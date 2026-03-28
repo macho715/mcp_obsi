@@ -1,0 +1,12 @@
+---
+description: Cursor 2026 project configuration guidance.
+alwaysApply: true
+---
+- Prefer skills for procedural workflows and explicit slash-like tasks.
+- Prefer subagents for context-heavy validation, planning, and security review.
+- Keep hooks lightweight, shell-focused, and Windows-stable; avoid broad automation and avoid verbose raw logging of local-sensitive data.
+- Prefer project-local MCP config in `.cursor/mcp.json`, preserve `.cursor/mcp.sample.json` as the sample, and keep token flow environment-driven.
+- Prefer Cursor and Codex workflows to share the same local MCP endpoint and environment variables when practical.
+- Do not invent `.cursor/cli.json`, plugin manifests, or automation configs without verified repo evidence or official documentation.
+- Do not force broad automations, dashboard-only flows, or unverified marketplace packaging; align with `docs/CURSOR_LATEST_NOTES_2026-03-28.md`.
+- Treat `AGENTS.md` plus these rules as the shared top-level contract for Cursor and Codex-style work in this repo.

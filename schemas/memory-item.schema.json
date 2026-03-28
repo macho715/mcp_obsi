@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "memory-item.schema.json",
+  "title": "MemoryNote",
+  "type": "object",
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "const": "memory_item"
+    },
+    "memory_id": {
+      "type": "string",
+      "pattern": "^MEM-\\d{8}-\\d{6}-[0-9A-F]{6}$"
+    },
+    "memory_type": {
+      "type": "string",
+      "enum": [
+        "preference",
+        "project_fact",
+        "decision",
+        "person",
+        "todo",
+        "conversation_summary"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "superseded",
+        "archived"
+      ]
+    },
+    "sensitivity": {
+      "type": "string"
+    },
+    "mcp_sig": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_type",
+    "memory_id",
+    "memory_type",
+    "source",
+    "created_by",
+    "created_at_utc",
+    "updated_at_utc",
+    "title",
+    "content"
+  ],
+  "additionalProperties": false
+}

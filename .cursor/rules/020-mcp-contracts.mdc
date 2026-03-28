@@ -1,0 +1,10 @@
+---
+description: Preserve MCP tool and data contracts.
+alwaysApply: true
+---
+- Keep tool names stable unless a versioned migration is explicitly requested: `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, and `fetch`.
+- Do not silently rename frontmatter keys, enums, response fields, or stored relative-path formats.
+- Preserve compatibility wrappers `search` and `fetch` when changing memory APIs.
+- Preserve data contracts from `AGENTS.md`: paths under `20_AI_Memory/<memory_type>/<YYYY>/<MM>/`, daily notes under `10_Daily/YYYY-MM-DD.md`, `/` separators in stored relative paths, and the `MEM-YYYYMMDD-HHMMSS-XXXXXX` ID pattern.
+- Keep markdown writes authoritative and keep SQLite as a derived accelerator that stays synchronized through index upserts.
+- Before changing auth, `/mcp`, `/healthz`, tool schemas, enums, vault layout, wrappers, or automatic write scope, confirm against `AGENTS.md` Ask Before Changing and get explicit approval.
