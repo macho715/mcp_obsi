@@ -58,7 +58,7 @@ Always produce, in this order:
 2. **One raw note**
    - on-disk layout for this repo’s MCP server: `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md` (under `VAULT_PATH`)
 3. **Zero to many memory notes**
-   - on-disk layout: `20_AI_Memory/<memory_type>/<YYYY>/<MM>/<MEMORY_ID>.md` where `<memory_type>` is a server enum (`decision`, `project_fact`, `preference`, `person`, `todo`, `conversation_summary`) and `<MM>` is zero-padded month (e.g. `03`)
+   - on-disk layout for **MCP writes:** `memory/<YYYY>/<MM>/<MEMORY_ID>.md` (`<MM>` zero-padded). `MemoryType` / `roles` are metadata, not path segments. Legacy vault may still have `20_AI_Memory/<memory_type>/<YYYY>/<MM>/…` for older files.
 4. **Optional `save_memory` v2 JSON payloads**
    - only when requested or when the user mentions MCP / API / payload / schema
 
@@ -67,7 +67,7 @@ Always produce, in this order:
 ### 1) Folder policy
 - Do not invent ad-hoc semantic trees (e.g. `topic/foo/`, `project/bar/decisions/`). Use only the server layout below.
 - **Raw archive:** `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md` (see [`RawArchiveStore`](../../../app/services/raw_archive_store.py)).
-- **Memory notes:** `20_AI_Memory/<memory_type>/<YYYY>/<MM>/<MEMORY_ID>.md` (see [`MemoryStore.save`](../../../app/services/memory_store.py)).
+- **Memory notes:** `memory/<YYYY>/<MM>/<MEMORY_ID>.md` for current server writes (see [`MemoryStore._memory_rel_path`](../../../app/services/memory_store.py)). `20_AI_Memory/…` is legacy/read-compat only unless migrating.
 - **Daily append (optional):** `10_Daily/<YYYY-MM-DD>.md`.
 - **Search index:** SQLite lives at `INDEX_DB_PATH`, not under a `vault/system/` path for this server. The vault may include `90_System/` for other artifacts; do not confuse it with the DB file.
 

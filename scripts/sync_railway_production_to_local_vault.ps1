@@ -61,7 +61,7 @@ tar -xzf $tempArchive -C $extractRoot
 $sourceVault = Join-Path $extractRoot "vault"
 $synced = @()
 
-foreach ($name in @("10_Daily", "20_AI_Memory", "mcp_raw")) {
+foreach ($name in @("10_Daily", "20_AI_Memory", "memory", "mcp_raw")) {
     $src = Join-Path $sourceVault $name
     $dst = Join-Path $resolvedVault $name
     if (Test-Path -LiteralPath $src) {

@@ -42,8 +42,10 @@ For **actual conversion** of dialogue into raw + memory notes, use `.cursor/skil
 | `skills/cursor-obsidian-converter-package/SKILL.md` | This installer / map skill |
 | `agents/obsidian-metadata-scout.md` | Long or noisy input: metadata candidates |
 | `agents/obsidian-memory-splitter.md` | Long input: atomic memory splits |
-| `agents/obsidian-memory-verifier.md` | Schema and policy verification |
+| `agents/obsidian-memory-verifier.md` | Schema and policy verification (includes sync + canonical-merge checks when paste workflow applies) |
 | `agents/obsidian-converter-package.md` | Bundle install: inventories, merge plan, clash detection |
+
+**mcp_obsidian repo root only (not in portable bundle by default):** `skills/paste-conversation-to-obsidian/SKILL.md` — one-shot paste → MCP persist → **Railway sync + optional repo-canonical raw merge** into `OBSIDIAN_LOCAL_VAULT_PATH` before claiming complete. Vendoring: copy that skill and `skills/obsidian-memory-workflow/` together if you need the same close-the-loop rules.
 
 ## Nested duplicate folder
 

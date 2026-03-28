@@ -16,7 +16,7 @@ tags:
 
 # <Memory Title>
 
-Suggested path: `20_AI_Memory/<memory_type>/<YYYY>/<MM>/<id>.md` (`memory_type` must match MCP `MemoryType`, e.g. `decision`, `project_fact`).
+Suggested path (MCP): `memory/<YYYY>/<MM>/<id>.md`. Set `memory_type` / `roles` in YAML only; legacy vaults may still show `20_AI_Memory/<memory_type>/…`.
 
 ## Summary
 

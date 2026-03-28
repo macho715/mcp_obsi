@@ -20,6 +20,17 @@ You verify whether the produced output actually conforms to the contract.
 8. Titles are specific enough for retrieval.
 9. JSON payloads, if present, map `raw_ref` to `raw_refs` correctly.
 10. The final answer clearly separates assumptions from evidence.
+11. **Obsidian app visibility:** The user is told which vault root the files live under (local `vault/` vs remote `VAULT_PATH` conceptually) and that there is no automatic push to mobile—only same-folder desktop observation or user-configured sync/copy.
+12. **Raw id contract:** If the target server requires a `convo-…` `mcp_id`, drafts using other stems are flagged until corrected.
+13. **Memory path (this repo MCP):** New-save drafts use `memory/<YYYY>/<MM>/<MEM-…>.md`, not `20_AI_Memory/<memory_type>/…`, unless the note is explicitly legacy/migrated.
+14. **One-shot sync decision:** The final output says which of the following occurred:
+    - same-folder desktop visibility
+    - production -> local vault sync executed
+    - manual external sync still required
+15. **No fake sync claims:** If production was used and no sync script / same-folder condition is shown, the release decision cannot be plain PASS for app visibility.
+16. **User intent priority:** If the user explicitly asked for immediate Obsidian app visibility and `OBSIDIAN_LOCAL_VAULT_PATH` exists, `manual external sync still required` is a FAIL unless there is a stated blocker.
+17. **Railway sync evidence:** If persistence used **production** MCP and `OBSIDIAN_LOCAL_VAULT_PATH` is set (or the user asked for app visibility / “싱크까지”), the parent output must show **`production -> local vault sync executed`** with synced folder names **or** a concrete blocker (e.g. script error, `railway` missing). Silent omission is a FAIL for “finished” claims.
+18. **Canonical raw merge:** When the parent flow dual-wrote or disclosed stub/shorter `archive_raw` risk, the app vault copy at `mcp_raw/...` must be reconciled with the authoritative repo `vault/` file at the same relative path (or the gap flagged). Missing merge after a stated risk is a FAIL for “complete”.
 
 ## Output
 Return exactly these sections:

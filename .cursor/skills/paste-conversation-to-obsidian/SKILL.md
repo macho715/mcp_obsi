@@ -3,9 +3,9 @@ name: paste-conversation-to-obsidian
 description: >-
   One-shot pipeline: user pastes a chat or transcript → delegate to metadata scout
   and memory splitter when needed → convert with obsidian-conversation-to-memory
-  rules → verify → persist memories via MCP save_memory and optional raw markdown
-  under the vault. Use when the user wants dialogue stored into the Obsidian-backed
-  vault with minimal manual steps (paste and go).
+  rules → verify → persist via MCP save_memory and archive_raw (or vault writes)
+  → run production→desktop sync when required, merge repo-canonical raw into the app vault when applicable
+  → close only after sync/merge outcomes are real (success or stated blocker). Use for paste-and-go vault capture.
 compatibility:
   - cursor-editor
 metadata:
@@ -34,6 +34,7 @@ Do **not** use for: auth/MCP contract changes, bulk migration, or storing conten
 - **Obsidian memory MCP** is available in Cursor (e.g. `obsidian-memory-local` or production profile) with write tools enabled.
 - You know or can ask for: `source` label (e.g. `cursor`, `chatgpt`, `manual`), optional `project`, and whether **daily note append** is desired (`append_daily` on `save_memory`; default server behavior is `True`).
 - For **raw file** creation: resolve vault root from environment / user (`VAULT_PATH` or equivalent). Do not hard-code paths.
+- For **desktop app vault** target: `OBSIDIAN_LOCAL_VAULT_PATH` (optional). When present and production MCP wrote, finishing the run usually requires the Railway sync script (needs [`railway`](https://docs.railway.app/develop/cli) CLI linked to the service).
 
 ## Pipeline (execute in order)
 
@@ -86,7 +87,7 @@ Map each memory draft to tool arguments (names must match the server tool schema
 | `summary` | `conversation_summary` |
 | `person` / unclear | omit or set after user confirmation; server may infer from `roles` |
 
-After each call, record returned **`id`** and **`path`** for the user summary.
+After each call, record returned **`id`** and **`path`** for the user summary. **Authoritative on-disk location:** `save_memory` / `archive_raw` response `path` values override draft `suggested_path` from subagents if they differ.
 
 **B) Raw conversation — MCP `archive_raw`**
 
@@ -105,12 +106,100 @@ Returns `status`, `path` (under `mcp_raw/...`). If MCP is unavailable, fall back
 
 Use the **same** `mcp_id` everywhere so `raw_refs` in `save_memory` line up with the archived raw file.
 
-### 6) Close the loop
+**`archive_raw` / raw ids:** Many servers validate `mcp_id` with a `convo-…` pattern. If a call fails pattern validation, rename to a matching `convo-…` id and align `raw_refs` via `update_memory` before retrying.
+
+### 6) Obsidian app: visibility & sync decision
+
+MCP and scripts **only write files under the server’s `VAULT_PATH` (or local repo `vault/`)**. There is **no** built-in push to the Obsidian mobile app or to Obsidian Sync servers.
+
+Treat app visibility as a required finalization step, not an afterthought.
+
+#### 6-A) If using local same-folder desktop
+
+- If the write target is already the same folder that desktop Obsidian opened:
+  - stop after persistence
+  - report `same-folder desktop = immediate`
+  - do **not** run a separate sync script
+
+#### 6-B) If using remote production MCP and a local app vault exists
+
+- If writes landed on remote production and the operator has a local Obsidian app vault:
+  - **must run** `scripts/sync_railway_production_to_local_vault.ps1` from the **repo root** before claiming the pipeline complete (unless §6.1 outcome 1 already applies).
+  - resolve local target from `OBSIDIAN_LOCAL_VAULT_PATH`, or pass `-LocalVaultPath` explicitly.
+  - on **success:** report synced folders (from script JSON) and the memory/raw **relative** paths the user should open.
+  - on **failure:** report the error (e.g. `railway` not logged in); do **not** claim `production -> local vault sync executed`—use `manual external sync still required` with the blocker.
+- Use this path when the user explicitly wants “붙여넣기 한 번 -> 앱에서 바로 보이기”.
+- If `OBSIDIAN_LOCAL_VAULT_PATH` is present, treat sync as the **default completion path** for remote production writes, not as an optional follow-up.
+
+#### 6-C) If mobile / other machine only
+
+- Do not claim immediate app visibility.
+- State clearly that user-managed replication is still required:
+  - Obsidian Sync
+  - cloud drive
+  - manual copy/export
+
+### 6.1) Required sync execution rule
+
+After persistence, choose exactly one of:
+
+1. `same-folder desktop` -> no extra sync command
+2. `production -> local vault sync` -> run `scripts/sync_railway_production_to_local_vault.ps1`
+3. `manual external sync required` -> explain limitation plainly
+
+Do not end the pipeline before one of those three outcomes is stated **and** executed when execution is implied (outcome 2 means the script actually ran or a blocker was recorded).
+If the user asked for “옵시디언 앱에 바로 보이게” / “싱크까지”, and `OBSIDIAN_LOCAL_VAULT_PATH` exists, outcome 2 is required unless outcome 1 already applies.
+
+### 6.2) Canonical raw merge (after production sync, when applicable)
+
+When **both** are true:
+
+1. You have an authoritative full raw file under the **workspace / repo** vault at the same relative path returned by `archive_raw` or local `MemoryStore` (e.g. `mcp_raw/cursor/2026-03-28/convo-….md`), **and**
+2. You pulled production into `OBSIDIAN_LOCAL_VAULT_PATH` via §6-B (so the app vault may contain an older or stub `archive_raw` body),
+
+then **copy that repo file over** the matching path inside `OBSIDIAN_LOCAL_VAULT_PATH` (create parent dirs if needed). Use PowerShell `Copy-Item -LiteralPath` (or equivalent). Do not invent folder names; reuse the **same relative path** under each vault root.
+
+If there was only a single write target and no fuller repo copy exists, state **N/A** for this step.
+
+### 6.3) Definition of “pipeline complete”
+
+You may call the paste workflow **complete** only when:
+
+- §4 verifier outcome is acceptable, **and**
+- §5 persistence succeeded (or documented fallback write), **and**
+- §6.1 sync outcome is chosen and—if outcome 2—§6-B actually ran or a blocker is explicitly reported, **and**
+- §6.2 is done or explicitly **N/A**.
+
+After successful writes, do **all** of the following in the user-facing summary:
+
+1. **Desktop Obsidian (same PC)**  
+   - Tell the user to open **exactly the same folder** as the write target: the MCP host’s `VAULT_PATH`, or the workspace `vault/` when using local `MemoryStore`.  
+   - If they already have that folder as a vault, files appear as normal notes; Obsidian watches the filesystem—**no extra sync step**.  
+   - If files do not show: wrong vault, or Obsidian needs a restart; suggest **file explorer** navigation to the returned relative `path` under vault root.
+
+2. **Phone / tablet / second PC**  
+   - MCP does **not** deliver to those devices. The vault directory must already be replicated by **Obsidian Sync**, **iCloud/Dropbox/Git/etc.**, or manual copy.  
+   - State this limitation plainly and mention that **`VAULT_PATH` must be the synced folder** (or users must copy exported paths into that folder).
+
+3. **Remote production MCP**  
+   - Writes land on the **server’s** disk. Local Obsidian will **not** see them unless that path is shared (network drive, sync, or deliberate export).  
+   - Call out when **local** vs **production** profile was used so the user does not search the wrong vault.
+
+4. **Optional deep link**  
+   - If `OBS_VAULT_NAME` (or equivalent) is known: `obsidian://open?vault=<name>&file=<relative path from vault root>`.
+
+### 7) Close the loop
 
 Reply with:
 
 - Count of `save_memory` calls and each returned **`path`** / `id`.
 - Raw file path (or explicit manual-save instructions).
+- **Which disk vault** the writes used (local `vault/` vs production `VAULT_PATH`—describe as “same folder Obsidian should open”, without inventing private paths).
+- **Sync result:** one of
+  - `same-folder desktop, no extra sync needed`
+  - `production -> local vault sync executed`
+  - `manual external sync still required`
+- **Completion claim:** only say the pipeline is fully complete when §6.3 is satisfied (sync + optional canonical merge), not merely when MCP calls returned OK.
 - Link pattern the server uses for Obsidian: `obsidian://open?vault=…&file=…` when settings are known.
 - Any verifier **PASS WITH AMBIGUITIES** items.
 

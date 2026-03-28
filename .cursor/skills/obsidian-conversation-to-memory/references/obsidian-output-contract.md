@@ -10,7 +10,11 @@ Paths are relative to `VAULT_PATH` except the search index DB (`INDEX_DB_PATH`).
 │  └─ <source>/
 │     └─ <YYYY-MM-DD>/
 │        └─ <mcp_id>.md
-├─ 20_AI_Memory/
+├─ memory/                         ← current MCP memory writes
+│  └─ <YYYY>/
+│     └─ <MM>/
+│        └─ <MEM-...>.md
+├─ 20_AI_Memory/                   ← legacy / read-compat layout (optional)
 │  └─ <memory_type>/
 │     └─ <YYYY>/
 │        └─ <MM>/
@@ -19,9 +23,9 @@ Paths are relative to `VAULT_PATH` except the search index DB (`INDEX_DB_PATH`).
    └─ <YYYY-MM-DD>.md
 ```
 
-`MemoryStore` also ensures top-level folders `90_System` and `mcp_raw` exist alongside `10_Daily` and `20_AI_Memory`.
+`MemoryStore` ensures top-level folders including `90_System`, `mcp_raw`, `memory`, `10_Daily`, and `20_AI_Memory` (see `_ensure_structure`).
 
-`<memory_type>` MUST be one of: `decision`, `project_fact`, `preference`, `person`, `todo`, `conversation_summary` (see `MemoryType` in `app/models.py`). `<MM>` is zero-padded month (`01`–`12`).
+For **new** notes written by this server, memory paths are **`memory/<YYYY>/<MM>/<MEMORY_ID>.md`** only; `memory_type` and `roles[]` live in frontmatter, not in the path. `MemoryType` enum values remain: `decision`, `project_fact`, `preference`, `person`, `todo`, `conversation_summary` (`app/models.py`). `<MM>` is zero-padded (`01`–`12`).
 
 ## Manual draft vs MCP-written files
 
@@ -60,7 +64,7 @@ Use the same `mcp_id` value as the filename stem when aligning with `RawArchiveS
 
 - One durable fragment → one memory note.
 - Use arrays for all semantic facets.
-- Path shape: `20_AI_Memory/<memory_type>/<YYYY>/<MM>/<MEMORY_ID>.md`.
+- Path shape (MCP write): `memory/<YYYY>/<MM>/<MEMORY_ID>.md`. Legacy: `20_AI_Memory/<memory_type>/<YYYY>/<MM>/<MEMORY_ID>.md`.
 - Memory id format: `MEM-YYYYMMDD-HHMMSS-XXXXXX` (six uppercase hex digits).
 
 ### Memory draft frontmatter
@@ -109,6 +113,6 @@ Rank using a combination of:
 ## Prohibitions
 
 - No ad-hoc semantic folder trees outside the layout above.
-- No singular `memory_type` as the primary classifier in prose when contradicting the path segment rules in this doc.
+- No singular `memory_type` as the primary classifier in prose when contradicting metadata-driven storage (`AGENTS.md`).
 - No fabricated metadata.
 - No one-conversation-equals-one-memory-note assumption.
