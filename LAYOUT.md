@@ -124,20 +124,19 @@ flowchart TD
   - `SearchPlan` parser
   - single query string에서 structured filter 추출
 - `app/services/path_backfill.py`
-  - legacy `20_AI_Memory/...` -> `memory/YYYY/MM/...` migration planner / applier
+  - legacy `20_AI_Memory/...` -> `memory/<YYYY>/<MM>/...` migration planner / applier
 - `scripts/backfill_memory_paths.py`
   - operator dry-run / apply CLI
+- `app/mcp_server.py`
+  - 통합 MCP: `archive_raw` (raw transcript → `mcp_raw/...`)
 
-### 현재 저장 경로 역할
+### 현재 저장 경로 역할 (`AGENTS.md` · 코드 기준)
 
-- current write target:
-  - `vault/memory/YYYY/MM/<MEM-ID>.md`
-- legacy compatibility:
-  - `vault/20_AI_Memory/<memory_type>/YYYY/MM/<MEM-ID>.md`
-- raw archive:
-  - `vault/mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md`
-- derived index:
-  - `data/memory_index.sqlite3` 또는 Railway `/data/state/memory_index.sqlite3`
+- **memory 쓰기:** `memory/<YYYY>/<MM>/<MEM-ID>.md` (`MemoryStore._memory_rel_path`)
+- **memory 레거시:** 인덱스에 남아 있으면 `20_AI_Memory/...` 경로도 읽기·갱신 가능 (`path_backfill`으로 `memory/...`로 이전 가능)
+- **raw 아카이브:** `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md` (`RawArchiveStore`; MCP `archive_raw`)
+- **데일리:** `10_Daily/<YYYY-MM-DD>.md` (선택 append)
+- **인덱스:** 환경 `INDEX_DB_PATH` (예: 로컬 `data/memory_index.sqlite3`, Railway `/data/state/memory_index.sqlite3`). vault의 `90_System/`과 혼동 금지.
 
 ```mermaid
 flowchart TD
@@ -146,12 +145,12 @@ flowchart TD
     Runtime --> Query["app/utils/search_query.py"]
     Runtime --> Backfill["app/services/path_backfill.py"]
 
-    Store --> MemoryTree["vault/memory/YYYY/MM"]
-    Store --> LegacyTree["vault/20_AI_Memory/... (legacy read/update)"]
-    Store --> RawTree["vault/mcp_raw/..."]
-    Index --> SQLite["data/memory_index.sqlite3"]
+    Store --> MemoryTree["memory/YYYY/MM"]
+    Store --> LegacyTree["20_AI_Memory/... 레거시 path"]
+    Store --> RawTree["mcp_raw/source/YYYY-MM-DD"]
+    Index --> SQLite["INDEX_DB_PATH SQLite"]
     Backfill --> CLI["scripts/backfill_memory_paths.py"]
-    CLI --> Railway["railway ssh python /app/scripts/backfill_memory_paths.py"]
+    CLI --> Railway["railway ssh ... backfill_memory_paths.py"]
 ```
 
 ### 운영자 기준 추가 편집 포인트
@@ -169,16 +168,15 @@ flowchart TD
 
 ## v2 Storage and Runtime Layout
 
-v2 migration 이후의 현재 저장/검색/백필 레이아웃은 시간축 경로와 호환 레이어를 함께 유지하는 형태다.  
-새 메모리는 `vault/memory/YYYY/MM/<MEM-...>.md` 계열로 취급하고, 기존 `20_AI_Memory/...` 경로는 legacy compatibility/read support 대상으로 남긴다.  
-`app/services/path_backfill.py`는 이 legacy 경로를 새 경로로 옮길 후보를 계획하고 적용하는 서비스이며, `scripts/backfill_memory_paths.py`는 운영자가 dry-run/apply를 선택해서 실행하는 오퍼레이터 스크립트다.
+v2 이후 레이아웃: **신규 memory 쓰기**는 `memory/<YYYY>/<MM>/<MEM-...>.md`이며, DB·인덱스에 남은 **레거시 `20_AI_Memory/...` path**는 계속 읽기·갱신된다.  
+`app/services/path_backfill.py` + `scripts/backfill_memory_paths.py`는 레거시 path를 `memory/...`로 옮기는 운영 도구다.
 
 ### Storage Paths
 
-- current time-axis write target: `memory/YYYY/MM`
-- legacy compatibility path: `20_AI_Memory/<memory_type>/YYYY/MM`
-- raw archive path: `mcp_raw/YYYY/MM`
-- SQLite index path: `vault/system/` 또는 configured `INDEX_DB_PATH`
+- current time-axis write target: `memory/<YYYY>/<MM>`
+- legacy compatibility path (stored in index): `20_AI_Memory/<memory_type>/<YYYY>/<MM>` (백필 이전분)
+- raw archive path: `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md`
+- SQLite index: `INDEX_DB_PATH` (not `vault/system/` 고정)
 
 ### Search Layer
 
@@ -210,14 +208,15 @@ v2 migration 이후의 현재 저장/검색/백필 레이아웃은 시간축 경
 
 ```mermaid
 flowchart TD
-  Save["save_memory / MemoryStore.save"] --> Current["vault/memory/YYYY/MM/<MEM-...>.md"]
-  Save --> Legacy["legacy compatibility: 20_AI_Memory/<memory_type>/YYYY/MM"]
+  Save["save_memory / MemoryStore.save"] --> Current["memory/YYYY/MM/<MEM-...>.md"]
+  Save --> Legacy["index에 남은 20_AI_Memory/... path 읽기·갱신"]
 
   Legacy --> BackfillSvc["app/services/path_backfill.py"]
   BackfillSvc --> BackfillScript["scripts/backfill_memory_paths.py"]
   BackfillScript --> DryRun["dry-run summary"]
   BackfillScript --> Apply["apply + move/update_index_only"]
 
+  RawTool["archive_raw"] --> RawPath["mcp_raw/source/YYYY-MM-DD/<mcp_id>.md"]
   Save --> Markdown["MarkdownStore frontmatter"]
   Markdown --> Index["SQLite index"]
   Index --> SearchLayer["JSON1 + FTS5 search layer"]
@@ -230,5 +229,5 @@ flowchart TD
 - production path migration has been applied on the live Railway deployment referenced in the runtime evidence
 - backfill summary after apply reported `moved: 18` and then a dry run returned `candidate_count: 0`
 - specialist read/write rechecks passed after the path migration
-- legacy `20_AI_Memory/...` remains supported for compatibility while the runtime continues to resolve migrated records through `memory/YYYY/MM`
-- current status is therefore: cutover active for migrated production records, with legacy compatibility retained and no remaining backfill candidates in the recorded production run
+- **신규 쓰기**는 `memory/<YYYY>/<MM>/...`이며, 레거시 path 레코드는 인덱스·`get`·`update`로 계속 처리된다
+- 위 production run 기준 백필 후보는 0으로 기록됨 (이후 배포는 별도 evidence로 확인)

@@ -25,7 +25,7 @@
 - `/claude-mcp-write`는 Claude용 authenticated specialist write-capable sibling profile이다.
 - 인증은 `MCP_API_TOKEN`이 비어 있지 않을 때 Bearer token으로 적용된다.
 - 현재 Bearer auth는 `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` 경로에 적용된다.
-- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `search`, `fetch`를 노출한다.
+- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`를 노출한다.
 - `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch`와 authenticated sibling `save_memory`, `get_memory`, `update_memory` 조합을 제공한다.
 - `MemoryStore`는 저장·조회·검색·업데이트를 묶는 서비스 계층이다.
 - `RawArchiveStore`는 raw conversation note를 `mcp_raw/` 아래에 저장한다.
@@ -77,6 +77,12 @@ flowchart LR
 4. `IndexStore`가 SQLite에 upsert 한다.
 5. `append_daily=True`이면 `DailyStore`가 `10_Daily/YYYY-MM-DD.md`에 보조 로그를 쓴다.
 
+### `archive_raw`
+
+1. MCP tool이 `mcp_id`, `source`, `body_markdown` 등으로 `RawConversationCreate`에 해당하는 입력을 받는다.
+2. `MemoryStore.archive_raw_conversation()`가 `RawArchiveStore`에 위임한다.
+3. `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md`에 YAML frontmatter + body가 기록된다 (인덱스 대상은 아니다).
+
 ### `search_memory`
 
 1. MCP tool이 query, types, project, tags, limit, recency 조건을 받는다.
@@ -109,6 +115,9 @@ sequenceDiagram
   opt append_daily=true
     Store->>Daily: append_memory()
   end
+  Client->>MCP: archive_raw payload
+  MCP->>Store: archive_raw_conversation()
+  Store-->>MCP: path under mcp_raw/...
   Client->>MCP: search_memory query
   MCP->>Store: search()
   Store->>DB: search()
@@ -120,7 +129,7 @@ sequenceDiagram
 
 아래 계약은 유지되어야 한다.
 
-- Tool names는 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `search`, `fetch`다.
+- Tool names는 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`다.
 - Public endpoint shape는 `/mcp`, `/healthz`다.
 - Markdown-first architecture를 유지한다.
 - SQLite는 derived index / accelerator only 이다.
@@ -183,7 +192,7 @@ flowchart TD
     FastAPI --> Auth["Bearer auth"]
     Auth --> HostCheck["Transport security allowlist"]
     HostCheck --> Session["FastMCP session manager"]
-    Session --> Tools["7 MCP tools"]
+    Session --> Tools["8 MCP tools"]
     Tools --> Store["MemoryStore"]
     Store --> Vault["/data/vault"]
     Store --> SQLite["/data/state/memory_index.sqlite3"]

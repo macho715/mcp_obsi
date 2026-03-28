@@ -2,6 +2,29 @@
 
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
 
+## 2026-03-28 - Root docs aligned with AGENTS + `archive_raw` MCP
+
+### Changed
+
+- `SYSTEM_ARCHITECTURE.md`
+  - 통합 MCP 도구 목록에 `archive_raw` 추가, 도구 수 8개로 정정
+  - `archive_raw` 데이터 흐름 소절 추가
+- `LAYOUT.md`
+  - 저장 경로 서술을 `AGENTS.md` / `MemoryStore._memory_rel_path` / `RawArchiveStore`와 일치 (`memory/...`, `mcp_raw/<source>/<date>/`, `INDEX_DB_PATH`)
+  - 잘못된 `mcp_raw/YYYY/MM`, `vault/system` SQLite 설명 제거·수정
+  - Mermaid에 `archive_raw` 분기 보강
+- `README.md`
+  - `app/mcp_server.py` 도구 개수 8개 및 `archive_raw` 언급
+  - `LAYOUT.md` 설명을 `AGENTS.md`와 동시 유지하도록 안내 문구 추가
+
+### Verification
+
+- `AGENTS.md`, `app/services/memory_store.py`, `app/services/raw_archive_store.py`와 교차 확인 (문서만 변경)
+
+### Remaining manual / deferred
+
+- ChatGPT/Claude 전용 MCP 프로필에 `archive_raw` 포함 여부는 별도 결정
+
 ## 2026-03-28 - Root docs detailed expansion after v2 runtime consolidation
 
 ```mermaid

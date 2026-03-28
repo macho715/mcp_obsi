@@ -1,22 +1,23 @@
 # mcp_obsidian
 
-Obsidian-backed shared memory MCP server with a local Obsidian curator plugin, shared schemas, and a verified Railway preview runtime.
+Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdown SSOT storage, SQLite JSON1+FTS5 search, and Railway-verified hosted profiles for Cursor, ChatGPT, and Claude.
 
-이 저장소의 현재 기준선은 다음이다.
+현재 이 저장소의 핵심은 다음이다.
 
 - Markdown SSOT
 - SQLite derived index
-- read-first, write-with-intent
-- global Cursor MCP + hosted specialist profiles
-- delivery archive 유지, runtime 비채택
-- hybrid architecture 시작
+- metadata-first memory contract
+- SearchPlan query DSL
+- `memory/YYYY/MM` write path + legacy compatibility
+- read-first, write-with-intent specialist profiles
+- Railway production recheck 완료
 
 ## Document Map
 
 - [README.md](README.md): 운영 허브, 설치/실행/MCP 연결, 현재 상태
 - [changelog.md](changelog.md): 작업 이력과 검증 기록
 - [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md): 런타임 구조와 보호 계약
-- [LAYOUT.md](LAYOUT.md): 저장소 구조, active/archive 구분, 편집 위치
+- [LAYOUT.md](LAYOUT.md): 저장소 구조, active/archive 구분, 편집 위치 (`AGENTS.md` 저장 레이아웃과 함께 유지)
 - [AGENTS.md](AGENTS.md): 저장소 공통 작업 계약
 - [CLAUDE.md](CLAUDE.md): Claude-specific delta
 - [plan.md](plan.md): 현재 실행 로드맵
@@ -37,6 +38,7 @@ Obsidian-backed shared memory MCP server with a local Obsidian curator plugin, s
 - [docs/WRITE_TOOL_GATE.md](docs/WRITE_TOOL_GATE.md): preview write gate와 rollback 기준
 - [docs/reference/](docs/reference): 제안/참고 문서 보관 영역
 - [docs/history/](docs/history): 점검/시점 기록 보관 영역
+- `.cursor/skills/`: Cursor Agent Skills (예: `paste-conversation-to-obsidian` 파이프라인, `obsidian-conversation-to-memory` 변환)
 
 ## Current State
 
@@ -68,7 +70,7 @@ Obsidian-backed shared memory MCP server with a local Obsidian curator plugin, s
 - code
   - `app/config.py`: local + Railway env shape, MCP host/origin allowlist 지원
   - `app/main.py`: FastAPI app factory, `/healthz`, `/mcp`, bearer auth middleware
-  - `app/mcp_server.py`: 7개 MCP tools, wrapper compatibility, transport security injection
+  - `app/mcp_server.py`: 8개 MCP tools (`archive_raw` 포함), wrapper compatibility, transport security injection
   - `app/services/memory_store.py`: Markdown first, SQLite second, raw archive + daily append + schema validation
 - docs
   - root docs 4종과 `docs/MASKING_POLICY.md`, `docs/MCP_RUNTIME_EVIDENCE.md`, `docs/REMOTE_DEPLOYMENT_MATRIX.md`, `docs/RAILWAY_PREVIEW_RUNBOOK.md` 존재
