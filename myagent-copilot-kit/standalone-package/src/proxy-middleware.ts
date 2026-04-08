@@ -530,7 +530,7 @@ export function createChatProxyHandler(opts?: {
           if (lastUserMessage?.content?.trim()) {
             try {
               const memResult = await searchMemory(opts.memoryClientOptions, {
-                query: lastUserMessage.content.trim().slice(0, 300),
+                query: lastUserMessage.content.trim().slice(0, 80),
               });
               if (memResult.results.length > 0) {
                 kbSources = memResult.results;
