@@ -8,25 +8,28 @@
 - Obsidian vault를 Markdown SSOT로 유지한다.
 - SQLite는 Markdown에서 파생된 검색용 인덱스로만 사용한다.
 - 읽기는 넓게, 쓰기는 의도적으로 유지한다.
-- Cursor, Claude Code, 그리고 원격 API 계열 클라이언트가 같은 MCP 계약을 공유하도록 한다.
+- Cursor, Claude Code, 그리고 원격 API 계열 클라이언트가 같은 backend/store를 공유하되, client-specific MCP profiles를 가질 수 있게 유지한다.
+- 이 문서의 기본 범위는 현재 repo의 직접 runtime(`app/main.py`)이다.
+- sibling `local-rag`, `standalone-package`는 현재 통합 경계에는 포함되지만, 구현 소유권은 이 저장소 밖에 있다.
 
 ## 런타임 구성
 
 현재 실행 경로는 다음과 같다.
 
 - FastAPI 앱이 `app/main.py`에서 시작된다.
+- `app/chatgpt_main.py`도 별도 앱 엔트리로 존재하지만, 이 문서의 기본 운영 기준은 통합 앱 `app/main.py`다.
 - `/healthz`는 상태 확인용 경로다.
 - `/chatgpt-healthz`, `/claude-healthz`는 hosted specialist read-only profile 상태 확인용 경로다.
 - `/chatgpt-write-healthz`, `/claude-write-healthz`는 hosted specialist write-capable sibling profile 상태 확인용 경로다.
 - `/mcp`는 FastMCP 스트리머블 HTTP 앱을 마운트한 경로다.
-- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` profile이다.
+- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
 - `/chatgpt-mcp-write`는 ChatGPT용 authenticated specialist write-capable sibling profile이다.
-- `/claude-mcp`는 Claude용 read-only `search` / `fetch` profile이다.
+- `/claude-mcp`는 Claude용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
 - `/claude-mcp-write`는 Claude용 authenticated specialist write-capable sibling profile이다.
-- 인증은 `MCP_API_TOKEN`이 비어 있지 않을 때 Bearer token으로 적용된다.
+- 인증은 route별 effective token이 비어 있지 않을 때 Bearer token으로 적용된다. `/mcp`는 `MCP_API_TOKEN`, `/chatgpt-mcp-write`는 `CHATGPT_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`, `/claude-mcp-write`는 `CLAUDE_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`을 사용한다.
 - 현재 Bearer auth는 `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` 경로에 적용된다.
 - MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`를 노출한다.
-- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch`와 authenticated sibling `save_memory`, `get_memory`, `update_memory` 조합을 제공한다.
+- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch` / `list_recent_memories`와 authenticated sibling `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory` 조합을 제공한다.
 - `MemoryStore`는 저장·조회·검색·업데이트를 묶는 서비스 계층이다.
 - `RawArchiveStore`는 raw conversation note를 `mcp_raw/` 아래에 저장한다.
 - `MarkdownStore`는 vault 안의 Markdown 파일을 SSOT로 기록한다.
@@ -38,7 +41,37 @@
 - Railway preview에서는 `Dockerfile` 기반 컨테이너가 실행되고, volume `/data`가 vault/index 저장소를 제공한다.
 - Railway production에서는 `/mcp`, `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`가 같은 volume `/data`를 공유한다.
 - Railway public domain에서는 FastMCP DNS rebinding protection 때문에 explicit host/origin allowlist가 필요하다.
-- HMAC phase-2가 켜진 경우 new/updated memory docs와 raw archive docs에 `mcp_sig`가 기록된다.
+- `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
+- optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
+
+## Companion Runtime Boundary
+
+현재 운영 문맥에는 아래 sibling runtime이 함께 등장하지만, 이 repo의 `app/` 코드 안에는 포함되지 않는다.
+
+- `..\local-rag`
+  - FastAPI local retrieval/generation service
+  - `GET /health`
+  - `POST /api/internal/ai/chat-local`
+  - `GET /api/internal/ai/chat-local/ready`
+  - conservative retrieval cache + sidecar metadata file
+  - shared-secret guard via `x-local-rag-token`
+- `..\myagent-copilot-kit\standalone-package`
+  - app/proxy/orchestrator layer
+  - `GET /api/ai/health` returns `localIntelligence` section: `{ok, memory: {...}, localRag: {...}}`
+  - `localIntelligenceOk` flag = `memoryOk && localRagOk`
+  - `localOnlyChatOk` now requires both `memoryOk` AND `localRagOk` (tightened)
+  - `MYAGENT_LOCAL_RAG_BASE_URL`, `MYAGENT_LOCAL_RAG_TOKEN`
+  - Default memory MCP mount changed from `/chatgpt-mcp-write` to `/chatgpt-mcp` (read-only, no bearer required)
+  - `MYAGENT_MEMORY_TOKEN` / `MYAGENT_MEMORY_BEARER_TOKEN` / `MCP_API_TOKEN` as bearer fallback
+  - RAG keyword auto-detection: messages with 근거/요약/문서/통관/etc → automatic local-rag route
+  - Memory enrichment: when RAG keyword detected, queries memory MCP and injects KB context as system message
+  - `kbEnriched` flag in `/api/ai/chat` response
+  - Memory search query shortened to 80 chars for better Korean text hit rate
+  - `routeHint=local` forces local route; `routeHint=copilot` forces copilot route
+  - `local route` defaults to `gemma4:e4b` when the request omits `model`
+  - `non-loopback bind` 시 `MYAGENT_PROXY_AUTH_TOKEN` 미설정이면 startup fail-fast
+
+즉, 이 저장소는 durable memory / MCP control plane을 직접 소유하고, local chat-local orchestration은 companion runtime과의 경계로만 다룬다.
 
 ```mermaid
 flowchart LR
@@ -50,7 +83,7 @@ flowchart LR
   F --> CH["/claude-mcp"]
   F --> CHW["/claude-mcp-write"]
   M --> T[MCP tools]
-  GH --> RT["read-only search/fetch"]
+  GH --> RT["read-only search/fetch/recent"]
   GHW --> WT["specialist write tools"]
   CH --> RT
   CHW --> WT
@@ -95,7 +128,7 @@ flowchart LR
 1. 외부 client가 Railway public HTTPS domain으로 요청한다.
 2. Railway edge가 FastAPI `/mcp`로 전달한다.
 3. FastAPI bearer auth가 `Authorization: Bearer <token>`를 검증한다.
-4. FastMCP transport security가 `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS` allowlist를 검증한다.
+4. runtime host/origin lists가 모두 비어 있지 않을 때에만 FastMCP transport security가 allowlist를 검증한다. 이 리스트는 `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`뿐 아니라 Railway-derived runtime values에서도 확장될 수 있다.
 5. MCP session manager가 streamable HTTP 세션을 생성하거나 기존 세션을 사용한다.
 6. tool call은 동일한 `MemoryStore` 계층으로 내려간다.
 
@@ -130,7 +163,7 @@ sequenceDiagram
 아래 계약은 유지되어야 한다.
 
 - Tool names는 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`다.
-- Public endpoint shape는 `/mcp`, `/healthz`다.
+- public endpoint shape는 `/mcp`, `/healthz`에 더해 specialist read/write mounts와 their health endpoints를 포함한다: `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`, `/chatgpt-healthz`, `/chatgpt-write-healthz`, `/claude-healthz`, `/claude-write-healthz`.
 - Markdown-first architecture를 유지한다.
 - SQLite는 derived index / accelerator only 이다.
 - Vault relative path는 `/` separator를 사용한다.
@@ -139,15 +172,19 @@ sequenceDiagram
 - Compatibility wrapper response shape는 유지한다.
 - 자동 write 범위는 넓히지 않는다.
 - 새 memory writes는 `memory/YYYY/MM/` 아래로 저장하고, legacy `20_AI_Memory/...`는 read/update 호환 경로로 유지한다.
+- `/chatgpt-mcp`, `/claude-mcp` read-only 마운트는 bearer 없이 노출됨. 프로덕션 배포 시 네트워크/프록시 레이어에서 차단하거나 전용 read token을 추가할 것 (변경 시 auth 게이트 승인 필요).
+- `MCP_API_TOKEN` 기본값 `dev-change-me`는 프로덕션에서 반드시 교체해야 한다.
+- `CHATGPT_MCP_WRITE_TOKEN`, `CLAUDE_MCP_WRITE_TOKEN`을 따로 두면 write sibling route에 별도 bearer를 적용할 수 있다. 비어 있으면 각 write route는 `MCP_API_TOKEN`으로 fallback 된다.
 
 ## 현재 코드 기준 상세
 
 - `app/main.py`는 FastAPI app을 만들고 `/mcp`에 FastMCP app을 마운트한다.
 - `app/main.py`는 통합 앱에서 `/mcp`, `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`를 함께 마운트한다.
 - `app/mcp_server.py`는 wrapper helper를 통해 `search`와 `fetch`의 레거시 응답 모양을 유지한다.
-- `app/chatgpt_mcp_server.py`와 `app/claude_mcp_server.py`는 standard `search` / `fetch` read-only profile과 authenticated write-capable sibling profile을 제공한다.
+- `app/chatgpt_mcp_server.py`와 `app/claude_mcp_server.py`는 standard `search` / `fetch` / `list_recent_memories` read-only profile과 authenticated write-capable sibling profile을 제공한다.
+- `app/utils/specialist_readonly.py`는 specialist read-only `search`가 generic recent/list query를 recent browse로 보정하도록 돕는다.
 - `app/config.py`는 `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`를 CSV env로 읽는다.
-- `app/config.py`는 `MCP_HMAC_SECRET`를 통해 optional signing을 켠다.
+- `app/config.py`는 `MCP_HMAC_SECRET`와 `mcp_hmac_enabled` flag를 제공한다. 실제 signed-write runtime 적용 여부는 별도 contract / implementation 확인이 필요하다.
 - `app/mcp_server.py`는 allowlist가 있으면 `TransportSecuritySettings`를 명시적으로 주입한다.
 - `app/services/memory_store.py`는 normalize, path build, save, get, recent, update 책임을 가진다.
 - `app/services/raw_archive_store.py`는 raw conversation frontmatter/body를 `mcp_raw/`에 저장한다.
@@ -160,7 +197,69 @@ sequenceDiagram
 
 ## 직접 확인한 실행 결과
 
-2026-03-28 기준으로 아래를 직접 확인했다.
+### 2026-04-08 current workspace recheck
+
+- `.venv\Scripts\python.exe -m pytest -q` → **65 passed**
+- `.venv\Scripts\python.exe -m ruff check .` → **fail** (`11` existing issues, including tracked `app.py`)
+- `.venv\Scripts\python.exe -m ruff format --check .` → **fail** (`3` files would be reformatted, `58` files already formatted)
+- `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp`
+
+### 2026-04-08 companion ingest + local route verification
+
+- note: 아래 기록은 sibling repo의 temp companion runtime evidence다. current local `127.0.0.1:3010` 프로세스와 같은 세션 결과로 합치지 않는다.
+- local MCP `/healthz` → `200 {"ok":true,"service":"obsidian-mcp"}`
+- local-rag `/health` → `200`, `model = gemma4:e4b`, repo `vault/wiki` 기준 temp instance에서 `documents = 7`
+- standalone `/api/ai/health` (temp instance) → `localOnlyChatOk = true`, `memoryOk = true`, `localRag.chatRouteReady = true`
+- manual KB ingest
+  - raw copy → `vault/raw/articles/chatgpt-projects-pipeline-standard.md`
+  - wiki note → `vault/wiki/concepts/chatgpt-projects-pipeline-standard.md`
+  - MCP `archive_raw` returned id → `convo-chatgpt-projects-pipeline-standard-2026-04-08`
+  - MCP `save_memory` returned id → `MEM-20260408-163522-F9FE2A`
+- temp `local-rag` direct call → ingested concept note를 retrieval source로 반환
+- temp `standalone-package` memory bridge
+  - `/api/memory/search` → `MEM-20260408-163522-F9FE2A`
+  - `/api/memory/fetch` → saved pointer 본문
+- temp `standalone-package` local route
+  - 이전 동작: `model` 미지정 시 Copilot default model이 내려가 `local-rag` 503 유발 가능
+  - 현재 동작: `model` 미지정이어도 local route가 `gemma4:e4b`로 자동 매핑되어 `POST /api/ai/chat` 성공
+- note: repo vault 직접 확인 대상은 `vault/raw/` / `vault/wiki/` direct-write 결과였다. `archive_raw`는 returned `mcp_id` + `path` 기준으로 확인했고, `save_memory`는 returned `id` + `/api/memory/search` / `/api/memory/fetch` readback 기준으로 검증했다
+
+### 2026-04-08 production specialist route recheck (current Codex session)
+
+- production `/chatgpt-mcp` tool set → `search`, `fetch`, `list_recent_memories`
+- `list_recent_memories(limit=5)` → recent titles 5건 반환
+- generic recent query fallback
+  - `search("2026 03 memory memo")` → recent browse와 같은 결과 반환
+  - first hit `fetch(id)` → wrapper fetch payload 정상 반환
+
+### 2026-04-08 current local standalone spot-check (current Codex session)
+
+- `GET http://127.0.0.1:3010/` → `200`, title `Standalone Chat`, input + send button visible
+- `GET http://127.0.0.1:3010/api/ai/health` → `200`
+  - `chatOk = false`
+  - `localOnlyChatOk = false`
+  - `memoryOk = false`
+  - payload 내부 `localRag.status = "down"`, `ollama = "down"`
+  - payload 내부 `memory.status = "ok"`, `tools = ["search", "fetch", "list_recent_memories", "save_memory", "get_memory", "update_memory"]`
+- `GET http://127.0.0.1:3010/api/memory/health` → `503`
+  - payload는 `memory.status = "ok"`를 유지해 bridge health 판정과 payload 상태가 어긋남
+- `POST http://127.0.0.1:3010/api/memory/save` → `200`
+  - sample id: `MEM-20260408-221147-54967A`
+  - follow-up `GET /api/memory/fetch?id=MEM-20260408-221147-54967A` → saved record readback 확인
+- `POST http://127.0.0.1:3010/api/ai/chat` with valid `messages[]` payload and `routeHint: "local"` → `503 LOCAL_RUNNER_FAILED`
+  - detail: local-rag upstream returned `OLLAMA_UNAVAILABLE` because `http://127.0.0.1:11434/api/chat` returned `404`
+
+### 2026-04-07 QA 검증 (historical snapshot; mstack-pipeline 5라운드 병렬)
+
+- `ruff check .` → All checks passed ✅ (scripts/ 24건 수정 후)
+- `ruff format --check .` → 22 files already formatted ✅
+- `pytest -q` → **65 passed, 0 failed** ✅
+- `from app.main import app` → import OK ✅
+- vault 4계층 존재 확인: `vault/raw/`, `vault/mcp_raw/`, `vault/wiki/`, `vault/memory/` ✅
+- cross-layer 오염 없음 (memory 노트가 wiki 본문을 중복 저장하지 않음) ✅
+- `.cursor/skills/obsidian-{ingest,query,lint}/SKILL.md` frontmatter 수정 완료 ✅
+
+### 2026-03-28 기준으로 아래를 직접 확인했다
 
 - local verification
   - `pytest -q` -> pass
@@ -366,3 +465,200 @@ sequenceDiagram
     - sample id: `MEM-20260328-234330-5D6BA3`
   - Claude -> pass
     - sample id: `MEM-20260328-234330-2D7741`
+
+## 2026-04-07 KB Layer — Gemma 4 + Ollama + 3 Cursor Skills
+
+이 섹션은 기존 MCP 서버 계층과 분리된 로컬 KB 계층을 정의한다. `app/` 코드는 무수정이다.
+
+### KB Layer 목적
+
+- `vault/wiki/`를 장기 KB canonical 트리로 관리한다.
+- Gemma 4 (로컬 Ollama)를 ingest/query/lint 워크플로우의 LLM으로 사용한다.
+- `memory/`와 `mcp_raw/`의 역할을 오염하지 않는다.
+
+### LLM Runtime
+
+| 항목 | 값 |
+|---|---|
+| Provider | Ollama |
+| Base URL | `http://localhost:11434` (env: `OLLAMA_BASE_URL`) |
+| Primary model | `gemma4:e4b` (9.6 GB, 128K ctx) |
+| Light model | `gemma4:e2b` (7.2 GB, 128K ctx) |
+| API | `POST /api/chat`, `stream: false` |
+| Timeout | 300 s (env: `OLLAMA_TIMEOUT`) |
+| Adapter | `scripts/ollama_kb.py::generate()` |
+
+### 스토리지 라우팅
+
+```
+입력/대화    →  archive_raw  →  mcp_raw/<source>/<date>/<id>.md  (immutable)
+KB canonical →  직접 쓰기    →  vault/wiki/<category>/<slug>.md
+요약/포인터  →  save_memory  →  memory/<YYYY>/<MM>/<MEM-ID>.md
+운영 산출물  →  직접 쓰기    →  runtime/patches/ , runtime/audits/
+```
+
+`memory/`에는 **포인터 + 한 줄 요약만** 저장한다. wiki canonical 전문을 복사하지 않는다.
+
+### 3개 스킬 역할
+
+| Skill | 모델 | 역할 |
+|---|---|---|
+| `obsidian-ingest` | `gemma4:e4b` | 소스 분류 → wiki note 생성 → archive_raw → log·index 갱신 → memory 포인터 |
+| `obsidian-query` | `gemma4:e4b` | wiki 검색 → Ollama 재순위 → 합성 답변 → analyses 저장(선택) → memory 포인터 |
+| `obsidian-lint` | `gemma4:e2b` | frontmatter·링크·중복·품질 감사 → patch plan JSON → memory 결과 요약 |
+
+### 아키텍처 다이어그램
+
+```mermaid
+flowchart LR
+  User["Cursor / Agent"] --> IngestSkill["obsidian-ingest"]
+  User --> QuerySkill["obsidian-query"]
+  User --> LintSkill["obsidian-lint"]
+
+  subgraph KB Layer ["KB Layer (local only, app/ 무수정)"]
+    IngestSkill --> Adapter["scripts/ollama_kb.py"]
+    QuerySkill --> Adapter
+    LintSkill --> Adapter
+    Adapter --> Ollama["Ollama\ngemma4:e4b / e2b\nlocalhost:11434"]
+  end
+
+  IngestSkill -->|archive_raw| McpRaw["mcp_raw/ (immutable)"]
+  IngestSkill -->|direct write| Wiki["vault/wiki/"]
+  IngestSkill -->|save_memory pointer| Memory["memory/YYYY/MM/"]
+  QuerySkill -->|direct write| Wiki
+  QuerySkill -->|save_memory pointer| Memory
+  LintSkill -->|patch plan| Patches["runtime/patches/"]
+  LintSkill -->|save_memory summary| Memory
+
+  Wiki --> WikiLog["vault/wiki/log.md"]
+  Wiki --> WikiIndex["vault/wiki/index.md"]
+```
+
+## 2026-04-07 KB Layer E2E Verification
+
+Phase 1-4 전 단계 로컬 실행으로 검증됨.
+
+### 환경 확인 (Phase 1)
+
+| 항목 | 결과 |
+|---|---|
+| `gemma4:e4b` | ✅ 설치 (9.6 GB) |
+| `gemma4:e2b` | ✅ 설치 (7.2 GB) |
+| `VAULT_PATH` | ✅ `./vault` |
+| `OBSIDIAN_LOCAL_VAULT_PATH` | ✅ `C:\Users\jichu\OneDrive\문서\Obsidian Vault` |
+| MCP `/healthz` | ✅ `{"ok":true,"service":"obsidian-mcp"}` |
+| `vault/wiki/` 구조 | ✅ sources/concepts/entities/analyses + index.md + log.md |
+
+### obsidian-ingest (Phase 2) — PASS
+
+| Step | 결과 |
+|---|---|
+| Ollama health | OK |
+| `archive_raw` | `mcp_raw/cursor/2026-04-07/convo-kb-ingest-test-2026-04-07.md` |
+| Classify `gemma4:e4b` | `category=entities, slug=gemma-4-llm-model` |
+| Knowledge extraction | 591자 한국어 구조화 본문 |
+| Wiki note write | `vault/wiki/entities/gemma-4-llm-model.md` |
+| `save_memory` pointer | `MEM-20260407-212039-9C7277` (`roles:["fact"]`, `raw_refs:[mcp_id]`) |
+| `vault/wiki/log.md` | 업데이트 완료 |
+
+### obsidian-query (Phase 3) — PASS
+
+| Step | 결과 |
+|---|---|
+| 한국어 질의 | `"Gemma 4 모델에 대해 우리가 알고 있는 것은? 크기와 특징을 알려줘."` |
+| 후보 검색 | 2개 노트, keyword score=2 각각 |
+| Re-rank `gemma4:e4b` | `[0, 1]` JSON 정상 반환 |
+| 합성 답변 | 1498자 한국어, `[[wiki/...]]` 인용 포함 |
+| analyses 저장 | 건너뜀 (simple lookup — 정상 동작) |
+
+### obsidian-lint (Phase 4) — PASS
+
+| Step | 결과 |
+|---|---|
+| Historical run summary | 초기 2개 노트 기준 duplicate 감지 중심으로 보고됨 |
+| Current artifact snapshot | `runtime/patches/kb-lint-2026-04-07.json` 기준 `total_notes: 4`, `total_deterministic: 12`, `auto_fixable: 4` |
+| Current artifact recommendation | `Add outgoing [[links]] to orphan pages; confirm evidence in sources.` |
+| Patch plan artifact | `runtime/patches/kb-lint-2026-04-07.json` |
+| `save_memory` audit | `MEM-20260407-213350-B040B2` |
+
+### 발견 버그 → 수정 완료
+
+- `roles=["knowledge"]` → `MemoryRole` enum에 없는 값 → `roles=["fact"]` 로 수정
+- 영향 파일: `obsidian-ingest/SKILL.md`, `obsidian-query/SKILL.md` (프로젝트 + 전역 각 2곳)
+
+---
+
+## 2026-04-07 — Karpathy LLM Wiki 고도화
+
+### C안 Storage Routing (docs/storage-routing.md 참조)
+
+4계층 분리 원칙:
+
+| 계층 | 경로 | 쓰기 방식 | 불변? |
+|---|---|---|---|
+| 불변 원본 | `vault/raw/<type>/<slug>.md` | direct write | **Yes** |
+| 아카이브 | `vault/mcp_raw/<src>/<date>/<id>.md` | `archive_raw` MCP | Yes |
+| Canonical KB | `vault/wiki/<category>/<slug>.md` | direct write | No |
+| 메모리 포인터 | `vault/memory/<YYYY>/<MM>/<MEM-ID>.md` | `save_memory` MCP | No |
+
+### 설계 원칙
+
+Karpathy의 LLM Wiki 아키텍처([Gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f))를 반영:
+
+- `vault/raw/` = immutable source of truth (원본 불변)
+- `vault/wiki/` = LLM-maintained wiki (분석·정리)
+- `index.md` = 탐색 허브 (query가 먼저 읽는 파일)
+- `obsidian-lint` = Karpathy의 health-check 루프
+
+### 추가된 저장소 레이어
+
+| 경로 | 역할 | 불변 여부 |
+|---|---|---|
+| `vault/raw/articles/` | 웹 아티클·텍스트 원본 | **불변** |
+| `vault/raw/pdf/` | PDF 원본 | **불변** |
+| `vault/raw/notes/` | 수기 노트 원본 | **불변** |
+| `vault/wiki/` | KB canonical (LLM 정리) | 갱신 가능 |
+
+### 스킬 변경 요약
+
+| 스킬 | 추가된 단계 |
+|---|---|
+| `obsidian-ingest` | Step 1a: vault/raw/ 복사, Step 5: 역방향 cross-link, Step 6: index.md Recent Notes 갱신 |
+| `obsidian-query` | Step 2a: index.md 우선 탐색 → keyword match → full rglob |
+| `obsidian-lint` | Step 2: orphan_page, missing_cross_reference, evidence_gap, stale_note 추가; Step 3: contradiction + stale claim 시맨틱 검사 |
+
+### 확장된 Lint 검사 매트릭스
+
+| 검사 | 단계 | Ollama 필요 | Auto-fix |
+|---|---|---|---|
+| missing_frontmatter | 2 | No | No |
+| missing_field | 2 | No | Partial |
+| broken_wikilink | 2 | No | No |
+| tags_not_array | 2 | No | Yes |
+| orphan_page | 2b | No | No |
+| missing_cross_reference | 2d | No | No |
+| evidence_gap | 2c | No | No |
+| stale_note | 2 (detect) + 3b (semantic) | Yes | No |
+| contradiction | 3a | Yes | No |
+| duplicate | 3c | Yes | No |
+
+## Karpathy Wiki Method 대조표
+
+이 저장소는 Karpathy의 "Wiki Method" 패턴을 로컬 Ollama + Cursor Skills 구조로 구현한다.
+
+| Karpathy 원안 | 현재 구현 | 상태 |
+|---|---|---|
+| `raw/` 불변 원본 저장 | `vault/raw/articles·pdf·notes/` | ✅ |
+| `wiki/` LLM 정리본 | `vault/wiki/concepts·entities·analyses·sources/` | ✅ |
+| `index.md` 자동 허브 | `obsidian-ingest` 스킬이 갱신 | ✅ |
+| `log.md` 변경 로그 | lint/ingest 스킬이 기록 | ✅ |
+| `claude.md` 시스템 프롬프트 | repo root `CLAUDE.md` + KB workflow 문서 (`vault/wiki/claude.md`는 현재 루트 repo 기준 미확인) | ✅ (repo contract) |
+| Claude Code 실행 엔진 | Cursor Agent + Skills | ✅ (대체) |
+| Claude API | Ollama `gemma4:e4b` (로컬, 무료) | ✅ (대체) |
+| "업데이트해줘" | `obsidian-ingest` 스킬 | ✅ |
+| "린트 돌려줘" | `obsidian-lint` 스킬 (원안보다 강화) | ✅ |
+| Web Clipping → raw/ | `docs/web-clipping-setup.md` | ✅ |
+| YouTube 대본 처리 | `yt-dlp` 가이드 포함 | ✅ |
+| 토큰 절감 측정 | 미구현 (`scripts/token_savings.py` deferred) | ❌ |
+
+**원안 대비 추가된 강점**: `mcp_raw/` (불변 인덱싱된 아카이브) + `memory/` (검색 포인터) 레이어가 추가됨. 원안은 단순 파일 시스템이지만 현재 구현은 FastAPI + FastMCP + SQLite FTS5까지 결합된 더 견고한 구조.

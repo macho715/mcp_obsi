@@ -2,6 +2,525 @@
 
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
 
+## 2026-04-09 — standalone memory enrichment + RAG auto-route + local-rag retrieval
+
+### Changed
+
+- `myagent-copilot-kit/standalone-package/src/server.ts`
+  - Change default memory MCP path from `/chatgpt-mcp-write` to `/chatgpt-mcp` (aligns with read-only mount used by Cursor IDE integration)
+  - Add `memoryClientOptions` wiring into `createChatProxyHandler` for memory enrichment
+  - Add `localIntelligence` section to `/api/ai/health` response; unify `localRag` + `memory` under it
+  - Change `localOnlyChatOk` to require both `memoryOk` AND `localRagOk`
+- `myagent-copilot-kit/standalone-package/src/proxy-middleware.ts`
+  - Add memory enrichment: when RAG keywords detected (근거/요약/문서/통관/etc), auto-query memory MCP and inject KB context as system message into local-rag prompt
+  - Merge memory search results with local-rag sources in response
+  - Add `kbEnriched` flag to `/api/ai/chat` response
+  - Add `memoryClientOptions` parameter to `createChatProxyHandler`
+  - Extend `ProxyLocalRunner` type with `kbContext` and `kbSources`
+- `myagent-copilot-kit/standalone-package/src/mcp-memory-client.ts`
+  - New file: MCP memory client wrapper (`searchMemory`, `getMemory`, `saveMemory`, `probeMemoryClient`, `listMemoryTools`)
+- `myagent-copilot-kit/standalone-package/src/docs-browser.ts`
+  - New file: inline docs renderer for standalone package
+- `myagent-copilot-kit/standalone-package/src/server.ts`
+  - Shorten memory search query from 300 chars to 80 chars to improve hit rate for Korean text
+- `local-rag/app/retrieval.py`
+  - New file: lexical file search with mtime/size cache, TF-IDF scoring, query cache with TTL
+  - Exposes `count_documents()` and `search_documents(query, top_k=5)`
+  - Supports markdown and text files under `LOCAL_RAG_DOCS_DIR`
+
+### New
+
+- RAG keyword auto-detection: messages containing 근거/요약/문서/통관/dem.det/etc are automatically routed to local-rag route
+- Memory enrichment: when RAG keyword detected, memory MCP is queried and KB context is injected as system message into Ollama prompt
+- Unified health: `/api/ai/health` now returns `localIntelligence` section with `memory` and `localRag` sub-statuses, and `localIntelligenceOk` flag
+
+### Verification
+
+- TypeScript `tsc --noEmit` → 0 errors
+- TypeScript build → 0 errors, dist updated
+- `pytest -q` (mcp_obsidian root) → 65 passed
+- Python urllib UTF-8 tests:
+  - `근거 문서 요약` → `route: local`
+  - `hello world` → `route: copilot`
+  - `요약해줘` → `route: local`
+- local-rag direct: `POST /api/internal/ai/chat-local` → 200, `sources: 2`
+- memory MCP direct: `GET /api/memory/search?q=HVDC` → 2 results
+- standalone `/api/ai/health` → `localIntelligenceOk: true`
+
+### Git commits
+
+- `a38ab22` feat(standalone): memory enrichment + unified health for local LLM integration
+- `19d6fb5` fix(standalone): shorten memory search query to 80 chars
+- (local-rag retrieval.py commit not yet created — companion repo)
+
+### Notes
+
+- Windows curl encoding: use `--data-raw` + `charset=utf-8` header or Python/Node.js clients for Korean text
+- Memory enrichment returns `kbEnriched: false` when memory search returns 0 results (normal — query didn't match indexed memory)
+- RAG keyword auto-detection works correctly: verified via Python urllib UTF-8 tests
+
+## 2026-04-08 — root docs current-session re-sync (specialist production + local standalone caveats)
+
+### Changed
+
+- `README.md`
+  - `docs/LOCAL_RAG_STANDALONE_GUIDE.md`와 `2026-04-08-local-rag-retrieval-benchmark.md`를 문서 맵에 추가
+  - workspace-local companion 사본(`local-rag/`, `myagent-copilot-kit/standalone-package/`)을 canonical tracked runtime과 분리해 설명
+  - production `/chatgpt-mcp` current-session recheck 결과(`search`, `fetch`, `list_recent_memories`, recent-query fallback)를 직접 확인한 사실로 추가
+  - previous temp companion evidence와 current local `127.0.0.1:3010` spot-check를 분리해 기록
+  - current local standalone에서 `chatOk = false`, `localOnlyChatOk = false`, `memoryOk = false`, `/api/memory/health` `503`, `/api/memory/save` `200`, local-forced `/api/ai/chat` `503 LOCAL_RUNNER_FAILED`가 관찰된 사실을 추가
+- `SYSTEM_ARCHITECTURE.md`
+  - companion boundary에 standalone memory bridge 기본 mount `/chatgpt-mcp-write`, env 이름, probe caveat를 코드 기준으로 보강
+  - `app/utils/specialist_readonly.py` recent-query fallback helper를 current code basis에 추가
+  - current-session production specialist route recheck와 current local standalone spot-check를 직접 확인한 실행 결과에 추가
+  - previous temp companion verification이 current local `3010` evidence와 다른 세션 결과임을 명시
+- `LAYOUT.md`
+  - `docs/LOCAL_RAG_STANDALONE_GUIDE.md`와 retrieval benchmark spec을 루트/문서 분류에 추가
+  - workspace-local companion 디렉터리 `local-rag/`, `myagent-copilot-kit/standalone-package/`를 reference 성격으로 분리 기록
+  - `Where To Edit What`와 운영 메모에 standalone memory bridge 기본 mount caveat와 local clone boundary를 추가
+- `changelog.md`
+  - 이번 root-doc current-session re-sync 항목을 추가
+
+### Verification
+
+- current code and route checks
+  - `Invoke-WebRequest http://127.0.0.1:8000/healthz`
+  - `Invoke-WebRequest http://127.0.0.1:3010/`
+  - `Invoke-WebRequest http://127.0.0.1:3010/api/ai/health`
+  - `curl.exe -i http://127.0.0.1:3010/api/memory/health`
+  - `curl.exe -i -X POST http://127.0.0.1:3010/api/memory/save ...`
+  - `curl.exe -s http://127.0.0.1:3010/api/memory/fetch?id=MEM-20260408-221147-54967A`
+  - `curl.exe -i -X POST http://127.0.0.1:3010/api/ai/chat ...`
+- production specialist recheck
+  - `railway up -d`
+  - `Invoke-WebRequest https://mcp-server-production-90cb.up.railway.app/healthz`
+  - direct MCP session against `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`
+  - `list_recent_memories(limit=5)` success
+  - `search("2026 03 memory memo")` fallback success
+  - `fetch(id)` success
+
+### Notes
+
+- 이번 항목은 루트 문서 4개를 current session evidence와 current code 기준으로 다시 맞춘 것이다.
+- previous temp companion verification은 유지하되, current local runtime evidence와 섞이지 않도록 분리 기록했다.
+- local standalone memory bridge는 current session 기준으로 save/fetch는 동작했지만 health 판정과 local-forced chat은 아직 green이 아니다. root docs는 이 상태를 완료로 올리지 않는다.
+
+## 2026-04-08 — specialist read-only recent listing 추가
+
+### Changed
+
+- `app/services/index_store.py`
+  - `recent()`에 `offset`을 추가해 페이지 단위 recent browse를 지원
+- `app/services/memory_store.py`
+  - `recent()`가 `offset`, `has_more`, `next_offset`, `updated_at`를 반환하도록 확장
+- `app/mcp_server.py`
+  - main `/mcp`의 `list_recent_memories`에 `offset` 인자를 추가
+- `app/chatgpt_mcp_server.py`
+  - ChatGPT read-only route와 write sibling route에 `list_recent_memories`를 노출
+  - tool instructions를 recent/list 질문에 맞게 보강
+- `app/claude_mcp_server.py`
+  - Claude read-only route와 write sibling route에 `list_recent_memories`를 노출
+  - tool instructions를 recent/list 질문에 맞게 보강
+- `app/utils/specialist_readonly.py`
+  - specialist read-only `search`가 recent/list 계열 generic query를 recent browse로 보정하도록 helper 추가
+- `tests/test_memory_store.py`
+  - recent pagination 회귀 테스트를 추가
+- `tests/test_chatgpt_mcp_server.py`
+  - ChatGPT specialist tool surface를 `search`, `fetch`, `list_recent_memories` 기준으로 갱신
+  - date-only memory query가 recent browse로 보정되는 회귀 테스트를 추가
+- `tests/test_claude_mcp_server.py`
+  - Claude specialist tool surface를 `search`, `fetch`, `list_recent_memories` 기준으로 갱신
+  - `최근 메모` generic query가 recent browse로 보정되는 회귀 테스트를 추가
+- `scripts/verify_chatgpt_mcp_readonly.py`
+  - read-only specialist route 자체에서 recent title을 해석하도록 검증 흐름을 수정
+- `scripts/verify_claude_mcp_readonly.py`
+  - read-only specialist route 자체에서 recent title을 해석하도록 검증 흐름을 수정
+- `scripts/mcp_local_tool_smoke.py`
+  - wrapper mode required tool set에 `list_recent_memories`를 추가
+- `README.md`
+  - specialist read-only surface 설명을 recent listing 포함으로 정정
+- `SYSTEM_ARCHITECTURE.md`
+  - specialist read-only / write sibling tool contract를 recent listing 포함으로 정정
+- `Spec.md`
+  - specialist route 계약을 recent listing 포함으로 정정
+- `docs/CHATGPT_MCP.md`
+  - ChatGPT specialist route의 tool surface와 설명을 recent listing 포함으로 정정
+- `docs/CLAUDE_MCP.md`
+  - Claude specialist route의 tool surface와 설명을 recent listing 포함으로 정정
+- `docs/PRODUCTION_RAILWAY_RUNBOOK.md`
+  - read-only specialist route hardening rule과 verification 설명을 새 contract 기준으로 정정
+
+### Verification
+
+- target tests planned
+  - `tests/test_memory_store.py`
+  - `tests/test_chatgpt_mcp_server.py`
+  - `tests/test_claude_mcp_server.py`
+- target commands planned
+  - `.venv\Scripts\python.exe -m pytest tests/test_memory_store.py tests/test_chatgpt_mcp_server.py tests/test_claude_mcp_server.py -q`
+
+### Notes
+
+- 이 변경의 목적은 ChatGPT/Claude specialist read-only MCP가 “최근 문서”, “목록”, “브라우징” 성격 질문에 구조적으로 답할 수 있게 만드는 것이다.
+- public read-only surface가 넓어진 만큼, 프로덕션에서는 network/proxy 레벨의 노출 범위를 계속 관리해야 한다.
+
+## 2026-04-08 — root docs 재동기화 (companion verification + local default model)
+
+### Changed
+
+- `AGENTS.md`
+  - KB workflow verification에 2026-04-08 companion ingest / local-rag / standalone 연계 검증을 추가
+  - LLM runtime policy에 sibling `standalone-package` local route 기본 모델 `gemma4:e4b` 규칙을 명시
+- `README.md`
+  - current state에 sibling `standalone-package` local route 기본 모델 자동 매핑 사실을 보강
+  - directly confirmed snapshot에 2026-04-08 ingest → MCP → local-rag → standalone 실제 검증 결과와 artifact ids를 추가
+  - companion runtime boundary에 local route default model 사실을 추가
+- `LAYOUT.md`
+  - companion runtime boundary row를 guarded readiness / local default model / MCP bridge fact 기준으로 보강
+  - 운영 메모에 companion runtime 최신 사실 집합을 추가
+- `SYSTEM_ARCHITECTURE.md`
+  - companion runtime boundary에 local route default model 사실을 추가
+  - 직접 확인한 실행 결과에 2026-04-08 companion ingest + local route verification 섹션을 추가
+
+### Verification
+
+- repo runtime + docs re-check
+  - `AGENTS.md`
+  - `README.md`
+  - `LAYOUT.md`
+  - `SYSTEM_ARCHITECTURE.md`
+  - `scripts/ollama_kb.py`
+- companion runtime code re-check
+  - `..\local-rag\app\main.py`
+  - `..\local-rag\README.md`
+  - `..\myagent-copilot-kit\standalone-package\src\server.ts`
+  - `..\myagent-copilot-kit\standalone-package\src\proxy-middleware.ts`
+  - `..\myagent-copilot-kit\standalone-package\README.md`
+- commands actually run
+  - `node --import tsx --test src/proxy-middleware.test.ts`
+  - `pnpm check`
+  - local MCP `/healthz`
+  - local-rag `/health`
+  - standalone `/api/ai/health`
+  - MCP `archive_raw`
+  - MCP `save_memory`
+  - temp standalone `/api/memory/search`, `/api/memory/fetch`, `/api/ai/chat`
+  - `.venv\Scripts\python.exe -m pytest -q` → `65 passed`
+  - `.venv\Scripts\python.exe -m ruff check .` → `fail (11 existing issues)`
+  - `.venv\Scripts\python.exe -m ruff format --check .` → `fail (3 files would be reformatted)`
+  - `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp`
+
+### Notes
+
+- 이번 항목은 문서 동기화 중심이며 `mcp_obsidian/app/` 자체의 runtime behavior는 변경하지 않았다.
+- companion runtime 사실은 sibling repo 코드를 직접 읽고, 실제 temp runtime 검증 결과까지 반영했다.
+- `local route -> gemma4:e4b` 기본 모델 매핑은 sibling `standalone-package`의 현재 구현 사실이다.
+- 2026-04-08 ingest 기록에서 repo vault 직접 확인 대상은 `vault/raw/` / `vault/wiki/` direct-write 결과였다. `archive_raw`는 returned `mcp_id` + `path`, `save_memory`는 returned `id` + `/api/memory/search` / `/api/memory/fetch` readback으로 확인했다.
+
+## 2026-04-08 — root docs 재동기화 (code-checked scope + companion boundary)
+
+### Changed
+
+- `README.md`
+  - root runtime 범위를 `app/main.py` 기준으로 다시 명시
+  - `Spec.md`와 `docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md`를 문서 맵에 추가
+  - sibling `local-rag` / `standalone-package` 경계를 별도 섹션으로 추가
+  - Railway public runtime URL 예시를 현재 `90cb` 도메인 기준으로 정정하고 `1454` preview는 historical note로 낮춤
+  - Karpathy 대조표의 `claude.md` 항목을 현재 repo에서 직접 확인된 `CLAUDE.md` 기준으로 정정
+- `LAYOUT.md`
+  - `schemas/`, `obsidian-memory-plugin/`를 future tense가 아니라 현재 active target으로 정정
+  - `docs/superpowers/specs/`와 companion runtime boundary 참조 위치를 추가
+  - 운영 메모에 sibling runtime은 boundary/integration fact만 기록한다는 원칙을 추가
+- `SYSTEM_ARCHITECTURE.md`
+  - 문서 scope를 `app/main.py` 중심으로 명시하고 `app/chatgpt_main.py`는 alternate entrypoint로 보강
+  - optional `[mcp]` dependency 미설치 시 `503 mcp_dependency_missing` fallback을 명시
+  - sibling `local-rag` / `standalone-package` 경계를 별도 섹션으로 추가
+  - Karpathy 대조표의 `claude.md` 항목을 현재 repo에서 직접 확인된 `CLAUDE.md` 기준으로 정정
+
+### Verification
+
+- root docs vs current repo code re-check
+  - `app/main.py`
+  - `app/config.py`
+  - `app/mcp_server.py`
+  - `app/chatgpt_mcp_server.py`
+  - `app/claude_mcp_server.py`
+  - `app/services/memory_store.py`
+  - `pyproject.toml`
+  - `.cursor/mcp.sample.json`
+- companion boundary vs sibling runtime code re-check
+  - `..\local-rag\app\main.py`
+  - `..\local-rag\app\retrieval.py`
+  - `..\myagent-copilot-kit\standalone-package\src\local-rag.ts`
+  - `..\myagent-copilot-kit\standalone-package\src\server.ts`
+- root doc patch review (`README.md`, `LAYOUT.md`, `SYSTEM_ARCHITECTURE.md`, `changelog.md`) → final patch 반영
+- `ReadLints` on changed root docs → **No linter errors**
+
+### Notes
+
+- 이번 항목은 root documentation sync 중심이며, `mcp_obsidian/app/` runtime behavior 자체는 변경하지 않았다.
+- companion runtime 관련 기술은 sibling repo 코드를 직접 읽어 boundary/integration fact만 반영했다.
+- `90cb` / `1454` Railway host 표기는 현재 문서/설정 기준 정합화이며, 이번 항목에서 live DNS/host 상태를 다시 검증한 것은 아니다.
+
+## 2026-04-08 — 문서/운영 런북 정합화 재점검 (root + specialist + runbooks)
+
+### Changed
+
+- `README.md`
+  - runtime overview diagram을 실제 mount 구조(`/mcp`, `/chatgpt-mcp`, `/claude-mcp`) 기준으로 정정
+  - project-local `.cursor/mcp.json`의 local / production profile과 `${env:MCP_API_TOKEN}` / `${env:MCP_PRODUCTION_BEARER_TOKEN}` 사용을 명시
+  - optional HMAC phase-2를 현재 core runtime 사실처럼 보이던 표현을 adjacent contract 문서 기준으로 완화
+  - `/mcp/` fallback 503 문구와 `save_memory` public contract 설명(`relations[]` 제거) 정리
+- `SYSTEM_ARCHITECTURE.md`
+  - public endpoint shape를 specialist mounts와 their health endpoints까지 포함하도록 정정
+  - auth 설명을 `MCP_API_TOKEN` 단일 설명에서 effective per-route token 설명으로 정정
+  - ChatGPT/Claude specialist write-capable sibling surface(`search`, `fetch`, `save_memory`, `get_memory`, `update_memory`)를 정확히 명시
+  - transport security 활성 조건을 runtime-derived allowlist 기준으로 정정
+  - optional HMAC 관련 문구를 current runtime 사실이 아니라 adjacent contract 설명으로 정리
+- `Spec.md`
+  - main `/mcp`와 specialist mounts의 tool surface 차이를 명시
+  - Cursor config example에 production bearer profile 반영
+  - `OBSIDIAN_LOCAL_VAULT_PATH`를 script/helper 성격으로 정정
+  - `OLLAMA_*`를 FastAPI core settings처럼 보이던 표현 제거
+  - `wiki/`를 FastAPI MCP runtime write surface가 아니라 repo/skill-level KB workflow로 분리 명시
+- `One-Page Architecture.md`
+  - config ownership에 production bearer token 반영
+  - `mcp_obsidian` 책임을 `memory/` writes + `mcp_raw/` archive 중심으로 정정
+  - desktop visibility flow에서 MCP runtime write와 repo/skill-level `wiki/` write를 분리 표기
+- `LAYOUT.md`
+  - active Cursor MCP config를 repo-local `.cursor/mcp.json` 기준으로 정정
+- `docs/INSTALL_WINDOWS.md`
+  - `OBSIDIAN_LOCAL_VAULT_PATH`의 script/helper 우선 적용 성격을 명시
+  - auth 설명과 `/mcp/` 503 fallback 문구를 현재 runtime 기준으로 정정
+- `docs/CHATGPT_MCP.md`
+  - integrated runtime 기준 local endpoint (`app.main` + `/chatgpt-mcp`, `/chatgpt-mcp-write`) 보강
+  - `healthz`를 liveness-only로 정정
+  - read-only route의 `No Authentication`을 `No Bearer Authentication`으로 정정하고 transport-security 가능성 명시
+  - specialist write verification 표현을 direct tool verification 기준으로 정정
+- `docs/CLAUDE_MCP.md`
+  - `healthz`를 liveness-only로 정정
+  - read-only route의 `No Authentication`을 `No Bearer Authentication`으로 정정하고 transport-security 가능성 명시
+  - specialist write verification 표현을 direct tool verification 기준으로 정정
+- `docs/LOCAL_MCP.md`
+  - `start-mcp-dev.ps1` 사용 시 `OBSIDIAN_LOCAL_VAULT_PATH`가 `VAULT_PATH`보다 우선할 수 있다는 점을 명시
+  - `MCP_API_TOKEN` 일치 조건을 server `.env` 고정이 아니라 effective runtime token 기준으로 정정
+- `docs/MCP_RUNTIME_EVIDENCE.md`
+  - current active Cursor config를 repo-local `.cursor/mcp.json` 기준으로 정정
+  - main `/mcp` tool surface에 `archive_raw` 반영
+  - specialist write rollback을 `update_memory(status="archived")` 기준으로 정정
+  - wrapper URL evidence를 실제 `obsidian://...&file=...` shape에 맞춰 정정
+  - HMAC phase-2 evidence를 historical/manual evidence 성격으로 낮춤
+- `docs/PRODUCTION_RAILWAY_RUNBOOK.md`
+  - `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS` 예시를 실제 production host placeholder 기준으로 정정
+  - rollout verify step에 `verify_chatgpt_mcp_readonly.py`, `verify_claude_mcp_readonly.py` 추가
+  - `*/healthz`를 liveness-only로 명시
+  - repo-local operator client note (`.cursor/mcp.json`, `MCP_PRODUCTION_BEARER_TOKEN`) 추가
+  - specialist read-only verification의 strict no-auth 실행 방식(`--expected-title`)을 명시
+- `plan.md`
+  - sibling repo reference 경로임을 명시
+- `Task.md`
+  - standalone evidence path가 sibling repo reference라는 점을 명시
+
+### Companion Docs (sibling repo)
+
+- `..\myagent-copilot-kit\standalone-package\README.md`
+  - route-aware health (`chatOk`, `partialChatOk`, `copilotChatOk`, `localOnlyChatOk`) 설명 보강
+  - in-app memory bridge가 read-only `/chatgpt-mcp`를 기본 사용한다는 점과 IDE MCP(`/mcp`)와의 차이를 명시
+  - `/api/memory/health`, `/api/memory/search`, `/api/memory/fetch`, `/docs`, `/docs/view` 설명 추가
+  - 공개 환경에서 `/api/ai/health`는 summary payload와 diagnostics visibility가 분리된다는 점을 명시
+  - HVDC predict 응답 예시를 현재 `202 Accepted` + `createdAt`/`statusUrl`/`downloadUrl` shape로 정정
+- `..\myagent-copilot-kit\standalone-package\docs\INTEGRATION_ARCHITECTURE.md`
+  - current runtime notes 추가 (read-only bridge, `/chatgpt-mcp` default, `/healthz` + MCP probe semantics)
+  - local-rag wire protocol(`GET /health`, `POST /api/internal/ai/chat-local`) 보강
+  - approved merge scope와 currently installed `.cursor/` scope를 구분
+
+### Verification
+
+- root docs vs runtime code re-review (`README.md`, `SYSTEM_ARCHITECTURE.md`, `Spec.md`, `One-Page Architecture.md`, `LAYOUT.md`, `docs/INSTALL_WINDOWS.md`, `plan.md`, `Task.md`) → **No findings**
+- specialist route docs vs runtime code re-review (`docs/CHATGPT_MCP.md`, `docs/CLAUDE_MCP.md`) → **No findings**
+- runbook docs vs runtime/scripts re-review (`docs/LOCAL_MCP.md`, `docs/MCP_RUNTIME_EVIDENCE.md`, `docs/PRODUCTION_RAILWAY_RUNBOOK.md`) → **No findings**
+- `ReadLints` on changed documentation files → **No linter errors**
+
+### Notes
+
+- 이번 턴은 문서/운영 계약 정합화 중심이며, `app/` runtime code behavior 자체는 변경하지 않았다.
+- `standalone-package`는 sibling repo라 최종 정합화는 companion docs 기준으로 함께 기록했다.
+
+---
+
+## 2026-04-07 — 문서 전체 업데이트 (AGENTS / README / LAYOUT / SYSTEM_ARCHITECTURE)
+
+### Updated
+
+- `AGENTS.md`
+  - Commands 섹션: `[ASSUMPTION]` 제거 → 확인된 명령어(`pytest`, `ruff check .`, `ruff format --check .`, `uvicorn`) 기록
+  - Security 섹션: `/chatgpt-mcp`, `/claude-mcp` read-only 무인증 경로 경고 추가; `MCP_API_TOKEN` 기본값 교체 필수 명시
+  - Verification 섹션: Code quality + KB workflow 검증 결과 (2026-04-07 confirmed) 추가
+
+- `README.md`
+  - Directly Confirmed Snapshot에 2026-04-07 QA 섹션 추가 (ruff All passed, pytest 65 passed, vault 4계층 확인)
+  - Karpathy Wiki Method 대조표 추가 (12개 항목, ❌ deferred 1건 — 토큰 절감 측정)
+  - `npm run check/build` 주석에 `obsidian-memory-plugin/` 출처 명시
+  - 2026-03-28 스냅샷을 별도 소제목으로 분리
+
+- `LAYOUT.md`
+  - `.cursor/skills/obsidian-{ingest,query,lint}/SKILL.md` 설명에 YAML frontmatter 수정 완료 이력 추가 (2026-04-07)
+  - 운영 메모: `C:\Users\jichu` 하드코딩 → `%USERPROFILE%` 치환; `/chatgpt-mcp` read-only 경고 추가
+
+- `SYSTEM_ARCHITECTURE.md`
+  - 직접 확인한 실행 결과: 2026-04-07 QA 섹션 추가 (ruff, pytest, vault 계층, skills frontmatter)
+  - 보호 계약: `/chatgpt-mcp`, `/claude-mcp` auth 경고 + `dev-change-me` 경고 추가
+  - Karpathy Wiki Method 대조표 섹션 추가 (파일 끝)
+
+### Verification
+
+- `ruff check .` → All checks passed (app/ pre-existing 5건 UP042/UP017 제외) ✅
+- `ruff check scripts/` → All checks passed ✅
+- `pytest -q` → **65 passed, 0 failed** ✅
+
+---
+
+
+
+### Fixed
+
+- `scripts/test_phase2_ingest.py`
+  - B005: `.strip("```json").strip("```")` → `.removeprefix("```json").removeprefix("```").removesuffix("```")` (multi-char strip 오용 수정)
+  - E402: `import re as _re` 인라인 → 상단 이동 (ruff `--fix` 자동 처리)
+  - F401: 미사용 `re` import 제거
+  - I001: import 블록 정렬
+  - E501: `log_row` 101자 → 2행 분리
+- `scripts/test_phase3_query.py`
+  - B005: 동일 multi-char strip 패턴 수정
+  - E501: `removeprefix` 체인 → 다중행 래핑
+- `scripts/test_phase4_lint.py`
+  - B005: 3개 위치 (contradiction/stale/dup parse) 동일 수정
+  - F401: 미사용 `IndexStore`, `timedelta` import 제거
+  - I001: import 정렬
+  - E501: `entity_stems` 한 줄 set comprehension → 4행, `outgoing` 동일, `missing_field` append → dict 형식, `log_row` 분리, `stale_raw` 체인 → 다중행
+- `scripts/test_routing_smoke.py`
+  - F541: f-string without placeholder 제거 (ruff `--fix`)
+
+**Final result:** `ruff check scripts/` → All checks passed ✅ | `pytest` → 65 passed ✅
+
+---
+
+
+
+### Fixed
+
+- `.cursor/skills/obsidian-ingest/SKILL.md` — YAML frontmatter 버그 수정: `description: >-` 블록에 `triggers:` 리터럴이 혼입되던 문제 해소; `triggers:` 를 독립 YAML 키로 분리
+- `.cursor/skills/obsidian-query/SKILL.md` — 동일 YAML frontmatter 버그 수정; Step 2 → Step 3 handoff에서 `candidates` 변수가 미정의였던 버그 수정 (병합·중복제거·점수정렬 코드 블록 추가)
+- `.cursor/skills/obsidian-lint/SKILL.md` — 동일 YAML frontmatter 버그 수정
+
+### Security Notes (non-blocking, risk documented)
+
+- `/chatgpt-mcp`, `/claude-mcp` 읽기 전용 마운트는 현재 bearer 인증 없음 — 네트워크 레이어에서 보호하거나 전용 읽기 토큰을 추가할 것. 현재 프로덕션 배포에서는 Railway 라우팅으로 제한됨.
+- `MCP_API_TOKEN` 기본값 `dev-change-me`가 프로덕션에 그대로 배포되지 않도록 배포 전 환경변수 검증 필요.
+
+### Deferred (known gaps)
+
+- ❌ **토큰 절감 측정(Token savings measurement)**: Karpathy 원안 대비 미구현. 구현 시 `wiki/` 풀 본문 vs. `memory/` 포인터 요약 비교로 토큰 절감률 산출 가능. 측정 스크립트 추가 예정 (`scripts/token_savings.py`).
+- `vault/wiki/index.md` Recent Notes 중복 항목 — 수동 정리 필요 (obsidian-ingest 스킬 ingest 시 dedupe 미적용).
+
+---
+
+## 2026-04-07 — 구조 검증 5라운드 패치 (mstack-plan QA)
+
+### Added
+
+- `vault/wiki/claude.md` — Karpathy 원안 `claude.md` 등가물: 실행 엔진 매핑표 (Claude Code → Cursor+Ollama), 운영 3사이클, 폴더 구조, 노트 작성 규칙, Web Clipping 안내
+- `docs/web-clipping-setup.md` — Obsidian Web Clipper 브라우저 확장 설정, PDF 처리, YouTube 대본(yt-dlp) 처리 가이드
+
+### Changed
+
+- `AGENTS.md` — KB Routing Policy에 `vault/raw/` 4번째 계층 추가; 핵심 규칙 6→7개; vault/raw/ subtrees 소절 추가
+- `SYSTEM_ARCHITECTURE.md` — `C안 Storage Routing` 4계층 표 소절 추가
+- `README.md` — KB Layer Quick Start에 vault 폴더 트리 + storage-routing.md·web-clipping-setup.md 링크 추가
+- `LAYOUT.md` — `docs/storage-routing.md`, `docs/web-clipping-setup.md` 항목 추가
+- `.cursor/skills/obsidian-{ingest,query,lint}/SKILL.md` — YAML frontmatter에 `triggers:` 필드 추가 (로컬 + 전역 동기화)
+- `scripts/test_phase3_query.py` — docstring `\S` invalid escape → `\\S` 수정 (SyntaxWarning 해소)
+
+### Removed
+
+- `.cursor/skills/obsidian-ingest/obsidian-ingest/SKILL.md` (중복 — stale 정책)
+- `.cursor/skills/obsidian-query/obsidian-query/SKILL.md` (중복)
+- `.cursor/skills/obsidian-lint/obsidian-lint/SKILL.md` (중복)
+
+---
+
+## 2026-04-07 — C안 Storage Routing Formalization
+
+### Added
+
+- `docs/storage-routing.md` — 라우팅 Quick Reference + Mermaid 다이어그램 + Pointer Template + Decision Tree + Anti-patterns
+- `scripts/test_routing_smoke.py` — SKILL 3종 + kb-core.mdc + AGENTS.md + docs/storage-routing.md 대상 24개 라우팅 정적 검사 (전체 PASS)
+- `AGENTS.md` — `KB Routing Policy` (C안 6개 핵심 규칙 + artifact별 경로 표), `KB Workflow Rules` (per-workflow 3종 라우팅), `Pointer Template Policy` (YAML 템플릿), `Approval Gates` 섹션 추가
+
+### Changed
+
+- `.cursor/rules/kb-core.mdc` — `vault/raw/` 레이어 추가, `save_memory` 포인터 템플릿 예시 포함, 경로 테이블 C안 정렬
+- `obsidian-ingest SKILL.md` — Step 7 `save_memory` 페이로드에 `projects: ["mcp_obsidian"]` 추가, 포인터 정책 주석
+- `obsidian-query SKILL.md` — Step 5 `save_memory` 페이로드 포인터 템플릿 통일
+- `obsidian-lint SKILL.md` — Step 7 `save_memory` 페이로드에 `[[wiki/log]]` 역참조 추가, `projects: ["mcp_obsidian"]` 추가
+- `C:\Users\jichu\.cursor\skills\` 전역 스킬 3종 동기화
+
+## 2026-04-07 — Karpathy LLM Wiki 고도화: vault/raw/ + cross-link + 5-check lint
+
+### Added
+
+- `vault/raw/articles/.gitkeep`, `vault/raw/pdf/.gitkeep`, `vault/raw/notes/.gitkeep` — immutable raw source layer (Karpathy architecture)
+- `obsidian-ingest` Step 1a: `vault/raw/<type>/<slug>.md` 복사 (원본 불변 보관)
+- `obsidian-ingest` Step 5: 관련 `entities/`·`concepts/` 노트에 역방향 `[[link]]` 자동 추가
+- `obsidian-ingest` Step 6: `index.md` Recent Notes 섹션 갱신 (최신 10개 유지)
+- `obsidian-query` Step 2a: `index.md` 탐색 우선 (index link → keyword match → full rglob)
+- `obsidian-lint` Step 2 checks 확장: `orphan_page`, `missing_cross_reference`, `evidence_gap`, `stale_note`
+- `obsidian-lint` Step 3: `contradiction` + `stale claim` 시맨틱 검사 (Ollama gemma4:e2b)
+- `obsidian-lint` 패치 플랜 JSON에 `contradictions[]`, `stale_notes[]` 필드 추가
+- `vault/wiki/index.md` — 카테고리 테이블, Raw Source Layer 설명, Recent Notes 섹션, Ingest Policy 추가
+- `scripts/test_phase2_ingest.py` — Step 2b (vault/raw/ 복사), Step 5b (cross-link 패치) 추가
+- `scripts/test_phase4_lint.py` — orphan/evidence gap/missing cross-ref/contradiction/stale 5개 검사 추가
+
+### Changed
+
+- `obsidian-lint` frontmatter description에 5개 신규 검사 항목 반영
+- `obsidian-ingest` Step 5→6→7→8 번호 재정렬 (새 Step 5 cross-link + Step 6 log/index 분리)
+- `C:\Users\jichu\.cursor\skills\` 전역 스킬 3종 동기화 (ingest/query/lint)
+
+## 2026-04-07 — KB Layer: Gemma 4 + Ollama + 3 Cursor Skills
+
+### Added
+
+- `vault/wiki/index.md`, `vault/wiki/log.md` — KB canonical 루트 노트
+- `vault/wiki/{sources,concepts,entities,analyses}/.gitkeep` — KB 서브트리 초기화
+- `runtime/patches/.gitkeep`, `runtime/audits/.gitkeep` — 운영 산출물 디렉터리 (vault 바깥)
+- `scripts/ollama_kb.py` — 3개 KB 스킬 공용 Ollama adapter (`generate()`, `health_check()`, `available_models()`, `MODELS`)
+- `.cursor/rules/kb-core.mdc` — KB 스토리지 라우팅 + LLM 런타임 정책 (always-apply Cursor rule)
+- `.cursor/skills/obsidian-ingest/SKILL.md` — 소스 ingest → `vault/wiki/` 쓰기 + `archive_raw` + `save_memory` 포인터
+- `.cursor/skills/obsidian-query/SKILL.md` — wiki 검색 + Ollama 합성 + `analyses/` 저장 옵션 + `save_memory` 포인터
+- `.cursor/skills/obsidian-lint/SKILL.md` — wiki 감사 + patch plan JSON + `save_memory` 결과 요약
+
+### Changed
+
+- `pyproject.toml` — `requests>=2.32` 의존성 추가 (`ollama_kb.py` 요구사항)
+- `AGENTS.md` — `LLM Runtime Policy` + `KB Workflow Rules` 섹션 추가
+- `LAYOUT.md` — `vault/wiki/`, `runtime/`, KB 스킬/규칙 편집 위치 추가
+- `SYSTEM_ARCHITECTURE.md` — KB Layer 아키텍처 섹션 추가
+- `changelog.md` — 본 항목 추가
+
+### Verification
+
+- `python -m py_compile scripts/ollama_kb.py` → syntax OK
+- `python -c "import requests"` → 2.32.4 (현재 env에 이미 설치됨)
+- 13개 파일 존재 확인 완료
+- `gemma4:e4b` pull 중 (76% 기준 / 11 MB/s), `gemma4:e2b` 이어서 자동 pull 예정
+
+### Remaining manual / deferred
+
+- `gemma4:e4b` + `gemma4:e2b` pull 완료 후 `obsidian-ingest` 스킬로 end-to-end 테스트
+- `obsidian-lint` contradiction / evidence gap 의미론적 탐지 (현재: stale·orphan·duplicate만)
+- `obsidian-ingest` 단일 입력 → concepts/entities 다중 노트 자동 분리
+
 ## 2026-03-28 - Root docs aligned with AGENTS + `archive_raw` MCP
 
 ### Changed
@@ -1053,6 +1572,73 @@ flowchart LR
 - live Cursor MCP connected 상태 확인
 - live `/healthz` / `/mcp` reachability 확인
 - public HTTPS remote-client examples execution
+
+## 2026-04-07 - Phase 2/3/4 end-to-end KB 검증 완료
+
+### Phase 2 — obsidian-ingest e2e (PASS)
+
+- `scripts/ollama_kb.py` health check → Ollama `gemma4:e4b` + `gemma4:e2b` 정상
+- `archive_raw` → `vault/mcp_raw/cursor/2026-04-07/convo-kb-ingest-test-2026-04-07.md`
+- Ollama `gemma4:e4b` classify → `category=entities, slug=gemma-4-llm-model`
+- Ollama knowledge extraction → 591자 구조화 본문
+- Wiki note → `vault/wiki/entities/gemma-4-llm-model.md` (frontmatter + 한국어 본문)
+- `save_memory` pointer → `MEM-20260407-212039-9C7277` (`roles:["fact"]`, `raw_refs:[mcp_id]`)
+- `vault/wiki/log.md` 업데이트 완료
+
+### Phase 3 — obsidian-query e2e (PASS)
+
+- 한국어 질의: "Gemma 4 모델에 대해 우리가 알고 있는 것은? 크기와 특징을 알려줘."
+- `vault/wiki/` rglob → 2개 노트 후보 (score=2 각각)
+- Ollama re-rank → `[0, 1]` 정상 JSON 반환
+- Ollama 합성 → 1498자 한국어 답변, `[[wiki/...]]` 인용 포함
+- Simple lookup → `vault/wiki/analyses/` 저장 건너뜀 (정상 동작)
+
+### Phase 4 — obsidian-lint e2e (PASS, historical run)
+
+- 당시 실행 요약에는 2개 노트 기준 duplicate 감지가 포함됐다
+- 현재 남아 있는 artifact `runtime/patches/kb-lint-2026-04-07.json`은 후속 상태 기준으로 `total_notes: 4`, `total_deterministic: 12`, `auto_fixable: 4`를 기록한다
+- Patch plan artifact → `runtime/patches/kb-lint-2026-04-07.json`
+- `vault/wiki/log.md` lint 행 추가
+- `save_memory` audit pointer → `MEM-20260407-213350-B040B2`
+
+### Bug Fix — MemoryRole enum
+
+- `roles=["knowledge"]` → 유효하지 않은 enum 값 발견 (Phase 2 Step 6에서 검출)
+- 수정: `roles=["fact"]` (4곳: `obsidian-ingest` + `obsidian-query` SKILL.md × 프로젝트/전역 2곳씩)
+
+### Added
+
+- `scripts/test_phase2_ingest.py` — ingest end-to-end 테스트 스크립트
+- `scripts/test_phase3_query.py` — query end-to-end 테스트 스크립트
+- `scripts/test_phase4_lint.py` — lint end-to-end 테스트 스크립트
+- `.env` `OBSIDIAN_LOCAL_VAULT_PATH=C:\Users\jichu\OneDrive\문서\Obsidian Vault` 추가
+- `.venv` Python 가상환경 생성 + fastmcp/uvicorn/fastapi 설치
+
+### Environment
+
+- `gemma4:e4b` (9.6GB) + `gemma4:e2b` (7.2GB) 모두 설치 확인
+- MCP 서버 `localhost:8000` `/healthz` 정상 응답 확인
+- Ollama `localhost:11434` 정상 응답 확인
+- `vault/wiki/` 구조 (sources/concepts/entities/analyses + index.md + log.md) 정상
+
+### Files touched
+
+- `.cursor/skills/obsidian-ingest/SKILL.md`
+- `.cursor/skills/obsidian-query/SKILL.md`
+- `C:\Users\jichu\.cursor\skills\obsidian-ingest\SKILL.md` (전역)
+- `C:\Users\jichu\.cursor\skills\obsidian-query\SKILL.md` (전역)
+- `scripts/test_phase2_ingest.py` (신규)
+- `scripts/test_phase3_query.py` (신규)
+- `scripts/test_phase4_lint.py` (신규)
+- `.env`
+- `changelog.md`
+
+### Verification
+
+- Phase 2: pass (7/7 steps)
+- Phase 3: pass (5/5 steps)
+- Phase 4: pass (6/6 steps)
+- 전체 3 스킬 end-to-end 완주 확인
 
 ## 2026-03-28 - Workspace alignment baseline
 
