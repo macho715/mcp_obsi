@@ -64,7 +64,7 @@ if (-not (Test-PortListening -Port 3010)) {
     throw "[start-all] missing standalone root: $standaloneRoot"
   }
   Write-Host "[start-all] starting standalone (3010)"
-  Start-DetachedPowerShell -WorkingDirectory $standaloneRoot -Command '$env:MYAGENT_HVDC_PREDICT_ENABLED="0"; node --import tsx src/cli.ts serve --host 127.0.0.1 --port 3010'
+  Start-DetachedPowerShell -WorkingDirectory $standaloneRoot -Command '$env:MYAGENT_HVDC_PREDICT_ENABLED="0"; $env:MYAGENT_LOCAL_RAG_TOKEN="dev-local-rag-token"; $env:MYAGENT_MEMORY_TOKEN="dev-memory-token"; node --import tsx src/cli.ts serve --host 127.0.0.1 --port 3010'
 } else {
   Write-Host "[start-all] standalone already running"
 }
