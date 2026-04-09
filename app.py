@@ -4,8 +4,8 @@ import json
 import os
 import re
 import sqlite3
-from datetime import date, datetime, timezone
-from enum import Enum
+from datetime import UTC, date, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal
 from uuid import uuid4
@@ -44,7 +44,7 @@ def normalize_list(values: list[str] | None) -> list[str]:
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def new_memory_id() -> str:
@@ -71,7 +71,7 @@ def fts_quote(term: str) -> str:
 # --------------------------
 # models
 # --------------------------
-class MemorySource(str, Enum):
+class MemorySource(StrEnum):
     chatgpt = "chatgpt"
     claude = "claude"
     grok = "grok"
@@ -79,7 +79,7 @@ class MemorySource(str, Enum):
     manual = "manual"
 
 
-class MemoryRole(str, Enum):
+class MemoryRole(StrEnum):
     decision = "decision"
     fact = "fact"
     preference = "preference"
@@ -87,13 +87,13 @@ class MemoryRole(str, Enum):
     summary = "summary"
 
 
-class MemoryStatus(str, Enum):
+class MemoryStatus(StrEnum):
     active = "active"
     superseded = "superseded"
     archived = "archived"
 
 
-class RelationType(str, Enum):
+class RelationType(StrEnum):
     supports = "supports"
     contradicts = "contradicts"
     follows = "follows"
@@ -172,7 +172,7 @@ class SaveMemoryV2(BaseModel):
         return normalize_text(str(v)).lower()
 
     @model_validator(mode="after")
-    def derive_namespaced_tags(self) -> "SaveMemoryV2":
+    def derive_namespaced_tags(self) -> SaveMemoryV2:
         derived = []
         derived.extend(f"role/{r.value}" for r in self.roles)
         derived.extend(f"topic/{x}" for x in self.topics)
@@ -437,10 +437,14 @@ class SQLiteMemoryRepository:
             clauses.append("EXISTS (SELECT 1 FROM json_each(m.topics_json) je WHERE je.value = ?)")
             params.append(topic)
         for entity in plan.entities:
-            clauses.append("EXISTS (SELECT 1 FROM json_each(m.entities_json) je WHERE je.value = ?)")
+            clauses.append(
+                "EXISTS (SELECT 1 FROM json_each(m.entities_json) je WHERE je.value = ?)"
+            )
             params.append(entity)
         for project in plan.projects:
-            clauses.append("EXISTS (SELECT 1 FROM json_each(m.projects_json) je WHERE je.value = ?)")
+            clauses.append(
+                "EXISTS (SELECT 1 FROM json_each(m.projects_json) je WHERE je.value = ?)"
+            )
             params.append(project)
         for tag in plan.tags:
             clauses.append("EXISTS (SELECT 1 FROM json_each(m.tags_json) je WHERE je.value = ?)")
@@ -519,7 +523,11 @@ class SQLiteMemoryRepository:
                     },
                 }
             )
-        return {"parsed_query": plan.model_dump(mode="json"), "count": len(results), "results": results}
+        return {
+            "parsed_query": plan.model_dump(mode="json"),
+            "count": len(results),
+            "results": results,
+        }
 
     def fetch(self, memory_id: str) -> dict | None:
         sql = """
@@ -575,8 +583,14 @@ async def save_memory(payload: SaveMemoryV2):
 async def search_memories(
     q: Annotated[
         str,
-        Query(min_length=1, description='예: text:"aggregate split" role:decision project:HVDC entity:DSV limit:5'),
-    ]
+        Query(
+            min_length=1,
+            description=(
+                '예: text:"aggregate split" role:decision '
+                "project:HVDC entity:DSV limit:5"
+            ),
+        ),
+    ],
 ):
     plan = parse_search_query(q)
     return repo.search(plan)
@@ -600,7 +614,10 @@ async def seed_demo():
     repo.save(
         SaveMemoryV2(
             title="Voyage 71 aggregate split",
-            content="Voyage 71은 20mm aggregate only로 유지하고, 5mm aggregate는 Voyage 72로 이연한다.",
+            content=(
+                "Voyage 71은 20mm aggregate only로 유지하고, "
+                "5mm aggregate는 Voyage 72로 이연한다."
+            ),
             source="chatgpt",
             roles=["decision", "fact"],
             topics=["aggregate", "shipment", "planning"],
