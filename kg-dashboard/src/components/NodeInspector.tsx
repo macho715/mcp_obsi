@@ -26,6 +26,10 @@ function formatValue(value: string | number | boolean | undefined): string {
   return value ? String(value) : '—';
 }
 
+function formatCount(value: number | null): string {
+  return typeof value === 'number' ? new Intl.NumberFormat('en-US').format(value) : '—';
+}
+
 export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
   if (!node) {
     return (
@@ -52,6 +56,21 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
   const extraFields = Object.entries(node.data)
     .filter(([key, value]) => !STANDARD_FIELDS.has(key) && value !== undefined && value !== null)
     .sort(([left], [right]) => left.localeCompare(right));
+  const resolvedLabel = node.data['rdf-schema#label'] ?? 'Not provided';
+  const degreeLabel = formatCount(degree);
+  const summaryRows = [
+    ['Label', node.data.label],
+    ['Resolved label', resolvedLabel],
+    ['Degree', degreeLabel],
+  ];
+
+  if (collapsedCounts) {
+    summaryRows.push(
+      ['Collapsed shipments', formatCount(collapsedCounts.shipment)],
+      ['Collapsed vessels', formatCount(collapsedCounts.vessel)],
+      ['Collapsed vendors', formatCount(collapsedCounts.vendor)],
+    );
+  }
 
   return (
     <aside className="panel inspector">
@@ -65,52 +84,24 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
         </button>
       </div>
 
+      <p className="panel-copy">
+        {node.data.type} node · {degreeLabel} connections
+        {issueSlug ? ` · linked note ${issueSlug}` : ''}
+      </p>
+
       <div className="inspector-badges">
         <span className="pill pill--accent">{node.data.type}</span>
         <span className="pill">{node.data.id}</span>
       </div>
 
-      <div className="details-grid">
-        <div className="detail-card">
-          <span className="detail-card__label">Label</span>
-          <strong className="detail-card__value">{node.data.label}</strong>
-        </div>
-        <div className="detail-card">
-          <span className="detail-card__label">Resolved label</span>
-          <strong className="detail-card__value">
-            {node.data['rdf-schema#label'] ?? 'Not provided'}
-          </strong>
-        </div>
-        <div className="detail-card">
-          <span className="detail-card__label">Degree</span>
-          <strong className="detail-card__value">
-            {typeof degree === 'number' ? new Intl.NumberFormat('en-US').format(degree) : '—'}
-          </strong>
-        </div>
-      </div>
-
-      {collapsedCounts ? (
-        <div className="details-grid">
-          <div className="detail-card">
-            <span className="detail-card__label">Collapsed shipments</span>
-            <strong className="detail-card__value">
-              {new Intl.NumberFormat('en-US').format(collapsedCounts.shipment)}
-            </strong>
+      <section className="field-list" aria-label="Node summary">
+        {summaryRows.map(([key, value]) => (
+          <div className="field-list__row" key={key}>
+            <span className="field-list__key">{key}</span>
+            <span className="field-list__value">{value}</span>
           </div>
-          <div className="detail-card">
-            <span className="detail-card__label">Collapsed vessels</span>
-            <strong className="detail-card__value">
-              {new Intl.NumberFormat('en-US').format(collapsedCounts.vessel)}
-            </strong>
-          </div>
-          <div className="detail-card">
-            <span className="detail-card__label">Collapsed vendors</span>
-            <strong className="detail-card__value">
-              {new Intl.NumberFormat('en-US').format(collapsedCounts.vendor)}
-            </strong>
-          </div>
-        </div>
-      ) : null}
+        ))}
+      </section>
 
       {obsidianPath ? (
         <a

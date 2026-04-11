@@ -248,31 +248,32 @@ function App() {
 
       <main className="dashboard-main">
         <header className="dashboard-topbar">
-          <div>
-            <p className="dashboard-kicker">Option A Prototype</p>
-            <h1>{VIEW_COPY[effectiveViewMode].title}</h1>
+          <div className="dashboard-topbar__copy">
+            <p className="dashboard-kicker">Knowledge graph tool</p>
+            <h1>kg-dashboard</h1>
+            <p className="dashboard-view-label">{VIEW_COPY[effectiveViewMode].title}</p>
             <p className="dashboard-description">{VIEW_COPY[effectiveViewMode].description}</p>
           </div>
-          <div className="dashboard-stat-grid">
-            <div className="dashboard-stat-card">
-              <span>Visible</span>
-              <strong>
+          <dl className="dashboard-stat-grid">
+            <div className="dashboard-stat">
+              <dt>Visible</dt>
+              <dd>
                 {metrics.visibleNodes} nodes / {metrics.visibleEdges} edges
-              </strong>
+              </dd>
             </div>
-            <div className="dashboard-stat-card">
-              <span>Hidden</span>
-              <strong>
+            <div className="dashboard-stat">
+              <dt>Hidden</dt>
+              <dd>
                 {metrics.hiddenNodes} nodes / {metrics.hiddenEdges} edges
-              </strong>
+              </dd>
             </div>
-            <div className="dashboard-stat-card">
-              <span>Hotspots</span>
-              <strong>
+            <div className="dashboard-stat">
+              <dt>Hotspots</dt>
+              <dd>
                 {metrics.issueCount} issues / {metrics.hubCount} hubs
-              </strong>
+              </dd>
             </div>
-          </div>
+          </dl>
         </header>
 
         <section className="dashboard-stage">

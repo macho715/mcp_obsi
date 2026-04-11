@@ -98,165 +98,6 @@ export function GraphSidebar({
 
   return (
     <aside className="dashboard-sidebar">
-      <section className="panel panel--hero">
-        <div className="eyebrow">Knowledge graph</div>
-        <h1 className="panel-title">Search first, not everything at once</h1>
-        <p className="panel-copy">
-          Start with a query, narrow to a view mode, then expand only the nodes that matter.
-        </p>
-      </section>
-
-      {viewMode === 'summary' && hubSummaries.length > 0 ? (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <div className="section-label">Infra summary</div>
-              <h2 className="section-title">Collapsed infra counts</h2>
-            </div>
-            <span className="pill pill--soft">{hubSummaries.length} infra nodes</span>
-          </div>
-
-          <div className="hub-summary-list">
-            {visibleInfraSummaries.map((hub) => (
-              <div key={hub.id} className="hub-summary-card">
-                <div className="hub-summary-header">
-                  <strong>{hub.label}</strong>
-                  <span className="hub-summary-type">{hub.type}</span>
-                </div>
-                <div className="hub-summary-metrics">
-                  <span>Ship {formatCount(hub.shipment)}</span>
-                  <span>Ves {formatCount(hub.vessel)}</span>
-                  <span>Ven {formatCount(hub.vendor)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {hiddenInfraSummaryCount > 0 ? (
-            <div className="infra-summary-actions">
-              <button
-                type="button"
-                className="ghost-button infra-summary-toggle"
-                onClick={() => {
-                  setShowAllInfraSummaries((current) => !current);
-                  setInfraFilter('All');
-                }}
-                aria-expanded={expandedInfraSummaries}
-              >
-                {expandedInfraSummaries
-                  ? 'Collapse infra summary'
-                  : `Show ${formatCount(hiddenInfraSummaryCount)} more`}
-              </button>
-              <p className="infra-summary-help">
-                {expandedInfraSummaries
-                  ? 'All hidden infra cards are visible below. Collapse the list to shorten the sidebar again.'
-                  : `Only the top ${DEFAULT_INFRA_SUMMARY_LIMIT} infra cards are shown first. The button below opens only the hidden remainder.`}
-              </p>
-
-              {expandedInfraSummaries ? (
-                <>
-                  <p className="infra-summary-help infra-summary-help-secondary">
-                    These counts apply only to the hidden cards below, not to the full summary list.
-                  </p>
-                  <div
-                    className="infra-filter-chips"
-                    role="tablist"
-                    aria-label="Hidden infra summary filters"
-                  >
-                    {INFRA_FILTERS.map((filter) => (
-                      <button
-                        key={filter}
-                        type="button"
-                        className={
-                          infraFilter === filter
-                            ? 'infra-filter-chip is-active'
-                            : 'infra-filter-chip'
-                        }
-                        onClick={() => setInfraFilter(filter)}
-                        aria-pressed={infraFilter === filter}
-                      >
-                        <span>{filter}</span>
-                        <span className="infra-filter-chip__count">
-                          {formatCount(hiddenInfraSummaryCounts[filter])}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="hub-summary-list hub-summary-list--expanded">
-                    {filteredHiddenInfraSummaries.length > 0 ? (
-                      filteredHiddenInfraSummaries.map((hub) => (
-                        <div key={hub.id} className="hub-summary-card">
-                          <div className="hub-summary-header">
-                            <strong>{hub.label}</strong>
-                            <span className="hub-summary-type">{hub.type}</span>
-                          </div>
-                          <div className="hub-summary-metrics">
-                            <span>Ship {formatCount(hub.shipment)}</span>
-                            <span>Ves {formatCount(hub.vessel)}</span>
-                            <span>Ven {formatCount(hub.vendor)}</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="empty-copy">
-                        No hidden infra cards match the current filter.
-                      </p>
-                    )}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="section-label">Metrics</div>
-            <h2 className="section-title">Current slice</h2>
-          </div>
-          <span className="pill pill--soft">Ready</span>
-        </div>
-
-        <dl className="metric-grid">
-          <div className="metric-card">
-            <dt>Total nodes</dt>
-            <dd>{formatCount(metrics?.totalNodes)}</dd>
-          </div>
-          <div className="metric-card">
-            <dt>Total edges</dt>
-            <dd>{formatCount(metrics?.totalEdges)}</dd>
-          </div>
-          <div className="metric-card">
-            <dt>Visible nodes</dt>
-            <dd>{formatCount(metrics?.visibleNodes)}</dd>
-          </div>
-          <div className="metric-card">
-            <dt>Visible edges</dt>
-            <dd>{formatCount(metrics?.visibleEdges)}</dd>
-          </div>
-        </dl>
-
-        <div className="metric-row">
-          <span>Hidden nodes</span>
-          <strong>{formatCount(metrics?.hiddenNodes)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Hidden edges</span>
-          <strong>{formatCount(metrics?.hiddenEdges)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Logistics issues</span>
-          <strong>{formatCount(metrics?.issueCount)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Hub nodes</span>
-          <strong>{formatCount(metrics?.hubCount)}</strong>
-        </div>
-      </section>
-
       <section className="panel">
         <div className="panel-header">
           <div>
@@ -283,7 +124,7 @@ export function GraphSidebar({
 
         {searchTerm.trim() ? (
           searchMatches.length > 0 ? (
-            <div className="search-result-block">
+            <>
               <div className="panel-header search-result-header">
                 <div>
                   <div className="section-label">Matches</div>
@@ -304,7 +145,7 @@ export function GraphSidebar({
                   </button>
                 ))}
               </div>
-            </div>
+            </>
           ) : (
             <p className="empty-copy">No quick matches. Try another label, hub, issue, or vessel name.</p>
           )
@@ -333,13 +174,13 @@ export function GraphSidebar({
           ))}
         </div>
 
-        <div className="threshold-card">
-          <span className="threshold-card__label">Hub threshold</span>
-          <strong className="threshold-card__value">{formatCount(hubThreshold)} connections</strong>
-          <span className="threshold-card__hint">
-            Nodes at or above this degree should collapse into summaries before expanding.
-          </span>
+        <div className="metric-row">
+          <span>Hub threshold</span>
+          <strong>{formatCount(hubThreshold)} connections</strong>
         </div>
+        <p className="field-help">
+          Nodes at or above this degree should collapse into summaries before expanding.
+        </p>
       </section>
 
       <section className="panel">
@@ -356,16 +197,173 @@ export function GraphSidebar({
         </div>
 
         {selectedNodeLabel ? (
-          <div className="selection-card">
-            <span className="selection-card__label">Selected node</span>
-            <strong className="selection-card__value">{selectedNodeLabel}</strong>
-            {selectedNodeType ? <span className="selection-card__type">{selectedNodeType}</span> : null}
+          <div className="selection-summary">
+            <div className="metric-row">
+              <span>Selected node</span>
+              <strong>{selectedNodeLabel}</strong>
+            </div>
+            {selectedNodeType ? (
+              <div className="metric-row">
+                <span>Type</span>
+                <strong>{selectedNodeType}</strong>
+              </div>
+            ) : null}
           </div>
         ) : (
           <p className="empty-copy">
             No node selected. Click a node to inspect it or clear the focus to return to browsing.
           </p>
         )}
+      </section>
+
+      {viewMode === 'summary' && hubSummaries.length > 0 ? (
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <div className="section-label">Infra summary</div>
+              <h2 className="section-title">Collapsed infra counts</h2>
+            </div>
+            <span className="pill pill--soft">{hubSummaries.length} infra nodes</span>
+          </div>
+
+          <div className="metric-row">
+            <span>Shown first</span>
+            <strong>{formatCount(visibleInfraSummaries.length)}</strong>
+          </div>
+
+          <div className="hub-summary-list" role="list" aria-label="Infra summary rows">
+            {visibleInfraSummaries.map((hub) => (
+              <div key={hub.id} className="metric-row" role="listitem">
+                <span>
+                  <strong>{hub.label}</strong> <span className="hub-summary-type">{hub.type}</span>
+                </span>
+                <strong>
+                  Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
+                  {formatCount(hub.vendor)}
+                </strong>
+              </div>
+            ))}
+          </div>
+
+          {hiddenInfraSummaryCount > 0 ? (
+            <div className="infra-summary-actions">
+              <button
+                type="button"
+                className="ghost-button infra-summary-toggle"
+                onClick={() => {
+                  setShowAllInfraSummaries((current) => !current);
+                  setInfraFilter('All');
+                }}
+                aria-expanded={expandedInfraSummaries}
+              >
+                {expandedInfraSummaries
+                  ? 'Collapse infra summary'
+                  : `Show ${formatCount(hiddenInfraSummaryCount)} more`}
+              </button>
+              <p className="infra-summary-help">
+                {expandedInfraSummaries
+                  ? 'All hidden infra rows are visible below. Collapse the list to shorten the sidebar again.'
+                  : `Only the top ${DEFAULT_INFRA_SUMMARY_LIMIT} infra rows are shown first. The button below opens only the hidden remainder.`}
+              </p>
+
+              {expandedInfraSummaries ? (
+                <>
+                  <p className="infra-summary-help infra-summary-help-secondary">
+                    These counts apply only to the hidden rows below, not to the full summary list.
+                  </p>
+                  <div
+                    className="infra-filter-chips"
+                    role="tablist"
+                    aria-label="Hidden infra summary filters"
+                  >
+                    {INFRA_FILTERS.map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        className={
+                          infraFilter === filter
+                            ? 'infra-filter-chip is-active'
+                            : 'infra-filter-chip'
+                        }
+                        onClick={() => setInfraFilter(filter)}
+                        aria-pressed={infraFilter === filter}
+                      >
+                        <span>{filter}</span>
+                        <span className="infra-filter-chip__count">
+                          {formatCount(hiddenInfraSummaryCounts[filter])}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="hub-summary-list hub-summary-list--expanded" role="list">
+                    {filteredHiddenInfraSummaries.length > 0 ? (
+                      filteredHiddenInfraSummaries.map((hub) => (
+                        <div key={hub.id} className="metric-row" role="listitem">
+                          <span>
+                            <strong>{hub.label}</strong>{' '}
+                            <span className="hub-summary-type">{hub.type}</span>
+                          </span>
+                          <strong>
+                            Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
+                            {formatCount(hub.vendor)}
+                          </strong>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="empty-copy">
+                        No hidden infra rows match the current filter.
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <div className="section-label">Metrics</div>
+            <h2 className="section-title">Current slice</h2>
+          </div>
+          <span className="pill pill--soft">Ready</span>
+        </div>
+
+        <div className="metric-row">
+          <span>Total nodes</span>
+          <strong>{formatCount(metrics?.totalNodes)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Total edges</span>
+          <strong>{formatCount(metrics?.totalEdges)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Visible nodes</span>
+          <strong>{formatCount(metrics?.visibleNodes)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Visible edges</span>
+          <strong>{formatCount(metrics?.visibleEdges)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Hidden nodes</span>
+          <strong>{formatCount(metrics?.hiddenNodes)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Hidden edges</span>
+          <strong>{formatCount(metrics?.hiddenEdges)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Logistics issues</span>
+          <strong>{formatCount(metrics?.issueCount)}</strong>
+        </div>
+        <div className="metric-row">
+          <span>Hub nodes</span>
+          <strong>{formatCount(metrics?.hubCount)}</strong>
+        </div>
       </section>
     </aside>
   );

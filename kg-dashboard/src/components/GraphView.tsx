@@ -24,6 +24,12 @@ export function GraphView({
   onSelectNode,
 }: GraphViewProps) {
   const cyRef = useRef<cytoscape.Core | null>(null);
+  const selectedNode = useMemo(
+    () => nodes.find((node) => node.data.id === selectedNodeId) ?? null,
+    [nodes, selectedNodeId],
+  );
+  const modeLabel =
+    viewMode === 'summary' ? 'Summary layout' : viewMode === 'search' ? 'Search layout' : 'Ego layout';
 
   const nodeTypeById = useMemo(
     () => new Map(nodes.map((node) => [node.data.id, node.data.type])),
@@ -262,9 +268,29 @@ export function GraphView({
   }, [selectedNodeId]);
 
   return (
-    <div className="graph-canvas-shell">
-      <div className="graph-canvas-legend">
-        <span>허브는 크게, 이슈는 붉게, 검색 결과는 주변 맥락만 펼칩니다.</span>
+    <div className="graph-canvas-shell" role="application" aria-label="Knowledge graph canvas">
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: '0 0 auto 0',
+          zIndex: 4,
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          padding: '0.85rem 1rem',
+          color: '#334155',
+          fontSize: '0.8rem',
+          lineHeight: 1.4,
+          pointerEvents: 'none',
+        }}
+      >
+        <span>{selectedNode ? getNodeLabel(selectedNode) : `${nodes.length} nodes · ${edges.length} edges`}</span>
+        <span>
+          {modeLabel}
+          {' · '}
+          Tap a node to inspect, tap empty space to clear.
+        </span>
       </div>
       <CytoscapeComponent
         elements={elements}
