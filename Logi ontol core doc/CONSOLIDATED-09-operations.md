@@ -143,42 +143,42 @@ __Scale \(지속\)__
 
 ---
 
-## Flow Code v3.5 Integration in Operations Management
+## ShipmentRoutingPattern Analytics for Operations Management
 
-### Flow Code Overview
+### RoutingPattern Overview
 
-Flow Code v3.5는 HVDC 프로젝트의 물류 흐름을 **0~5 범위**로 분류하는 핵심 알고리즘입니다. 운영 관리 관점에서 Flow Code는 **물류 효율성 KPI**와 **경로 최적화**의 기준이 됩니다.
+ShipmentRoutingPattern은 HVDC 프로젝트의 물류 흐름을 **routingPattern** 값으로 분류하는 핵심 분석 차원입니다. 운영 관리 관점에서 `hasRoutingPattern`은 **물류 효율성 KPI**와 **경로 최적화**의 기준이 됩니다.
 
-#### Flow Code 정의 (v3.5)
+#### RoutingPattern 정의
 
-| Flow Code | 설명 | 패턴 | 운영 의미 |
-|-----------|------|------|----------|
-| **0** | Pre Arrival | - | 입항 전 대기 상태 - 운영 시작 전 |
-| **1** | Port → Site | 직접 배송 | 최적 경로 - 창고 경유 없음 |
-| **2** | Port → WH → Site | 창고 경유 | 표준 경로 - 창고 1회 경유 |
-| **3** | Port → MOSB → Site | MOSB 경유 | 해상 운송 - MOSB 레그 필수 |
-| **4** | Port → WH → MOSB → Site | 창고+MOSB 경유 | 복합 경로 - 최대 hop 수 |
-| **5** | Mixed/Waiting/Incomplete | 혼합/미완료 | 비정상 상태 - 검토 필요 |
+| RoutingPattern | 설명 | 패턴 | 운영 의미 |
+|----------------|------|------|----------|
+| **PRE_ARRIVAL** | Pre Arrival | - | 입항 전 대기 상태 - 운영 시작 전 |
+| **DIRECT** | Port → Site | 직접 배송 | 최적 경로 - 창고 경유 없음 |
+| **WH_ONLY** | Port → WH → Site | 창고 경유 | 표준 경로 - 창고 1회 경유 |
+| **MOSB_DIRECT** | Port → MOSB → Site | MOSB 경유 | 해상 운송 - MOSB 레그 필수 |
+| **WH_MOSB** | Port → WH → MOSB → Site | 창고+MOSB 경유 | 복합 경로 - 최대 hop 수 |
+| **MIXED** | Mixed/Waiting/Incomplete | 혼합/미완료 | 비정상 상태 - 검토 필요 |
 
 ### Operations-Specific Flow Code Patterns
 
 #### 1. 운영 효율성 KPI
 
-Flow Code는 다음 운영 KPI와 직접 연관됩니다:
+`hasRoutingPattern`은 다음 운영 KPI와 직접 연관됩니다:
 
 ```
 효율성 지표:
-- Flow Code 1 비율 ↑ = 직송 비율 ↑ = 운영 효율 최적
-- Flow Code 2 비율 = 표준 창고 경유율
-- Flow Code 3, 4 비율 = 해상 운송 비율 (AGI/DAS)
-- Flow Code 5 비율 ↓ = 비정상 케이스 최소화 목표
+- routingPattern DIRECT 비율 ↑ = 직송 비율 ↑ = 운영 효율 최적
+- routingPattern WH_ONLY 비율 = 표준 창고 경유율
+- routingPattern MOSB_DIRECT + WH_MOSB 비율 = 해상 운송 비율 (AGI/DAS)
+- routingPattern MIXED 비율 ↓ = 비정상 케이스 최소화 목표
 
 처리 시간:
-- Flow Code 1: 평균 3-5일 (최단)
-- route_type WH_ONLY: 평균 7-10일 (창고 경유)
-- Flow Code 3: 평균 10-14일 (MOSB 레그)
-- route_type WH_MOSB: 평균 14-21일 (최장)
-- Flow Code 5: 검토 및 재분류 필요
+- routingPattern DIRECT: 평균 3-5일 (최단)
+- routingPattern WH_ONLY: 평균 7-10일 (창고 경유)
+- routingPattern MOSB_DIRECT: 평균 10-14일 (MOSB 레그)
+- routingPattern WH_MOSB: 평균 14-21일 (최장)
+- routingPattern MIXED: 검토 및 재분류 필요
 ```
 
 #### 2. AGI/DAS 도메인 규칙 (v3.5 신규)
@@ -393,26 +393,30 @@ ORDER BY ?month ?routeType
 
 ### Operations Management KPIs
 
-#### Flow Code 기반 성과 지표
+#### ShipmentRoutingPattern 기반 성과 지표
 
 | KPI | 목표 | 계산 방식 |
 |-----|------|----------|
-| **직송 비율** | ≥30% | Flow Code 1 / 전체 * 100 |
-| **표준 경로 비율** | 40-50% | Flow Code 2 / 전체 * 100 |
-| **해상 운송 비율** | 20-30% | (Flow Code 3 + Flow Code 4) / 전체 * 100 |
-| **비정상 비율** | <5% | Flow Code 5 / 전체 * 100 |
-| **평균 Flow Code** | 2.0-2.5 | Σ(Flow * Count) / Total |
-| **AGI/DAS 규칙 준수** | 100% | AGI/DAS 케이스 중 Flow Code ≥3 비율 |
+| **직송 비율** | ≥30% | routingPattern DIRECT / 전체 * 100 |
+| **표준 경로 비율** | 40-50% | routingPattern WH_ONLY / 전체 * 100 |
+| **해상 운송 비율** | 20-30% | (routingPattern MOSB_DIRECT + WH_MOSB) / 전체 * 100 |
+| **비정상 비율** | <5% | routingPattern MIXED / 전체 * 100 |
+| **RouteType 분포** | WH_ONLY~WH_MOSB 지배적 | Σ(hasRoutingPattern counts) / Total |
+| **AGI/DAS 규칙 준수** | 100% | AGI/DAS 케이스 중 routingPattern MOSB_DIRECT/WH_MOSB 비율 |
 
 #### Real-time Monitoring
 
 ```
 자동 알림 조건:
-1. Flow Code 5 비율 > 5% → 주간 리뷰 알림
-2. 신규 AGI/DAS 케이스 Flow Code < 3 → 즉시 알림 (규칙 위반)
-3. 월별 직송 비율 < 25% → 경로 최적화 검토
-4. 특정 현장 평균 Flow Code > 3.0 → 운영 효율 점검
+1. routingPattern MIXED 비율 > 5% → 주간 리뷰 알림
+2. 신규 AGI/DAS 케이스 routingPattern NOT IN (MOSB_DIRECT, WH_MOSB) → 즉시 알림 (규칙 위반)
+3. 월별 직송(DIRECT) 비율 < 25% → 경로 최적화 검토
+4. 특정 현장 WH_MOSB/MOSB_DIRECT 비율 과도 → 운영 효율 점검
 ```
+
+> **[Operations Domain Rule]**: KPI analytics use `ShipmentRoutingPattern` as the routing dimension.
+> Cross-domain Flow Code assignment to cases/shipments is removed. KPI queries join on `ShipmentUnit.hasRoutingPattern`.
+> Flow Code 0~5 remains internal to `WarehouseHandlingProfile` and is NOT a KPI dimension.
 
 ### Integration with Existing Systems
 

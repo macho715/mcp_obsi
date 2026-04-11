@@ -26,30 +26,31 @@ oute_type, shipment_stage, leg_sequence, JourneyLeg)
 # hvdc-document-ocr · CONSOLIDATED-03
 
 ## 📑 Table of Contents
-1. [Flow Code v3.5 in Document Processing](#flow-code-integration)
+1. [Route & Destination Evidence Extraction](#route-evidence-extraction)
 2. [Logistics Document Guardian (LDG)](#section-1)
 3. [LDG High-Precision OCR Pipeline](#section-2)
 
 ---
 
-## Flow Code v3.5 Integration in Document Processing {#flow-code-integration}
+## Route & Destination Evidence Extraction {#route-evidence-extraction}
 
-### Document-Flow Code Relationship
+### Document Route Evidence Relationship
 
-Logistics documents (Invoice, BOL, Packing List, Customs Declaration) contain **critical Flow Code information** that must be extracted and validated during OCR processing. Flow Code appears in documents as:
+Logistics documents (Invoice, BOL, Packing List, Customs Declaration) contain **route and destination evidence** that must be extracted and validated during OCR processing. Evidence fields extracted from documents include:
 
-1. **Destination Fields**: Final delivery location (MIR/SHU/AGI/DAS) determines Flow Code
-2. **Route Information**: Port → Warehouse → MOSB → Site path indicators
-3. **MOSB References**: Explicit MOSB leg mentioned in shipping instructions
-4. **Site Codes**: AGI/DAS codes trigger mandatory Flow Code ≥3 validation
+1. **Destination Fields**: Final delivery location (MIR/SHU/AGI/DAS) → `destinationEvidence`
+2. **Route Information**: Port → Warehouse → MOSB → Site path indicators → `routeEvidence`
+3. **MOSB References**: Explicit MOSB leg mentioned in shipping instructions → `mosbLegIndicator`
+4. **Site Codes**: AGI/DAS codes trigger mandatory MOSB leg evidence check
 
-> **[Document/OCR Domain Rule]** Documents extract 
-outeEvidence and destinationEvidence only.
-> Documents do NOT assign confirmedFlowCode. OCR output feeds WarehouseHandlingProfile as evidence source after WH In event.
+> **[Document/OCR Domain Rule — Clarified]**: OCR pipelines extract routing and destination *evidence* only.
+> `routeEvidence` (port routing indicators), `destinationEvidence` (site codes), `mosbLegIndicator` (MOSB leg present).
+> These evidence fields feed into `WarehouseHandlingProfile` after WH In (M110) — not as confirmedFlowCode directly.
+> The document layer does NOT assign `confirmedFlowCode`.
 
 ### OCR Extraction Fields for Route Evidence
 
-| Document Type | Flow Code Relevant Fields | Extraction Priority | Validation Rule |
+| Document Type | Route/Destination Evidence Fields | Extraction Priority | Validation Rule |
 |---------------|---------------------------|---------------------|-----------------|
 | **Bill of Lading (BOL)** | Final Destination, Consignee Site | HIGH | Site code → route_type assignment |
 | **Commercial Invoice** | Delivery Address, Project Site | HIGH | AGI/DAS → route_type MOSB_DIRECT/WH_MOSB/MIXED required |
