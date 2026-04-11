@@ -2,10 +2,10 @@
 title: "HVDC Port Operations - Consolidated"
 type: "ontology-design"
 domain: "port-operations"
-sub-domains: ["ofco-system", "port-agency", "bilingual", "flow-code"]
+sub-domains: ["ofco-system", "port-agency", "bilingual", "routing-pattern"]
 version: "consolidated-1.1"
 date: "2025-11-01"
-tags: ["ontology", "hvdc", "port-operations", "flow-code", "flow-code-v35", "khalifa-port", "zayed-port", "consolidated", "ofco", "invoice", "bilingual"]
+tags: ["ontology", "hvdc", "port-operations", "routing-pattern", "khalifa-port", "zayed-port", "consolidated", "ofco", "invoice", "bilingual"]
 standards: ["RDF", "OWL", "SHACL", "SPARQL", "JSON-LD"]
 status: "active"
 spine_ref: "CONSOLIDATED-00-master-ontology.md"
@@ -47,31 +47,30 @@ B/C) 분개.
 
 ---
 
-## Flow Code v3.5 Integration in Port Operations
+## Routing Pattern Classification in Port Operations
 
-### Port as Planned Route Type Classification Point
+> **[Port Domain Rule]**: Port records `plannedRoutingPattern` and `declaredDestination` as routing evidence.
+> Port does NOT assign `confirmedFlowCode`. Flow Code assignment occurs only at WH In (M110) inside `WarehouseHandlingProfile`.
 
-Port operations represent the **starting point** of the Flow Code classification system. Upon vessel arrival and cargo clearance at **Khalifa Port, Zayed Port, or Jebel Ali Port**, the initial Flow Code determination begins based on the **Final Destination** and **routing plan**.
+### Port as Routing Evidence Recording Point
 
-**Key Route Type Decision Points at Port:**
+Port operations represent the **starting point** for routing evidence collection. Upon vessel arrival and cargo clearance at **Khalifa Port, Zayed Port, or Jebel Ali Port**, `plannedRoutingPattern` and `declaredDestination` are recorded based on the **Final Destination** and **routing plan**.
+
+**Key Routing Evidence Decision Points at Port:**
 1. **Pre Arrival (shipment_stage: PRE_ARRIVAL)**: Cargo still on vessel, awaiting port clearance
-2. **Post-Clearance Classification**: Port operations team assigns initial Flow Code based on:
+2. **Post-Clearance Routing Evidence**: Port operations team records `plannedRoutingPattern` based on:
    - Final destination (MIR/SHU vs AGI/DAS)
    - Cargo type (container vs bulk)
    - Storage requirements (direct vs warehouse consolidation)
    - MOSB leg necessity (offshore delivery requirement)
 
-### Port-Specific Planned Route Patterns
+### Port-Specific Routing Patterns
 
-| Port | Primary Cargo Type | Typical Flow Code | Routing Pattern |
-|------|-------------------|-------------------|-----------------|
-| **Khalifa Port** | Containers | route_type: WH_ONLY / DIRECT | Direct or warehouse → Onshore sites |
-| **Zayed Port** | Bulk/Heavy | route_type: MOSB_DIRECT / WH_MOSB | MOSB staging → Offshore delivery |
-| **Jebel Ali** | Mixed (Freezone) | route_type: DIRECT / WH_ONLY / WH_MOSB | Varies by customs clearance |
-
-> **[Port Domain Rule]** Port operations classify plannedRouteType and declaredDestination only.
-> confirmedFlowCode (warehouse-flow evidence) is NOT assigned at port.
-> Port evidence feeds WarehouseHandlingProfile only after WH In event occurs.
+| Port | Primary Cargo Type | Planned Routing Pattern | Notes |
+|------|-------------------|-------------------------|-------|
+| **Khalifa Port** | Containers | `WH_ONLY` / `DIRECT` | Direct or warehouse → Onshore sites |
+| **Zayed Port** | Bulk/Heavy | `MOSB_DIRECT` / `WH_MOSB` | MOSB staging → Offshore delivery |
+| **Jebel Ali** | Mixed (Freezone) | `DIRECT` / `WH_ONLY` / `WH_MOSB` | Varies by customs clearance |
 
 ### Planned Route Type Classification at Port
 
@@ -82,7 +81,7 @@ Pre-Arrival Status:
 - PortCall initiated with Rotation Number
 - Cargo manifest reviewed
 - Final destination extracted from Samsung Ref / HVDC Code
-- Preliminary Flow Code assessment
+- Preliminary routingPattern assessment
 
 Port Operations:
 - Channel crossing (SAFEEN service)
@@ -126,18 +125,18 @@ ELSE:
 Departure from Port:
 - Cargo loaded onto trucks/transport
 - Port handling charges finalized (OFCO invoice)
-- Initial Flow Code recorded in HVDC tracking system
+- plannedRoutingPattern recorded in HVDC tracking system
 - Next location determined (Warehouse, MOSB, or direct to Site)
 
 Port Operations Complete:
 - PortCall status updated to "Departed"
-- Flow Code locked for this cargo
+- plannedRoutingPattern recorded as routing evidence (NOT confirmedFlowCode)
 - Transit tracking initiated
 ```
 
 ### RDF/OWL Implementation
 
-#### Flow Code Properties for Port Operations
+#### Routing Pattern Properties for Port Operations
 
 ```turtle
 @prefix port: <https://hvdc-project.com/ontology/port-operations/> .
@@ -145,32 +144,36 @@ Port Operations Complete:
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# Port-assigned Flow Code
-port:plannedRouteType a owl:DatatypeProperty ;
-    rdfs:label "Port-Assigned Flow Code" ;
-    rdfs:comment "Planned route type assigned at port based on destination and cargo type" ;
+# Port records plannedRoutingPattern as routing evidence (NOT a Flow Code)
+port:plannedRoutingPattern a owl:DatatypeProperty ;
+    rdfs:label "Planned Routing Pattern" ;
+    rdfs:comment "Routing pattern recorded at port based on destination and cargo type. String enum: DIRECT|WH_ONLY|MOSB_DIRECT|WH_MOSB|MIXED|PRE_ARRIVAL" ;
     rdfs:domain port:PortCall ;
-    rdfs:range xsd:integer ;
-    sh:minInclusive 0 ;
-    sh:maxInclusive 5 .
+    rdfs:range xsd:string .
 
-port:plannedRouteTypeAt a owl:DatatypeProperty ;
-    rdfs:label "Flow Code Assignment Date" ;
-    rdfs:comment "Date when Flow Code was determined at port" ;
+port:plannedRoutingPatternAt a owl:DatatypeProperty ;
+    rdfs:label "Routing Pattern Record Date" ;
+    rdfs:comment "Date when plannedRoutingPattern was determined at port" ;
     rdfs:domain port:PortCall ;
     rdfs:range xsd:dateTime .
 
-port:finalDestinationDeclared a owl:DatatypeProperty ;
-    rdfs:label "Final Destination Declared" ;
+port:declaredDestination a owl:DatatypeProperty ;
+    rdfs:label "Declared Destination" ;
     rdfs:comment "Destination declared at port (MIR/SHU/AGI/DAS)" ;
     rdfs:domain port:PortCall ;
     rdfs:range xsd:string .
 
-port:requiresMOSBTransit a owl:DatatypeProperty ;
-    rdfs:label "Requires MOSB Transit" ;
-    rdfs:comment "Boolean flag set at port for MOSB requirement" ;
+port:offshoreTransitRequired a owl:DatatypeProperty ;
+    rdfs:label "Offshore Transit Required" ;
+    rdfs:comment "Boolean flag set at port for MOSB requirement (AGI/DAS → true)" ;
     rdfs:domain port:PortCall ;
     rdfs:range xsd:boolean .
+
+port:importRoutingDecision a owl:DatatypeProperty ;
+    rdfs:label "Import Routing Decision" ;
+    rdfs:comment "Import routing decision at port: PRE_CLEARANCE | NORMAL" ;
+    rdfs:domain port:PortCall ;
+    rdfs:range xsd:string .
 
 port:portOfEntry a owl:ObjectProperty ;
     rdfs:label "Port of Entry" ;
@@ -178,27 +181,37 @@ port:portOfEntry a owl:ObjectProperty ;
     rdfs:domain port:PortCall ;
     rdfs:range port:Port .
 
-# SHACL Constraint: Flow Code Assignment Must Match Destination
+# SHACL Constraint: plannedRoutingPattern must use string enum values
+port:PlannedRoutingPatternEnumConstraint a sh:NodeShape ;
+    sh:targetClass port:PortCall ;
+    sh:property [
+        sh:path port:plannedRoutingPattern ;
+        sh:datatype xsd:string ;
+        sh:in ("PRE_ARRIVAL" "DIRECT" "WH_ONLY" "MOSB_DIRECT" "WH_MOSB" "MIXED") ;
+        sh:message "plannedRoutingPattern must be a ShipmentRoutingPattern enum value (not integer)"
+    ] .
+
+# SHACL Constraint: AGI/DAS must have MOSB-inclusive routing pattern
 port:PlannedRouteDestinationConstraint a sh:NodeShape ;
     sh:targetClass port:PortCall ;
     sh:sparql [
-        sh:message "AGI/DAS destination must have Flow Code ≥ 3 at port assignment" ;
+        sh:message "AGI/DAS destination must have MOSB-inclusive routing pattern (MOSB_DIRECT or WH_MOSB)" ;
         sh:select """
             PREFIX port: <https://hvdc-project.com/ontology/port-operations/>
             SELECT $this
             WHERE {
-                $this port:finalDestinationDeclared ?dest ;
-                      port:plannedRouteType ?routeType .
-                FILTER(?dest IN ("AGI", "DAS") && ?routeType NOT IN ("MOSB_DIRECT","WH_MOSB","MIXED"))
+                $this port:declaredDestination ?dest ;
+                      port:plannedRoutingPattern ?routePattern .
+                FILTER(?dest IN ("AGI", "DAS") && ?routePattern NOT IN ("MOSB_DIRECT","WH_MOSB","MIXED"))
             }
         """ ;
     ] .
 ```
 
-#### Instance Example: Port Clearance with Flow Code
+#### Instance Example: Port Clearance with Routing Pattern
 
 ```turtle
-# Port Call: Container cargo to AGI
+# Port Call: Container cargo to AGI — routing evidence recorded
 port:portcall/ROT-2504053298 a port:PortCall ;
     port:rotationNumber "2504053298" ;
     port:vesselName "MSC MAGNOLIA" ;
@@ -206,13 +219,13 @@ port:portcall/ROT-2504053298 a port:PortCall ;
     port:arrivalDate "2024-11-10T08:00:00"^^xsd:dateTime ;
     port:clearanceDate "2024-11-11T14:00:00"^^xsd:dateTime ;
     port:departureDate "2024-11-12T06:00:00"^^xsd:dateTime ;
-    port:finalDestinationDeclared "AGI" ;
-    port:requiresMOSBTransit true ;
-    port:plannedRouteType "MOSB_DIRECT" ;
-    port:plannedRouteTypeAt "2024-11-11T14:30:00"^^xsd:dateTime ;
-    port:routeTypeRationale "AGI offshore destination - MOSB leg mandatory" ;
-    port:offshoreRequired true ;
-    port:declaredDestination "AGI" .
+    port:declaredDestination "AGI" ;
+    port:offshoreTransitRequired true ;
+    port:plannedRoutingPattern "MOSB_DIRECT" ;
+    port:plannedRoutingPatternAt "2024-11-11T14:30:00"^^xsd:dateTime ;
+    port:importRoutingDecision "NORMAL" ;
+    port:routePatternRationale "AGI offshore destination - MOSB leg mandatory" .
+    # NOTE: confirmedFlowCode is NOT set here — assigned at WH In (M110) by WarehouseHandlingProfile
 
 # Port Services (OFCO Invoice Lines)
 port:service/CHANNEL-CROSSING-ROT2504053298 a port:ServiceEvent ;
@@ -231,56 +244,56 @@ port:service/BERTHING-ROT2504053298 a port:ServiceEvent ;
     port:currency "AED" .
 ```
 
-### SPARQL Queries for Port Operations Flow Code
+### SPARQL Queries for Port Routing Pattern Evidence
 
-#### 1. Flow Code Distribution by Port of Entry
+#### 1. Routing Pattern Distribution by Port of Entry
 
 ```sparql
 PREFIX port: <https://hvdc-project.com/ontology/port-operations/>
 
-SELECT ?port ?routeType (COUNT(?portCall) AS ?count)
+SELECT ?port ?routingPattern (COUNT(?portCall) AS ?count)
 WHERE {
     ?portCall a port:PortCall ;
               port:portOfEntry ?portObj ;
-              port:plannedRouteType ?routeType .
+              port:plannedRoutingPattern ?routingPattern .
     ?portObj port:portName ?port .
 }
-GROUP BY ?port ?routeType
-ORDER BY ?port ?routeType
+GROUP BY ?port ?routingPattern
+ORDER BY ?port ?routingPattern
 ```
 
-#### 2. AGI/DAS Port Clearance Compliance
+#### 2. AGI/DAS Port Clearance MOSB Compliance
 
 ```sparql
 PREFIX port: <https://hvdc-project.com/ontology/port-operations/>
 
-SELECT ?portCall ?rotationNumber ?destination ?routeType ?compliant
+SELECT ?portCall ?rotationNumber ?destination ?routingPattern ?compliant
 WHERE {
     ?portCall a port:PortCall ;
               port:rotationNumber ?rotationNumber ;
-              port:finalDestinationDeclared ?destination ;
-              port:plannedRouteType ?routeType .
+              port:declaredDestination ?destination ;
+              port:plannedRoutingPattern ?routingPattern .
     FILTER(?destination IN ("AGI", "DAS"))
-    BIND(IF(?routeType IN ("MOSB_DIRECT","WH_MOSB","MIXED"), "PASS", "FAIL") AS ?compliant)
+    BIND(IF(?routingPattern IN ("MOSB_DIRECT","WH_MOSB","MIXED"), "PASS", "FAIL") AS ?compliant)
 }
 ORDER BY ?compliant ?destination
 ```
 
-#### 3. Port Clearance Time by Flow Code
+#### 3. Port Clearance Time by Routing Pattern
 
 ```sparql
 PREFIX port: <https://hvdc-project.com/ontology/port-operations/>
 
-SELECT ?routeType (AVG(?clearanceTime) AS ?avgClearanceHours)
+SELECT ?routingPattern (AVG(?clearanceTime) AS ?avgClearanceHours)
 WHERE {
     ?portCall a port:PortCall ;
-              port:plannedRouteType ?routeType ;
+              port:plannedRoutingPattern ?routingPattern ;
               port:arrivalDate ?arrival ;
               port:clearanceDate ?clearance .
     BIND((xsd:decimal(?clearance - ?arrival) / 3600) AS ?clearanceTime)
 }
-GROUP BY ?routeType
-ORDER BY ?routeType
+GROUP BY ?routingPattern
+ORDER BY ?routingPattern
 ```
 
 #### 4. MOSB Requirement Accuracy at Port
@@ -293,28 +306,28 @@ SELECT ?destination (COUNT(?portCall) AS ?total)
        (100.0 * SUM(?mosbRequired) / COUNT(?portCall) AS ?mosbPercentage)
 WHERE {
     ?portCall a port:PortCall ;
-              port:finalDestinationDeclared ?destination ;
-              port:requiresMOSBTransit ?mosbFlag .
+              port:declaredDestination ?destination ;
+              port:offshoreTransitRequired ?mosbFlag .
     BIND(IF(?mosbFlag = true, 1, 0) AS ?mosbRequired)
 }
 GROUP BY ?destination
 ORDER BY ?destination
 ```
 
-### Port Operations KPIs with Flow Code
+### Port Operations KPIs
 
-| KPI Metric | Target | Calculation | Flow Code Relevance |
-|------------|--------|-------------|---------------------|
-| **Flow Code Assignment Accuracy** | 100% | Correct Flow assignments / Total | Initial classification correctness |
-| **AGI/DAS MOSB Flag Accuracy** | 100% | AGI/DAS with MOSB flag / Total AGI/DAS | Offshore routing accuracy |
-| **Khalifa Port DIRECT+WH_ONLY Ratio** | 70-80% | (DIRECT + WH_ONLY) / Total Khalifa | Container direct/warehouse routing |
-| **Zayed Port MOSB_DIRECT+WH_MOSB Ratio** | 80-90% | (MOSB_DIRECT + WH_MOSB) / Total Zayed | Bulk cargo MOSB routing |
+| KPI Metric | Target | Calculation | Routing Context |
+|------------|--------|-------------|-----------------|
+| **Routing Pattern Record Accuracy** | 100% | Correct `plannedRoutingPattern` records / Total | Initial routing evidence correctness |
+| **AGI/DAS MOSB Flag Accuracy** | 100% | AGI/DAS with `offshoreTransitRequired=true` / Total AGI/DAS | Offshore routing accuracy |
+| **Khalifa Port DIRECT+WH_ONLY Ratio** | 70-80% | (`DIRECT` + `WH_ONLY`) / Total Khalifa | Container direct/warehouse routing |
+| **Zayed Port MOSB_DIRECT+WH_MOSB Ratio** | 80-90% | (`MOSB_DIRECT` + `WH_MOSB`) / Total Zayed | Bulk cargo MOSB routing |
 | **Average Clearance Time** | <48 hours | Avg(Clearance - Arrival) | Port efficiency |
-| **MIXED (Unassigned) Rate** | <2% | MIXED / Total | Incomplete destination rate |
+| **MIXED (Unassigned) Rate** | <2% | `MIXED` / Total | Incomplete destination rate |
 
 ### Integration with Port Operations Workflow
 
-#### Port Call Lifecycle with Flow Code
+### Port Call Lifecycle with Routing Evidence
 
 ```
 1. Pre-Arrival (shipment_stage: PRE_ARRIVAL)
@@ -322,27 +335,28 @@ ORDER BY ?destination
    - Cargo manifest prepared
    - Samsung Ref / HVDC Code extracted
 
-2. Channel Crossing & Berthing (Flow Code 0)
+2. Channel Crossing & Berthing
    - SAFEEN channel crossing service
    - ADP berthing at terminal
-   - Awaiting customs clearance
+   - Awaiting customs clearance (shipment_stage: PRE_ARRIVAL)
 
-3. Customs Clearance (Flow Code Assignment)
+3. Customs Clearance (Routing Evidence Recorded)
    - MOIAT documentation verified
-   - Final destination confirmed
-   - Flow Code assigned (1-5)
-   - MOSB requirement flagged (if AGI/DAS)
+   - Final destination confirmed → declaredDestination set
+   - plannedRoutingPattern recorded (DIRECT/WH_ONLY/MOSB_DIRECT/WH_MOSB/MIXED)
+   - offshoreTransitRequired flagged (if AGI/DAS)
+   - NOTE: confirmedFlowCode is NOT assigned at port
 
-4. Port Departure (Flow Code Active)
+4. Port Departure (Routing Evidence Active)
    - Cargo loaded on transport
    - OFCO invoice finalized
-   - Flow Code tracked in system
-   - Next waypoint determined
+   - plannedRoutingPattern tracked in system
+   - Next waypoint determined (Warehouse, MOSB, or Site)
 
 5. Post-Port Tracking
-   - Flow Code guides routing decisions
-   - Warehouse, MOSB, or Site dispatch
-   - Flow Code remains fixed through journey
+   - plannedRoutingPattern guides downstream routing decisions
+   - confirmedFlowCode assigned ONLY after WH In event (M110) by WarehouseHandlingProfile
+   - Warehouse, MOSB, or Site dispatch proceeds
 ```
 
 ---
