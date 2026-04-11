@@ -49,10 +49,31 @@ evidence_layer: ["CONSOLIDATED-08"]
 | Cost Data | Invoice, InvoiceLine, Duty, DEM/DET, PortCharge, WarehouseCharge, MarineCharge |
 | Evidence Data | AuditRecord, CommunicationEvent, ApprovalAction |
 
+### 1.1.1 confirmedFlowCode 네이밍 정책 (창고 전용 처리 등급)
+
+> **정책 결정 2026-04-11 (v1.0)**: `confirmedFlowCode` 0~5 숫자 코드 유지.
+> 단, 이 코드는 **창고 전용 처리 등급(Warehouse-Exclusive Handling Class)**으로만 사용되며,
+> `WarehouseHandlingProfile` 클래스 외부에서 이 값을 할당하거나 참조하는 것은 **VIOLATION-1**로 자동 차단된다.
+
+| 코드 | 처리 등급 명칭 | 설명 | 저장 유형 |
+|---|---|---|---|
+| `0` | Standard Indoor | 일반 실내 보관 | 실내 창고 |
+| `1` | Standard Outdoor | 일반 야적 보관 | 야적장 |
+| `2` | Special Indoor | 특수 실내 보관 (항온항습, 정밀기기) | 특수 실내 창고 |
+| `3` | Special Outdoor | 특수 야적 (대형 자재, 방수 포장 필요) | 특수 야적장 |
+| `4` | Hazmat | 위험물 보관 (UN Class 기준) | 위험물 전용 창고 |
+| `5` | OOG / Abnormal | 초대형/이상 화물 (OOG, 변압기 등) | OOG 전용 구역 |
+
+> **⚠️ 사용 금지 컨텍스트**: Port, Document/OCR, Cost, Marine/Bulk, Operations KPI 도메인에서
+> `confirmedFlowCode` 0~5 숫자를 라우팅 코드, 비용 드라이버, 또는 KPI 버킷으로 사용하는 것을 금지합니다.
+> 해당 도메인에서는 반드시 `RoutingPattern`, `routeBasedCostDriver`, `MarineRoutingPattern` 등을 사용하세요.
+
+---
+
 ### 1.2 RoutingPattern Dictionary
 
-> RoutingPattern은 Flow Code 0~5 숫자 코드를 대체하는 named pattern 시스템입니다.
-> `WarehouseHandlingProfile.confirmedFlowCode` (0~5) 는 창고 내부 용도로만 유지됩니다.
+> RoutingPattern은 end-to-end 물류 여정 분류 시스템입니다. `confirmedFlowCode`(§1.1.1)와 별개입니다.
+> `WarehouseHandlingProfile.confirmedFlowCode` (0~5) 는 창고 내부 처리 등급 전용입니다.
 
 #### Tier 1: ShipmentRoutingPattern (전체 여정 분류)
 
