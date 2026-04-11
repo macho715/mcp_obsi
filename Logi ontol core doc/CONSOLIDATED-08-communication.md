@@ -1,6 +1,6 @@
----
+﻿---
 title: "HVDC Communication System - Consolidated"
-type: "ontology-design"
+type: "evidence-layer-extension"
 domain: "communication"
 sub-domains: ["email", "chat", "multi-channel"]
 version: "consolidated-1.0"
@@ -8,11 +8,27 @@ date: "2025-11-01"
 tags: ["ontology", "hvdc", "communication", "consolidated", "email", "whatsapp", "telegram"]
 standards: ["RDF", "OWL", "SHACL", "SPARQL", "JSON-LD", "PROV-O", "Time Ontology"]
 status: "active"
+spine_ref: "CONSOLIDATED-00-master-ontology.md"
+layer: "evidence"
+extension_of: "hvdc-master-ontology-v1.0"
 source_files: [
   "2_EXT-03-hvdc-comm-email.md",
   "2_EXT-04-hvdc-comm-chat.md"
 ]
 ---
+
+> **MASTER GOVERNANCE RULE**
+> 1. **Flow Code is a warehouse-handling classification only.** Restricted to WarehouseHandlingProfile. No other domain may own or assign Flow Code as primary language.
+> 2. **Program-wide shipment visibility shall use Journey Stage, Route Type, Milestone, and Leg.** (
+oute_type, shipment_stage, leg_sequence, JourneyLeg)
+> 3. **Port, Customs, Document, Cost, Marine, and Communication domains** may reference warehouse-flow *evidence*, but shall NOT own or assign Flow Code.
+> 4. **MOSB is an Offshore Staging / Marine Interface Node**, not a Warehouse in the top-level logistics ontology.
+
+> **Evidence Layer Document**
+> CONSOLIDATED-08은 HVDC Logistics Core Ontology의 **Evidence/Communication Layer**입니다.
+> 이 문서의 이메일/채팅 온톨로지는 Core Master Model의 일부가 아닙니다.
+> `AuditRecord`, `CommunicationEvent`, `ApprovalAction` Evidence 클래스로만 Core에 연결됩니다.
+> Core 물류 쿼리에서 직접 참조하지 마십시오.
 
 # hvdc-communication · CONSOLIDATED-08
 
@@ -479,4 +495,6 @@ Event
 **Confidential – SCT Internal Use**
 
 **Recommended Next Commands**: /summary ▪ /logi-master ▪ /doccheck
+
+
 
