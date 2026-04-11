@@ -13,13 +13,37 @@ from mcp.client.streamable_http import streamable_http_client
 
 SPECIALIST_PROFILES = {
     "chatgpt": {
-        "tool_set": ["search", "fetch", "save_memory", "get_memory", "update_memory"],
+        "tool_set": [
+            "search",
+            "fetch",
+            "list_recent_memories",
+            "save_memory",
+            "get_memory",
+            "update_memory",
+            "sync_wiki_index",
+            "append_wiki_log",
+            "write_wiki_page",
+            "lint_wiki",
+            "reconcile_conflict",
+        ],
         "title_prefix": "ChatGPT Specialist Write Check",
         "content_prefix": "ChatGPT specialist write verification",
         "tags": ["production", "verification", "specialist-write", "chatgpt"],
     },
     "claude": {
-        "tool_set": ["search", "fetch", "save_memory", "get_memory", "update_memory"],
+        "tool_set": [
+            "search",
+            "fetch",
+            "list_recent_memories",
+            "save_memory",
+            "get_memory",
+            "update_memory",
+            "sync_wiki_index",
+            "append_wiki_log",
+            "write_wiki_page",
+            "lint_wiki",
+            "reconcile_conflict",
+        ],
         "title_prefix": "Claude Specialist Write Check",
         "content_prefix": "Claude specialist write verification",
         "tags": ["production", "verification", "specialist-write", "claude"],
@@ -95,6 +119,9 @@ async def run_flow(server_url: str, token: str, profile_name: str) -> dict:
                 save_data = parse_tool_payload(save_result)
                 memory_id = save_data["id"]
 
+                recent_data = parse_tool_payload(
+                    await session.call_tool("list_recent_memories", {"limit": 3})
+                )
                 fetch_data = parse_tool_payload(await session.call_tool("fetch", {"id": memory_id}))
                 get_data = parse_tool_payload(
                     await session.call_tool("get_memory", {"memory_id": memory_id})
@@ -102,6 +129,20 @@ async def run_flow(server_url: str, token: str, profile_name: str) -> dict:
                 search_data = parse_tool_payload(
                     await session.call_tool("search", {"query": title})
                 )
+                wiki_index_data = parse_tool_payload(
+                    await session.call_tool("sync_wiki_index", {"limit": 10})
+                )
+                wiki_log_data = parse_tool_payload(
+                    await session.call_tool(
+                        "append_wiki_log",
+                        {
+                            "message": f"{profile_name} specialist write verification",
+                            "category": "verification",
+                            "related_ids": [memory_id],
+                        },
+                    )
+                )
+                wiki_lint_data = parse_tool_payload(await session.call_tool("lint_wiki", {}))
                 rollback_data = parse_tool_payload(
                     await session.call_tool(
                         "update_memory",
@@ -118,12 +159,20 @@ async def run_flow(server_url: str, token: str, profile_name: str) -> dict:
 
                 if save_data.get("status") != "saved":
                     raise RuntimeError("save_memory did not return status=saved")
+                if not recent_data.get("results"):
+                    raise RuntimeError("list_recent_memories returned no items")
                 if fetch_data.get("id") != memory_id:
                     raise RuntimeError("fetch returned wrong id")
                 if get_data.get("id") != memory_id:
                     raise RuntimeError("get_memory returned wrong id")
                 if not search_data.get("results"):
                     raise RuntimeError("search did not find the newly saved note")
+                if wiki_index_data.get("status") != "synced":
+                    raise RuntimeError("sync_wiki_index did not return status=synced")
+                if wiki_log_data.get("status") != "appended":
+                    raise RuntimeError("append_wiki_log did not return status=appended")
+                if wiki_lint_data.get("status") != "completed":
+                    raise RuntimeError("lint_wiki did not return status=completed")
                 if rollback_data.get("status") != "updated":
                     raise RuntimeError("update_memory did not archive the note")
                 if get_after_rollback.get("status") != "archived":
@@ -132,9 +181,13 @@ async def run_flow(server_url: str, token: str, profile_name: str) -> dict:
                 return {
                     "tools": tool_names,
                     "saved": save_data,
+                    "recent_after_save": recent_data,
                     "fetch_after_save": fetch_data,
                     "get_after_save": get_data,
                     "search_after_save": search_data,
+                    "wiki_index_sync": wiki_index_data,
+                    "wiki_log_append": wiki_log_data,
+                    "wiki_lint": wiki_lint_data,
                     "rollback": rollback_data,
                     "get_after_rollback": get_after_rollback,
                 }

@@ -1,6 +1,148 @@
 # Changelog
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> `C:\Users\jichu\Downloads\valut`
+
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
+
+## 2026-04-11 — Root docs sync for wiki overlay and production boundary
+
+### Changed
+
+- `README.md`
+  - Railway hosted specialist endpoints의 존재와 current-session production surface lag를 분리해서 적었다.
+  - current local code의 wiki-native tools/resources/prompts surface와 deployed production surface의 차이를 현재 세션 기준으로 보강했다.
+  - historical specialist write PASS와 current-session production lag를 같은 사실처럼 읽지 않도록 주석을 추가했다.
+- `SYSTEM_ARCHITECTURE.md`
+  - `/chatgpt-mcp`, `/claude-mcp`의 read-only + `resources/prompts` surface와 write sibling route의 wiki-native tools surface를 현재 코드 기준으로 다시 명시했다.
+  - `WIKI_OVERLAY_DIRNAME` 기본값 `wiki`, compiled wiki overlay semantics, current-session local vs production verification boundary를 추가했다.
+  - historical production specialist verification과 2026-04-11 current-session production lag를 분리해서 적었다.
+- `LAYOUT.md`
+  - compiled wiki overlay 관련 runtime surface와 specialist verification scripts의 역할을 현재 저장소 구조 기준으로 보강했다.
+  - workspace-local companion ownership boundary와 `WIKI_OVERLAY_DIRNAME` 기본값 `wiki`를 운영 메모에 추가했다.
+- `changelog.md`
+  - 이번 root docs sync 기록을 추가했다.
+
+### Verification
+
+- code recheck
+  - `app/main.py`
+  - `app/config.py`
+  - `app/mcp_server.py`
+  - `app/chatgpt_mcp_server.py`
+  - `app/claude_mcp_server.py`
+  - `app/resources_server.py`
+  - `app/prompts_server.py`
+  - `app/wiki_tools.py`
+  - `app/services/wiki_store.py`
+  - `app/services/wiki_index_service.py`
+  - `app/services/wiki_log_service.py`
+- targeted verification
+  - `tests/test_auth.py`
+  - `tests/test_chatgpt_mcp_server.py`
+  - `tests/test_claude_mcp_server.py`
+  - `tests/test_wiki_overlay_surface.py`
+  - `tests/test_wiki_write_surface.py`
+- live evidence basis
+  - `scripts/verify_specialist_mcp_write.py`
+  - `scripts/run_mcp_verification_round.ps1`
+  - `docs/MCP_RUNTIME_EVIDENCE.md`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. 앱 동작 자체를 바꾸지 않았다.
+- current-session 기준으로는 local code가 production deployed surface보다 앞서 있다.
+- 따라서 production specialist write/tool surface는 redeploy와 smoke recheck 전까지 local과 동일하다고 적지 않는다.
+
+## 2026-04-11 — KG Dashboard View Modes and WhatsApp Parsing Enhancement
+
+### Added
+
+- `kg-dashboard/src/components/NodeInspector.tsx`
+  - Added new NodeInspector component for viewing node details (extracted from GraphView).
+- `kg-dashboard/src/components/GraphSidebar.tsx`
+  - Added Sidebar component for search, metrics, and Hub node summaries.
+
+### Changed
+
+- `kg-dashboard/src/App.tsx`
+  - Extracted Sidebar component to `GraphSidebar.tsx`.
+  - Introduced 4 View Modes: Summary (요약 뷰), Issues (이슈 중심 뷰), Search (검색 뷰), and Ego (선택 노드 뷰).
+  - Added deferred search functionality (`useDeferredValue`) and graph metrics calculation.
+  - Implemented advanced graph indexing for faster relationship lookups.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Refactored graph rendering to support the 4 new View Modes.
+  - Added advanced Hub node styling (larger size, bold text, star shape) for nodes with degree >= `HUB_THRESHOLD` (200).
+  - Added dynamic node and edge classes based on view state (`hub-node`, `collapsed-summary-node`, `issue-edge`).
+- `kg-dashboard/src/main.tsx`
+  - Cleaned up formatting and removed React `StrictMode` wrapper for production rendering compatibility.
+- `scripts/parse_whatsapp_logistics.py`
+  - Increased `MAX_TO_PROCESS` to 10 for event block processing, allowing larger batches of WhatsApp logs to be delegated to subagents.
+
+## 2026-04-09 — Knowledge Graph extraction, RDF TTL build, and KG Dashboard Phase 1
+
+```mermaid
+flowchart TD
+    A[WhatsApp Logs & Excel] -->|parse_whatsapp_logistics.py| B(Raw Markdown & Event Blocks)
+    I[Multiple Vault Sources] -->|consolidate_vaults.py| C(Consolidated Vault)
+    B --> C
+    C -->|build_knowledge_graph.py| D(knowledge_graph.ttl)
+    D -->|test_kg_queries.py| E{SPARQL Validations}
+    D -->|ttl_to_json.py| F(nodes.json & edges.json)
+    F --> G[Vite React Dashboard]
+    G --> H[Interactive Cytoscape GraphView]
+```
+
+### Added
+
+- `scripts/parse_whatsapp_logistics.py`
+  - Added batch parsing for WhatsApp logs with regex matching, time-based event blocking, and markdown frontmatter generation.
+- `scripts/build_knowledge_graph.py`
+  - Added RDF TTL Knowledge Graph generation combining `HVDC STATUS.xlsx` records and `vault/wiki/analyses/` markdown notes using `rdflib`.
+- `scripts/ttl_to_json.py`
+  - Added python script to convert `.ttl` knowledge graph format into `nodes.json` and `edges.json` for frontend visualization.
+- `scripts/consolidate_vaults.py`
+  - Added multi-vault consolidation tool to merge files from `vault`, `vault-test`, `vault-test2`, and `vault-test3` based on modified time (`mtime`).
+- `scripts/test_kg_queries.py`
+  - Added SPARQL test scripts to validate graph relationships (e.g., matching Logistics Issues to Sites, Shipments to Vendors, and Issues to Vessels).
+- `kg-dashboard/src/App.tsx`
+  - Added interactive sidebar with Search & Expand, Min Degree filter to prevent Hairball views, and Focus Issue Mode.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Added Cytoscape graph view component with zoom-responsive font sizing (`min-zoomed-font-size: 12`) and element styling.
+- `kg-dashboard/src/main.tsx`
+  - Added Vite React entry point enforcing React `StrictMode`.
+
+### Changed
+
+- `kg-dashboard/`
+  - Initialized Vite React app for the `kg-dashboard` with interactive state management for nodes and edges.
+  - Applied detailed color coding based on entity type (`LogisticsIssue`, `Shipment`, `Vessel`, `Site`, `Warehouse`) to graph nodes for better visibility.
+
+### Fixed
+
+- `kg-dashboard/src/main.tsx`
+  - Enforced `StrictMode` in the React rendering tree to highlight potential component lifecycle issues.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Fixed readability issues on zoomed-out graphs by implementing `min-zoomed-font-size: 12` to prevent label clutter.
+
+### Verification
+
+- WhatsApp event extraction creates accurate time-grouped blocks.
+- Multi-vault consolidation completes without file conflicts, prioritizing latest `mtime`.
+- `knowledge_graph.ttl` successfully generates expected RDF Triples.
+- SPARQL queries execute successfully and return matching logical insights.
+- Cytoscape graph view rendering, Node Degree filtering, and panel interaction verified in the browser.
+- Python TTL to JSON parsing validated via output data files.
+
+### Git commits
+
+- `50c020a` feat: add sidebar filtering and node details panel
+- `c6ec07b` style: apply color coding based on entity type
+- `517b874` feat: add cytoscape graph view component
+- `63192e8` chore: initialize vite react app for kg-dashboard
+- `bff2988` feat: add python ttl to json parser
+- *(Untracked scripts `parse_whatsapp_logistics.py`, `build_knowledge_graph.py`, `test_kg_queries.py`, `consolidate_vaults.py` present in workspace)*
 
 ## 2026-04-09 — standalone memory enrichment + RAG auto-route + local-rag retrieval
 

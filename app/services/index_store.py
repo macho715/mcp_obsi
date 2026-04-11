@@ -291,7 +291,11 @@ class IndexStore:
         return self._row_to_dict(row)
 
     def recent(
-        self, limit: int = 10, memory_type: str | None = None, project: str | None = None
+        self,
+        limit: int = 10,
+        memory_type: str | None = None,
+        project: str | None = None,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         sql = "SELECT * FROM memories WHERE 1=1"
         args: list[Any] = []
@@ -301,8 +305,8 @@ class IndexStore:
         if project:
             sql += " AND project = ?"
             args.append(project)
-        sql += " ORDER BY created_at DESC LIMIT ?"
-        args.append(limit)
+        sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        args.extend([limit, max(offset, 0)])
         with self._conn() as conn:
             rows = conn.execute(sql, args).fetchall()
         return [self._row_to_dict(row) for row in rows if row is not None]

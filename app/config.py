@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     railway_service_mcp_server_url: str = Field(default="", alias="RAILWAY_SERVICE_MCP_SERVER_URL")
     timezone: str = Field(default="Asia/Dubai", alias="TIMEZONE")
     obs_vault_name: str = Field(default="mcp_obsidian_vault", alias="OBS_VAULT_NAME")
+    wiki_overlay_dirname: str = Field(default="wiki", alias="WIKI_OVERLAY_DIRNAME")
 
     @staticmethod
     def _csv(value: str) -> list[str]:

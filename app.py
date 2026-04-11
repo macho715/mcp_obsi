@@ -473,7 +473,7 @@ class SQLiteMemoryRepository:
                 m.occurred_at
             FROM memories_fts
             JOIN memories m ON m.rowid = memories_fts.rowid
-            WHERE memories_fts MATCH ? AND {' AND '.join(clauses)}
+            WHERE memories_fts MATCH ? AND {" AND ".join(clauses)}
             ORDER BY score ASC, m.occurred_at DESC
             LIMIT ?
             """
@@ -494,7 +494,7 @@ class SQLiteMemoryRepository:
                 m.status,
                 m.occurred_at
             FROM memories m
-            WHERE {' AND '.join(clauses)}
+            WHERE {" AND ".join(clauses)}
             ORDER BY m.occurred_at DESC, m.confidence DESC
             LIMIT ?
             """
@@ -586,8 +586,7 @@ async def search_memories(
         Query(
             min_length=1,
             description=(
-                '예: text:"aggregate split" role:decision '
-                "project:HVDC entity:DSV limit:5"
+                '예: text:"aggregate split" role:decision project:HVDC entity:DSV limit:5'
             ),
         ),
     ],
@@ -615,8 +614,7 @@ async def seed_demo():
         SaveMemoryV2(
             title="Voyage 71 aggregate split",
             content=(
-                "Voyage 71은 20mm aggregate only로 유지하고, "
-                "5mm aggregate는 Voyage 72로 이연한다."
+                "Voyage 71은 20mm aggregate only로 유지하고, 5mm aggregate는 Voyage 72로 이연한다."
             ),
             source="chatgpt",
             roles=["decision", "fact"],

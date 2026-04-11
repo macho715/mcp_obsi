@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: local-rag
+Version: 0.1.0
+Summary: Minimal local retrieval and generation service for standalone-package
+Requires-Python: <3.14,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: requests
+Provides-Extra: dev
+Requires-Dist: httpx; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+
+# local-rag
+
+Minimal local retrieval and generation service for `standalone-package`.

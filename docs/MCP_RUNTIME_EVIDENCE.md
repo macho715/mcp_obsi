@@ -14,6 +14,67 @@ Date: 2026-03-28
 
 read-first live MCP verification for the hybrid redesign.
 
+## 2026-04-11 Current Session — Wiki Overlay / Resources / Prompts / Wiki Tools
+
+이 섹션은 **현재 Codex 세션**에서 직접 실행한 검증만 기록한다.
+
+### Current-session local precheck
+
+- local `http://127.0.0.1:8000/healthz`는 처음엔 down이었다.
+- current session에서 `.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000`를 background로 띄운 뒤 `200` 응답을 확인했다.
+
+### Current-session explicit specialist write verifier
+
+실행 명령:
+
+- `.venv\Scripts\python.exe scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write/ --token <redacted> --profile chatgpt`
+
+결과:
+
+- **FAIL**
+- 실패 이유: production `/chatgpt-mcp-write`의 live tool set이 아직 `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`까지만 노출하고 있어서, current code가 기대하는 wiki-native tools(`sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`)와 불일치했다.
+- 즉, 이번 실패는 current local code의 verifier expectation과 current production deployment surface 사이의 **배포 불일치**다.
+
+### Current-session full verification round
+
+실행 명령:
+
+- `powershell -ExecutionPolicy Bypass -File .\scripts\run_mcp_verification_round.ps1 -Round 1`
+
+결과 요약:
+
+- `local_all_mounts_observe` → **PASS**
+  - local `/mcp` tool set: `append_wiki_log`, `archive_raw`, `fetch`, `get_memory`, `lint_wiki`, `list_recent_memories`, `reconcile_conflict`, `save_memory`, `search`, `search_memory`, `sync_wiki_index`, `update_memory`, `write_wiki_page`
+  - local read-only wrapper routes(`/chatgpt-mcp`, `/claude-mcp`) on current session exposed:
+    - resources `5개`
+    - prompts `4개`
+  - local `read_path_verified = true`
+- `production_all_mounts_observe` → **PASS (observe only)**
+  - production `/mcp` live tool set: 기존 8개 tool만 노출
+  - production `/chatgpt-mcp`, `/claude-mcp` live resources count = `0`
+  - production `/chatgpt-mcp`, `/claude-mcp` live prompts count = `0`
+  - 현재 code와 달리 production read-only routes에는 resources/prompts가 아직 배포되지 않았다.
+- `verify_main_mcp_readonly` → **PASS**
+- `verify_chatgpt_mcp_readonly` → **PASS**
+- `verify_claude_mcp_readonly` → **PASS**
+- `verify_mcp_write_once` → **PASS**
+  - sample id: `MEM-20260411-174139-71BBB9`
+  - final rollback state: `status = archived`
+- `verify_mcp_secret_paths` → **PASS**
+  - sample mixed probe id: `MEM-20260411-174147-6F191B`
+  - mixed-secret payload masked readback + archived rollback 확인
+- `verify_chatgpt_specialist_write` → **FAIL**
+  - 실패 이유: production `/chatgpt-mcp-write` tool set mismatch
+  - actual live tools: `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`
+  - expected current-code tools: 위 6개 + `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- round script는 `verify_chatgpt_specialist_write` 실패 지점에서 중단됐기 때문에 `verify_claude_specialist_write`와 후속 `pytest_mcp_focus` step은 current session 기준으로 실행되지 않았다.
+
+### Current-session interpretation
+
+- local current code는 `resources + prompts + wiki-native write tools`를 이미 노출한다.
+- production current deployment는 아직 기존 specialist write surface에 머물러 있다.
+- 따라서 이번 current-session 결과는 **code is ready, production is not yet rolled forward**로 해석해야 한다.
+
 ## Environment
 
 - local server URL: `http://127.0.0.1:8000/mcp/`
@@ -32,7 +93,7 @@ read-first live MCP verification for the hybrid redesign.
 
 Current Cursor active config:
 
-- `C:\Users\jichu\.cursor\mcp.json`
+- repo-local `.cursor/mcp.json`
 
 tool offerings 확인:
 
@@ -41,6 +102,7 @@ tool offerings 확인:
 - `get_memory`
 - `list_recent_memories`
 - `update_memory`
+- `archive_raw`
 - `search`
 - `fetch`
 
@@ -65,7 +127,7 @@ Python MCP client로 실제 호출한 결과:
 - raw archive note는 normalized search 대상이 아니다.
 - normalized memory note는 live MCP read tool로 검색 가능하다.
 - wrapper `search` / `fetch`는 현재도 동작한다.
-- Cursor MCP는 현재 global config 기준으로 local + production 둘 다 connected 상태가 확인됐다.
+- Cursor MCP는 현재 repo-local config 기준으로 local + production 둘 다 connected 상태가 확인됐다.
 - main `/mcp` write tool과 specialist write-capable sibling route는 이후 섹션에서 별도 검증 결과를 기록한다.
 
 ## Railway Preview Evidence
@@ -158,6 +220,8 @@ Verified command:
 
 ## Railway Production HMAC Phase 2
 
+이 섹션은 현재 verification round 기본 셋이라기보다 별도 verifier 기반의 historical/manual evidence로 유지한다.
+
 - `MCP_HMAC_SECRET` configured on Railway production service
 - signed write verification:
   - memory id: `MEM-20260328-165501-4BBDFC`
@@ -193,14 +257,14 @@ Verified command:
   - `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write`
   - unauthenticated probe -> `401`
   - authenticated tool set: `search`, `fetch`, `save_memory`, `get_memory`, `update_memory`
-  - save/fetch/get/search/archive rollback verification passed
+  - save/fetch/get/search + `update_memory(status="archived")` rollback verification passed
   - sample id: `MEM-20260328-203945-8AD433`
 - Claude sibling route:
   - `/claude-write-healthz` -> `200`
   - `https://mcp-server-production-90cb.up.railway.app/claude-mcp-write`
   - unauthenticated probe -> `401`
   - authenticated tool set: `search`, `fetch`, `save_memory`, `get_memory`, `update_memory`
-  - save/fetch/get/search/archive rollback verification passed
+  - save/fetch/get/search + `update_memory(status="archived")` rollback verification passed
   - sample id: `MEM-20260328-203945-00EA52`
 
 ## Production Path Backfill and Specialist Recheck
@@ -223,7 +287,7 @@ Verified command:
 - read-only recheck after path migration:
   - ChatGPT route recheck passed
   - Claude route recheck passed
-  - both returned `RailwayProductionDecision` with `url=file=memory/2026/03/MEM-20260328-120319-2591AB.md`
+  - both returned `RailwayProductionDecision` with wrapper URL containing `file=memory/2026/03/MEM-20260328-120319-2591AB.md`
 - specialist write sibling recheck after path migration:
   - ChatGPT sibling route recheck passed
     - sample id: `MEM-20260328-234330-5D6BA3`

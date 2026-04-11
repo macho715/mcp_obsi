@@ -2,7 +2,10 @@ from datetime import date, datetime
 
 from app.config import settings
 from app.models import MemoryCreate, MemoryPatch, RawConversationCreate
+from app.prompts_server import register_prompts
+from app.resources_server import register_resources
 from app.services.memory_store import MemoryStore
+from app.wiki_tools import register_wiki_tools
 
 try:
     from mcp.server.fastmcp import FastMCP
@@ -154,9 +157,17 @@ def create_mcp_server(store: MemoryStore):
 
     @mcp.tool()
     async def list_recent_memories(
-        limit: int = 10, memory_type: str | None = None, project: str | None = None
+        limit: int = 10,
+        memory_type: str | None = None,
+        project: str | None = None,
+        offset: int = 0,
     ) -> dict:
-        return store.recent(limit=limit, memory_type=memory_type, project=project)
+        return store.recent(
+            limit=limit,
+            memory_type=memory_type,
+            project=project,
+            offset=offset,
+        )
 
     @mcp.tool()
     async def update_memory(
@@ -237,5 +248,9 @@ def create_mcp_server(store: MemoryStore):
     async def fetch(id: str) -> dict:
         item = store.get(id)
         return build_fetch_wrapper_response(id, item)
+
+    register_resources(mcp, store)
+    register_prompts(mcp, store)
+    register_wiki_tools(mcp, store)
 
     return mcp

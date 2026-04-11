@@ -1,0 +1,344 @@
+# Guideline_SHU_Logistics
+
+## 1) Executive Summary
+
+* **SHU. Logistics**는 Shuweihat site 기준의 **material receiving / issuance / warehouse control / urgent delivery coordination** 중심 그룹입니다.
+* 초기에는 **OT 승인 요청** 비중이 높았으나, **2025-02-19 이후 OT 요청 메시지 중단** 지시로 인해 현재는 **site issue escalation + delivery control** 채널로 보는 것이 맞습니다.
+* 반복 주제는 **MRR, FMCS, S-PMIS, material issuance, warehouse capacity, DSV delivery, gate pass, special lifting/offloading, document follow-up(IRN/Test Report/MSDS)** 입니다.
+* 반복 리스크는 **창고 공간 부족, indoor/outdoor 보관 판단, 문서 누락, weather delay, night unloading permit, heavy cargo support 장비 부족**입니다.
+
+## 2) Group Profile
+
+| 항목       | 내용                                                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------------ |
+| 목적/범위    | SHU site 자재 입고·불출·보관·현장 Delivery coordination                                                                      |
+| 운영 성격    | Site logistics control + issue escalation                                                                          |
+| 확인된 활동기간 | 2024-01-24 ~ 2026-03-27                                                                                            |
+| 주요 운영 대상 | MRR, FMCS, S-PMIS, warehouse, cable drum, battery, transformer oil, control cubicle, anchor bolt, indoor materials |
+| 운영 전환점   | 2025-02-19 이후 OT 승인 메시지 중단, 이슈 공유 채널로 전환                                                                           |
+
+## 3) Observed Patterns
+
+### A. 반복 업무
+
+| No | Item                      | Value | Risk                             | Evidence                                                 |
+| -- | ------------------------- | ----- | -------------------------------- | -------------------------------------------------------- |
+| 1  | MRR 작성                    | 매우 빈번 | 보고 누락 시 인수인계 불명확                 | `Prepare MRR / preliminary material receiving report` 반복 |
+| 2  | FMCS 업데이트                 | 매우 빈번 | 시스템 미반영 시 재고/불출 오류               | `Update FMCS` 반복                                         |
+| 3  | S-PMIS 업데이트               | 빈번    | 문서·자재 상태 불일치                     | `Update S-PMIS` 반복                                       |
+| 4  | Material issuance         | 매우 빈번 | 공종팀 handover 분쟁                  | `Material issuance` 반복                                   |
+| 5  | Material receiving        | 매우 빈번 | 수령/검수 지연                         | LPO/Hitachi/Siemens/Hanlim/UPC 다수                        |
+| 6  | Delivery plan 요청          | 빈번    | 현장 수용불가·차량 재배차                   | Battery, cable drum, auxiliary TR 사례                     |
+| 7  | Warehouse capacity        | 중요    | indoor full, outdoor 보관 리스크      | 2025-03-17, 2025-03-21, 2025-10-14                       |
+| 8  | Heavy/off-hours operation | 중요    | permit·HSE·장비 부족                 | cable drum, beam, Al Faris, port ops                     |
+| 9  | Document follow-up        | 중요    | IRN/Test Report/MSDS 누락          | transformer oil, indoor material, shipping docs          |
+| 10 | Weather impact            | 중요    | unloading stop / material damage | rain, high wind, heavy rain                              |
+
+### B. 성격 전환
+
+* **2024-08 ~ 2025-02-19**: 거의 매일 `Dear Sir, I would like to request overtime...` 패턴.
+* **2025-02-19 이후**: 국일 Kim 지시로 **OT 요청 메시지 중단**.
+* 이후 채널 목적은 아래로 재정의됨.
+
+  * site issue escalation
+  * urgent delivery follow-up
+  * storage capacity warning
+  * unloading progress report
+  * special cargo support coordination
+
+### C. 주요 Pain Point
+
+1. **Warehouse full / indoor 부족**
+2. **실물 수령 가능 시점과 현장 storage readiness 불일치**
+3. **문서 누락(IRN, Test Report, QA/QC, HSE, MSDS)**
+4. **야간 unloading 시 special permit/HSE requirement 누락**
+5. **Heavy cargo 작업 시 forklift/crane/SPMT/tool 부재**
+6. **Construction/other team handover refusal 또는 one-by-one 요구**
+7. **Bad weather로 unloading 중단**
+8. **Delivery plan 늦음 또는 partial delivery 필요**
+9. **List/Qty mismatch 및 return/replace 발생**
+10. **Indoor material인데 space 부족으로 outdoor 임시보관 판단 필요**
+
+## 4) Tailored Rules
+
+### 4.1 채널 목적
+
+* 본 그룹은 **SHU site logistics control room**으로 운영한다.
+* **OT 승인 요청은 그룹 기본 기능에서 제외**한다.
+* 아래 4종만 본 그룹에 게시한다.
+
+  1. Delivery plan
+  2. Site issue / risk / hold
+  3. Receiving / unloading status
+  4. Document / permit / gate pass follow-up
+
+### 4.2 태그 규칙
+
+첫 줄 좌측에 아래 태그 사용:
+`[URGENT][ACTION][FYI][ETA][COST][GATE][CRANE][MANIFEST][RISK]`
+
+SHU 전용 권장 조합:
+
+* 창고 공간 부족: `[RISK][ACTION]`
+* Delivery plan 제출: `[ETA][ACTION]`
+* 서류 요청: `[MANIFEST][ACTION]`
+* Gate pass/driver/vehicle: `[GATE][ETA]`
+* 야간/특수하역: `[CRANE][RISK][ACTION]`
+* 단순 현황: `[FYI]`
+
+### 4.3 첫줄 포맷
+
+반드시 아래 형식 중 하나로 시작:
+
+* `[SHU]/[ITEM]/[ETA]/[ACTION]`
+* `[SHU]/[DOC]/[REF]/[ACTION]`
+* `[SHU]/[RISK]/[LOCATION]/[ACTION]`
+
+예시:
+
+* `[SHU]/[BATTERY PKGS]/[2025-08-22 10:00 GST]/[PARTIAL DELIVERY PLAN]`
+* `[SHU]/[CABLE DRUM]/[ETA 14:00 GST]/[UNLOADING SUPPORT]`
+* `[SHU]/[IRN+TEST REPORT]/[HE-0335]/[REQUEST]`
+
+### 4.4 필수 본문 4요소
+
+질문/요청 메시지는 반드시 아래 4개 포함:
+
+* **현품/문서명**
+* **수량 또는 package**
+* **ETA/필요시점**
+* **다음 액션/요청 담당자**
+
+금지:
+
+* `noted only`
+* `please check`
+* `arrange asap`
+  같은 불완전 지시 단독 사용
+
+### 4.5 Delivery Plan 규칙
+
+* 기본적으로 **D-1 16:00**까지 다음날 Delivery plan 공유.
+* 현장 수용공간 부족 시 **full delivery 금지**, 아래 3개 중 하나로 명시:
+
+  * `partial delivery`
+  * `hold at DSV`
+  * `deliver to MOSB`
+* Battery / indoor package / control cubicle은 **space confirmation 후 출고**.
+* partial delivery 시 반드시 기재:
+
+  * total package
+  * first lot qty
+  * balance qty
+  * target date for next lot
+
+### 4.6 자재 수령/불출 규칙
+
+* Unloading 완료 메시지는 아래 형식 고정:
+
+  * `Arrived`
+  * `Unloading start time`
+  * `Unloading complete time`
+  * `balance qty / issue`
+* MRR / DN / issuance 관련 문서는 **same day draft** 원칙.
+* handover dispute 발생 시 사진 + handover slip 상태 + 상대방 요구사항을 함께 공유.
+
+### 4.7 문서 체크리스트
+
+다음 케이스는 문서 없으면 `HOLD`:
+
+* Transformer oil
+
+  * Supplier Test Report
+  * MSDS
+  * Storage Tank Inspection Certificate
+* Heavy cargo / cable drum / special lifting
+
+  * drawing
+  * unloading method
+  * permit / FRA if applicable
+* 일반 delivery
+
+  * DN / PL / shipping docs / IRN / Test Report 중 적용 문서
+* HAZMAT / chemical / resin / paint
+
+  * MSDS 필수
+* Gate pass collection
+
+  * driver name
+  * vehicle no.
+  * collection point
+  * pass status
+
+### 4.8 Warehouse 관리 규칙
+
+* indoor full 또는 dome risk 발생 시 즉시:
+
+  * 현재 occupancy 상태
+  * 사진
+  * indoor/outdoor 가능 구분
+  * urgent/non-urgent 구분
+  * hold recommendation
+    를 함께 게시.
+* `indoor material`인데 indoor space가 없으면 **임의 outdoor 보관 금지**.
+  아래 중 하나 승인 후 진행:
+
+  1. temporary outdoor with cover
+  2. hold at DSV/MOSB
+  3. priority reshuffling in warehouse
+* rain forecast 또는 actual leak 발생 시 **covering status**를 1시간 내 공유.
+
+### 4.9 특수/야간 작업 규칙
+
+아래 작업은 일반 delivery와 분리하여 관리:
+
+* night unloading
+* cable drum heavy move
+* beam shifting
+* port-to-site transfer with Al Faris / OFCO / SPMT / cranes
+* road ban 영향 delivery
+
+필수 포함:
+
+* ETA / ETD
+* permit status
+* equipment readiness
+* standby resource
+* site receiving readiness
+* photo update every key milestone
+
+### 4.10 에스컬레이션 체인
+
+* SHU site issue 발생 시:
+
+  * **Site team(Nicole / Samuel / Roy)** → **국일 Kim / 상욱 / Shariff** → **DSV/Arvin/DaN** → **OFCO / Al Faris / relevant function**
+* 아래 경우 즉시 에스컬:
+
+  * warehouse full
+  * unloading impossible
+  * document mismatch
+  * special permit missing
+  * wrong qty / wrong package / replacement
+  * weather stop
+  * night operation manpower/equipment gap
+
+### 4.11 응답 SLA
+
+업무시간 08:00–20:00 기준:
+
+* `[URGENT]` 10분
+* `[ACTION]` 2시간
+* `[FYI]` 당일
+* 오프타임은 **URGENT만 escalation**
+
+SHU 전용 추가:
+
+* trailer arrival / unloading start / unloading finish는 **30분 내 status update**
+* warehouse risk 사진 요청 시 **2시간 내 회신**
+* IRN/Test Report 요청 건은 **same day follow-up status** 필수
+
+## 5) KPI & Monitoring
+
+| KPI                                     |          Target |
+| --------------------------------------- | --------------: |
+| D-1 16:00 Delivery Plan 제출율             |        ≥ 95.00% |
+| 도착 후 unloading start status 공유율         |         100.00% |
+| unloading 완료시간 공유율                      |         100.00% |
+| 문서완전성(IRN/Test Report/MSDS/DN 등)        |        ≥ 98.00% |
+| warehouse capacity risk 사전경보            | issue 발생 24h 이전 |
+| special/night unloading permit 누락       |           0.00건 |
+| wrong qty / wrong package / return case |       월 0~1건 이내 |
+| urgent issue first response             |           ≤ 10분 |
+
+## 6) SHU 전용 템플릿
+
+### A. Delivery Plan
+
+```markdown
+[ETA][ACTION] [SHU]/[ITEM]/[ETA]/[DELIVERY PLAN]
+
+- Item:
+- Qty/Package:
+- Delivery Mode:
+- ETA:
+- Receiving Location:
+- Space Status: Available / Limited / Full
+- Required Support: forklift/crane/permit/cover
+- Documents: DN / IRN / Test Report / MSDS / Gate pass
+- Owner:
+- Next Action:
+```
+
+### B. Unloading Update
+
+```markdown
+[FYI][ETA] [SHU]/[ITEM]/[UNLOADING]/[STATUS]
+
+- Trailer/Vehicle:
+- Arrived:
+- Unloading Start:
+- Unloading Finish:
+- Qty Received:
+- Balance:
+- Issue/Risk:
+- Photo: Attached
+```
+
+### C. Warehouse Risk
+
+```markdown
+[RISK][ACTION] [SHU]/[WAREHOUSE]/[SPACE]/[HOLD OR PARTIAL]
+
+- Area: Indoor / Dome / Outdoor
+- Current Status:
+- Risk:
+- Material Affected:
+- Recommended Action: Hold at DSV / Partial delivery / Reallocation
+- Required Decision By:
+```
+
+### D. Document Request
+
+```markdown
+[MANIFEST][ACTION] [SHU]/[DOC]/[REF]/[REQUEST]
+
+- Ref No:
+- Required Document:
+- Reason:
+- Required By:
+- Request To:
+- Impact if delayed:
+```
+
+## 7) Change Log
+
+* v1.0: 발췌 로그 기준 최초 초안
+* 핵심 반영사항:
+
+  * 2025-02-19 이후 **OT 요청 종료**
+  * warehouse full / indoor material / partial delivery 운영 반영
+  * heavy cargo / cable drum / port transfer 실작업 반영
+  * document completeness(IRN/Test Report/MSDS) 강화
+  * unloading status reporting 표준화
+
+## 8) 운영 판정
+
+* 이 그룹의 본질은 **단순 창고방이 아니라 SHU site logistics execution + exception control room**입니다.
+* 따라서 핵심 통제 포인트는 아래 4개입니다.
+
+  1. **Space**
+  2. **Document**
+  3. **Delivery timing**
+  4. **Receiving readiness**
+
+AMBER:
+
+* 제공 로그는 발췌본이라 **정확한 Top10 참여자/평균 응답지연/언어비율**은 미산정.
+* 전체 txt가 있으면 다음 4개를 추가 보정 가능:
+
+  * Top10 참여자
+  * 피크 시간대
+  * 평균 응답지연
+  * 키워드 빈도표
+
+원하시면 다음 단계로 바로 `MIR..Logistics`도 같은 형식으로 이어서 작성하겠습니다.

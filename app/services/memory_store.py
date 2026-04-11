@@ -18,6 +18,7 @@ from app.services.raw_archive_store import RawArchiveStore
 from app.services.schema_validator import SchemaValidator
 from app.utils.ids import make_memory_id
 from app.utils.integrity import sign_payload, verify_payload
+from app.utils.recent_memory_filter import prioritize_recent_memories
 from app.utils.sanitize import (
     reject_sensitive_label,
     sanitize_free_text_for_sensitivity,
@@ -28,6 +29,8 @@ from app.utils.time import now_tz
 
 
 class MemoryStore:
+    DERIVED_TAG_PREFIXES = ("role/", "topic/", "entity/", "project/")
+
     ROLE_TO_MEMORY_TYPE = {
         MemoryRole.decision: MemoryType.decision,
         MemoryRole.fact: MemoryType.project_fact,
@@ -155,6 +158,26 @@ class MemoryStore:
                 normalized_projects.insert(0, normalized_project)
         project_value = normalized_projects[0] if normalized_projects else None
         return project_value, normalized_projects
+
+    def _resolve_updated_projects(
+        self,
+        current_project: str | None,
+        current_projects: list[str],
+        patch_projects: list[str] | None,
+    ) -> tuple[str | None, list[str]]:
+        if patch_projects is None:
+            return self._resolve_projects(current_project, current_projects)
+        normalized_projects = self._normalize_list(patch_projects)
+        project_value = normalized_projects[0] if normalized_projects else None
+        return project_value, normalized_projects
+
+    def _strip_derived_tags(self, tags: list[str]) -> list[str]:
+        normalized_tags = self._normalize_tags(tags)
+        return [
+            tag
+            for tag in normalized_tags
+            if not tag.casefold().startswith(self.DERIVED_TAG_PREFIXES)
+        ]
 
     def _memory_document(self, rec: MemoryRecord) -> dict:
         document = {
@@ -373,9 +396,45 @@ class MemoryStore:
         }
 
     def recent(
-        self, limit: int = 10, memory_type: str | None = None, project: str | None = None
+        self,
+        limit: int = 10,
+        memory_type: str | None = None,
+        project: str | None = None,
+        offset: int = 0,
     ) -> dict:
-        rows = self.idx.recent(limit=limit, memory_type=memory_type, project=project)
+        safe_limit = max(limit, 1)
+        safe_offset = max(offset, 0)
+        required_results = safe_offset + safe_limit
+        # Default recent UX needs a broader lookback than one page because verification
+        # probes can dominate the newest few rows while business notes still exist nearby.
+        inspection_limit = max(required_results * 5, required_results + 20)
+        inspected_rows: list[dict] = []
+        raw_offset = 0
+        has_unseen_rows = False
+
+        while True:
+            rows = self.idx.recent(
+                limit=inspection_limit + 1,
+                memory_type=memory_type,
+                project=project,
+                offset=raw_offset,
+            )
+            has_unseen_rows = len(rows) > inspection_limit
+            batch = rows[:inspection_limit]
+            if not batch:
+                break
+            inspected_rows.extend(batch)
+            raw_offset += len(batch)
+            prioritized_rows = prioritize_recent_memories(inspected_rows)
+            business_count = sum(
+                1 for row in prioritized_rows if row["classification"] == "business"
+            )
+            if business_count >= required_results or not has_unseen_rows:
+                break
+
+        prioritized_rows = prioritize_recent_memories(inspected_rows)
+        visible_rows = prioritized_rows[safe_offset : safe_offset + safe_limit]
+        has_more = len(prioritized_rows) > safe_offset + safe_limit or has_unseen_rows
         return {
             "results": [
                 {
@@ -387,10 +446,18 @@ class MemoryStore:
                     "project": row["project"],
                     "projects": row["projects"],
                     "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
                     "path": row["path"],
+                    "classification": row["classification"],
+                    "classification_reasons": row["classification_reasons"],
                 }
-                for row in rows
-            ]
+                for row in visible_rows
+            ],
+            "limit": safe_limit,
+            "offset": safe_offset,
+            "has_more": has_more,
+            "next_offset": safe_offset + safe_limit if has_more else None,
+            "inspection_limit": raw_offset,
         }
 
     def update(self, patch: MemoryPatch) -> dict:
@@ -400,13 +467,28 @@ class MemoryStore:
 
         self._verify_existing_memory_integrity(current["path"], current.get("mcp_sig"))
         now = now_tz(self.timezone)
+        roles = self._resolve_roles(
+            current["type"],
+            patch.roles if patch.roles is not None else current.get("roles", []),
+        )
+        topics = self._normalize_list(
+            patch.topics if patch.topics is not None else current.get("topics", [])
+        )
+        entities = self._normalize_list(
+            patch.entities if patch.entities is not None else current.get("entities", [])
+        )
+        project, projects = self._resolve_updated_projects(
+            current["project"],
+            current.get("projects", []),
+            patch.projects,
+        )
+        base_tags = self._strip_derived_tags(
+            patch.tags if patch.tags is not None else current["tags"]
+        )
         updated = MemoryRecord(
             id=current["id"],
             memory_type=current["type"],
-            roles=self._resolve_roles(
-                current["type"],
-                patch.roles if patch.roles is not None else current.get("roles", []),
-            ),
+            roles=roles,
             title=sanitize_free_text_for_sensitivity(
                 "title",
                 patch.title,
@@ -423,36 +505,16 @@ class MemoryStore:
             else current["content"],
             source=current["source"],
             created_by="mcp-server",
-            project=self._resolve_projects(
-                current["project"],
-                patch.projects if patch.projects is not None else current.get("projects", []),
-            )[0],
-            topics=self._normalize_list(
-                patch.topics if patch.topics is not None else current.get("topics", [])
-            ),
-            entities=self._normalize_list(
-                patch.entities if patch.entities is not None else current.get("entities", [])
-            ),
-            projects=self._resolve_projects(
-                current["project"],
-                patch.projects if patch.projects is not None else current.get("projects", []),
-            )[1],
+            project=project,
+            topics=topics,
+            entities=entities,
+            projects=projects,
             tags=self._derive_namespaced_tags(
-                patch.tags if patch.tags is not None else current["tags"],
-                self._resolve_roles(
-                    current["type"],
-                    patch.roles if patch.roles is not None else current.get("roles", []),
-                ),
-                self._normalize_list(
-                    patch.topics if patch.topics is not None else current.get("topics", [])
-                ),
-                self._normalize_list(
-                    patch.entities if patch.entities is not None else current.get("entities", [])
-                ),
-                self._resolve_projects(
-                    current["project"],
-                    patch.projects if patch.projects is not None else current.get("projects", []),
-                )[1],
+                base_tags,
+                roles,
+                topics,
+                entities,
+                projects,
             ),
             raw_refs=self._normalize_list(
                 patch.raw_refs if patch.raw_refs is not None else current.get("raw_refs", [])

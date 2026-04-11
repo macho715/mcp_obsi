@@ -1,6 +1,10 @@
 # mcp_obsidian
 
-Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdown SSOT storage, SQLite JSON1+FTS5 search, and Railway-verified hosted profiles for Cursor, ChatGPT, and Claude.
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> `C:\Users\jichu\Downloads\valut`
+
+Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdown SSOT storage, SQLite JSON1+FTS5 search, and Railway-hosted profiles for Cursor, ChatGPT, and Claude.
 
 현재 이 저장소의 핵심은 다음이다.
 
@@ -10,7 +14,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - SearchPlan query DSL
 - `memory/YYYY/MM` write path + legacy compatibility
 - read-first, write-with-intent specialist profiles
-- Railway production recheck 완료
+- Railway production recheck is currently partial: local code is ahead of the deployed production surface
 
 ## Document Map
 
@@ -40,6 +44,8 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - [docs/VPS_COMMAND_SHEET.md](docs/VPS_COMMAND_SHEET.md): VPS에서 복붙 가능한 실행 명령 시트
 - [docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md](docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md): sibling `local-rag` cache/guard design 기록
 - [docs/superpowers/specs/2026-04-08-local-rag-retrieval-benchmark.md](docs/superpowers/specs/2026-04-08-local-rag-retrieval-benchmark.md): local-rag lexical retrieval benchmark 기록
+- [docs/superpowers/specs/2026-04-09-kg-visualization-design.md](docs/superpowers/specs/2026-04-09-kg-visualization-design.md): 지식 그래프(Knowledge Graph) 대시보드 시각화 아키텍처 설계 명세서
+- [docs/MASTER_LOGISTICS_PLAN.md](docs/MASTER_LOGISTICS_PLAN.md): UAE HVDC Logistics WhatsApp 지식화 및 지식 그래프 통합 마스터 플랜
 - [docs/WRITE_TOOL_GATE.md](docs/WRITE_TOOL_GATE.md): preview write gate와 rollback 기준
 - [docs/reference/](docs/reference): 제안/참고 문서 보관 영역
 - [docs/history/](docs/history): 점검/시점 기록 보관 영역
@@ -53,13 +59,48 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 ## Current State (English Summary)
 
 **2026-04-09 Integration Updates:**
-- standalone-package now features RAG keyword auto-detection: messages containing Korean keywords (근거/요약/문서/통관/dem.det/hs/리스크) are automatically routed to local-rag route
-- Memory enrichment: when RAG keyword detected, memory MCP is queried and KB context is injected as system message into Ollama prompt
-- Unified health: `/api/ai/health` returns `localIntelligence` section with `memory` + `localRag` sub-statuses
-- Default memory MCP mount changed to `/chatgpt-mcp` (read-only, no bearer required)
+- standalone-package now features RAG keyword auto-detection: messages containing Korean keywords (근거/요약/문서/통관/dem.det/hs/리스크) are automatically routed to the local-rag path
+- Memory enrichment: when a RAG keyword is detected, memory MCP is queried and KB context is injected as a system message into the Ollama prompt
+- Unified health: `/api/ai/health` returns a `localIntelligence` section with `memory` + `localRag` sub-statuses
+- Memory bridge routing is now explicit: read-only browsing uses `/chatgpt-mcp`, while write-capable flows use `/chatgpt-mcp-write`
 - Memory search query optimized to 80 chars for better Korean text hit rate
-- `routeHint=local` and `routeHint=copilot` parameters supported
+- `routeHint=local` and `routeHint=copilot` parameters are supported
 - local-rag retrieval working: 12 documents indexed, lexical search operational
+
+### 2026-04-09 Knowledge Graph & WhatsApp Integration Updates (상세)
+
+최근 업데이트를 통해 UAE HVDC 물류 관리를 위한 **WhatsApp 지식화 자동화 파이프라인** 및 **Knowledge Graph 시각화 대시보드**가 통합되었습니다. 주요 파이프라인의 구성은 다음과 같습니다.
+
+#### 1. WhatsApp Extraction Pipeline (지식 추출)
+- **대상 채널:** Abu Dhabi Logistics, DSV Delivery, Project Lightning, Jopetwil 71 Group, MIR Logistics, SHU Logistics (총 6개 주요 물류 채널)
+- **작업 흐름:** 
+  - 원본 채팅 로그 파일 파싱 및 이벤트 블록 생성 (`vault/raw/articles/`)
+  - 로컬 LLM(Gemma 4)의 지연 문제(Latency)를 해결하기 위해 **병렬 서브에이전트(Parallel Subagents)**를 활용하여 개별 이벤트 분석 (각 채널당 추출 처리량을 `MAX_TO_PROCESS = 10`으로 상향하여 병렬 위임 테스트 범위 확대)
+  - 분석 결과 및 Lessons Learned를 Obsidian Wiki 형식(`vault/wiki/analyses/*.md`)으로 자동 저장 (개인정보 마스킹 포함)
+
+#### 2. Ontology-based Knowledge Graph (지식 그래프 빌드)
+- **`scripts/build_knowledge_graph.py`:**
+  - `HVDC STATUS.xlsx`의 선적/오더/벤더/선박/허브/현장(Site) 데이터를 파싱하여 기본 그래프 생성
+  - Wiki 분석 노트(`vault/wiki/analyses/*.md`)의 YAML Frontmatter(Tags, Slug 등)를 파싱하여 `LogisticsIssue`(물류 지연/사고) 엔티티 추가
+  - `occursAt`, `relatedTo` 등의 관계(Edge)를 통해 물류 지연 이슈와 물리적 노드를 연결하여 통합 시맨틱 그래프(`vault/knowledge_graph.ttl`, 18,000+ Triples) 생성
+- **`scripts/test_kg_queries.py`:** SPARQL을 활용한 그래프 데이터 질의 테스트 스크립트
+
+#### 3. KG Visualization Dashboard (`kg-dashboard`)
+- **Phase 1 In-Memory Browser App:** React(Vite) + Cytoscape.js 기반의 고성능 시각화 대시보드
+- **데이터 변환 (`scripts/ttl_to_json.py`):** 무거운 TTL/RDF 데이터를 프론트엔드용 JSON(`nodes.json`, `edges.json`)으로 변환
+- **주요 UX/UI 기능:**
+  - **Color Coding:** 엔티티 타입별 명시적 색상 (예: `LogisticsIssue`=Red, `Site/Warehouse`=Green)
+  - **4가지 View Mode 지원 (동적 렌더링):**
+    - **요약 뷰 (Summary View):** 연결성(Degree)이 200 이상(`HUB_THRESHOLD`)인 노드를 허브로 취급하여 크게 표시하고, 이슈와 핵심 인프라 위주로 그래프를 축소하여 전체 관계 표시
+    - **이슈 중심 뷰 (Issues View):** LogisticsIssue 노드와 그에 연결된 핵심 엣지만 남겨 문제 흐름에 집중
+    - **검색 뷰 (Search View):** 검색어 매칭 노드 및 가까운 이웃만 동심원(Concentric) 레이아웃으로 표시해 맥락 제공 (지연 검색 `deferredSearch` 적용)
+    - **선택 노드 뷰 (Ego View):** 특정 노드 클릭 시 주변 1~2 Hop만 BFS 레이아웃으로 전개하여 허브 노드의 상세 탐색 지원
+  - **허브(Hub) 시각적 강조:** 연결이 많은 허브 노드(`degree >= hubThreshold`)는 노드 크기 확대 및 굵은 폰트를 적용하여 한눈에 식별 가능하도록 개선
+  - **사이드바 및 통합 인스펙터:** 좌측 사이드바(`GraphSidebar`)에서 메트릭스(가시 노드/엣지, 허브/이슈 카운트)와 허브 서머리를 제공하며, 우측 패널(`NodeInspector`)에서 개별 노드의 상세 정보 및 원본 Obsidian 마크다운 노트를 여는 URI 다이렉트 링크 지원
+- **트러블슈팅:** 거대 그래프 렌더링 시 발생하는 `react-cytoscapejs` 호환성 문제를 해결하기 위해 React Strict Mode(`main.tsx`) 해제 적용
+
+#### 4. Vault 관리 유틸리티
+- **`scripts/consolidate_vaults.py`:** 분산된 다수의 테스트용 Vault 폴더(`vault`, `vault-test`, `vault-test2` 등)를 수정 시간(mtime) 기준으로 최신 파일을 식별하여 단일 타겟 디렉토리(`C:\Users\jichu\Downloads\valut`)로 병합하는 자동화 스크립트
 
 ---
 
@@ -76,18 +117,20 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - Railway production split dry run도 완료된 상태다.
 - Railway production volume backup/restore drill도 완료된 상태다.
 - Railway generated production domain이 현재 공식 interim production endpoint로 채택된 상태다.
+- current session 기준 local code는 resources/prompts와 wiki-native write tools를 노출하지만, production deployment는 아직 그 surface를 따라오지 못했다.
 - `docs/HMAC_PHASE_2.md`에 optional signed-write contract가 정리돼 있다. 현재 루트 runtime surface에서는 adjacent contract 문서로 유지한다.
 - local direct save와 `production -> local vault` pull sync를 병행할 수 있게 정리한 상태다.
-- ChatGPT용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write`가 배포된 상태다.
-- Claude용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/claude-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/claude-mcp-write`가 배포된 상태다.
+- ChatGPT용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write` endpoint는 현재도 살아 있다.
+- Claude용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/claude-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/claude-mcp-write` endpoint는 현재도 살아 있다.
+- 다만 2026-04-11 current session 기준 production write surface는 아직 `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`를 노출하지 않는다.
 - Cursor는 이제 repo의 project-local `.cursor/mcp.json` 기준으로 local/production을 함께 사용한다.
 - 현재 운영 결정은 `Railway = production path`, `VPS + reverse proxy = alternate self-managed reference`다.
 - proposal/reference 성격의 루트 문서는 `docs/reference/`와 `docs/history/`로 정리된 상태를 기준으로 삼는다.
 - 이 저장소의 직접 runtime 범위는 `app/main.py`가 만드는 FastAPI + FastMCP MCP server다.
-- `local-rag`(`GET /health`, `POST /api/internal/ai/chat-local`, `GET /api/internal/ai/chat-local/ready`)와 `standalone-package`(`MYAGENT_LOCAL_RAG_TOKEN`, route-aware `/api/ai/health`, default `/chatgpt-mcp-write` memory bridge)는 sibling repo runtime이며, 여기서는 boundary와 companion docs만 추적한다.
+- `local-rag`(`GET /health`, `POST /api/internal/ai/chat-local`, `GET /api/internal/ai/chat-local/ready`)와 `standalone-package`(`MYAGENT_LOCAL_RAG_TOKEN`, route-aware `/api/ai/health`, read-only `/chatgpt-mcp` + write-capable `/chatgpt-mcp-write` memory bridge)는 sibling repo runtime이며, 여기서는 boundary와 companion docs만 추적한다.
 - 현재 작업 트리에는 `local-rag/`와 `myagent-copilot-kit/standalone-package/` 로컬 사본이 함께 존재한다. 다만 이 디렉터리들은 루트 repo의 canonical tracked runtime이라고 가정하지 않고, companion reference + local verification 대상으로만 취급한다.
 - current local `127.0.0.1:3010` standalone runtime은 화면과 `/api/ai/health`는 응답하고, `/api/memory/save` + `/api/memory/fetch`도 현재 세션에서 동작했다. 다만 memory bridge health는 아직 green이 아니다. current spot-check에서는 `memoryOk: false`, `/api/memory/health` `503`, local-forced `/api/ai/chat` `503 LOCAL_RUNNER_FAILED`가 관찰됐다.
-- current local `3010` runtime은 write-capable memory tools(`save_memory`, `get_memory`, `update_memory`)까지 노출한다. current companion source도 기본 memory bridge를 `/chatgpt-mcp-write`로 두고 `MYAGENT_MEMORY_TOKEN`을 읽는다. 남은 mismatch는 write-capable mount를 `mcp-readonly` probe로 검사하는 health semantics와 local-rag/Ollama availability다.
+- current local `3010` runtime은 write-capable memory tools(`save_memory`, `get_memory`, `update_memory`)까지 노출한다. current companion source는 read-only browsing과 write-capable bridge를 분리하고 `MYAGENT_MEMORY_TOKEN`을 읽는다. 남은 mismatch는 write-capable mount를 `mcp-readonly` probe로 검사하는 health semantics와 local-rag/Ollama availability다.
 - **2026-04-07:** Gemma 4 + Ollama 기반 KB 레이어가 추가됐다 (`vault/wiki/`, `scripts/ollama_kb.py`, 3개 Cursor Skills).
 - **2026-04-07:** `gemma4:e4b` + `gemma4:e2b` 두 모델이 로컬에 설치됐다.
 - **2026-04-07:** obsidian-ingest / obsidian-query / obsidian-lint 스킬 end-to-end 검증 완료.
@@ -105,6 +148,13 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `.venv\Scripts\python.exe -m ruff format --check .` → **fail** (`3` files would be reformatted, `58` files already formatted)
 - `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp` ✅
 
+### 2026-04-11 current code vs production deployment check
+
+- current local code `/mcp` tool set → `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- current local `/chatgpt-mcp` and `/claude-mcp` mounts expose resources and prompts in addition to the read-only tool surface
+- current-session `verify_specialist_mcp_write.py` against production `/chatgpt-mcp-write/` failed because production still exposed only `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`
+- current-session round script stopped at the ChatGPT specialist write step, so the Claude specialist write step was not reached in that run
+
 ### 2026-04-08 production specialist route recheck
 
 - Railway production `/chatgpt-mcp` tool set → `search`, `fetch`, `list_recent_memories`
@@ -112,7 +162,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - generic recent query fallback
   - `search("2026 03 memory memo")` → recent browse 결과와 같은 5건 반환
   - 첫 결과 `fetch(id)` → 본문 반환 확인
-- note: 위 결과는 current Codex session에서 production `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`에 직접 붙어서 확인했다
+- note: 위 결과는 2026-04-08 current Codex session에서 production `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`에 직접 붙어서 확인했다. 2026-04-11 current session에서는 production `/chatgpt-mcp-write`가 최신 wiki-native tools를 아직 노출하지 않는다는 점을 다시 확인했다.
 
 ### 2026-04-08 companion ingest + local-rag + standalone 검증 결과 (previous temp runtime evidence)
 
@@ -157,6 +207,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `pytest -q` → **65 passed, 0 failed** ✅
 - `from app.main import app` → import OK ✅
 - MCP tool surface: 8개 (`search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`) ✅
+- current code 기준으로 read-side `resources/prompts` surface와 write-side wiki-native tools (`sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`)가 추가됐다. targeted local pytest/ruff/import 검증은 통과했지만, current-session production recheck에서는 `/chatgpt-mcp-write`가 아직 새 wiki-native tools를 따라오지 못했다.
 - Auth: `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` bearer 적용; `/chatgpt-mcp`, `/claude-mcp` read-only 무인증 (네트워크 레이어 차단 권장)
 - `vault/raw/`, `vault/mcp_raw/`, `vault/wiki/`, `vault/memory/` 4계층 정상 ✅
 - `.cursor/skills/obsidian-{ingest,query,lint}/SKILL.md` YAML frontmatter 수정 완료 ✅
@@ -221,6 +272,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - ChatGPT authenticated write route `/chatgpt-mcp-write` -> pass
 - Claude hosted route `/claude-mcp` -> pass
 - Claude authenticated write route `/claude-mcp-write` -> pass
+- note: 위 specialist write pass는 2026-03-28 historical verification 결과다. 2026-04-11 current session에서는 production `/chatgpt-mcp-write`가 아직 예전 6-tool write profile에 머물러 있는 것이 다시 확인됐다.
 
 ## Hybrid Layers
 
@@ -251,9 +303,9 @@ flowchart LR
     OpenAI --> GMCP["FastAPI /chatgpt-mcp"]
     Anthropic --> CMCP
 
-    MCP --> Tools["8-tool main MCP surface"]
-    GMCP --> GTools["read-only search/fetch/recent"]
-    CMCP --> CTools["read-only search/fetch/recent"]
+    MCP --> Tools["13-tool main MCP surface"]
+    GMCP --> GTools["read-only search/fetch/recent + resources/prompts"]
+    CMCP --> CTools["read-only search/fetch/recent + resources/prompts"]
     Tools --> MemoryStore[MemoryStore]
     GTools --> MemoryStore
     CTools --> MemoryStore
@@ -279,7 +331,7 @@ The `local-rag` and `standalone-package` are sibling repositories. This repo own
 - RAG keyword auto-detection: 근거/요약/문서/통관/etc → local-rag route
 - Memory enrichment: KB context injection when RAG keyword detected
 - Local LLM: `gemma4:e4b` via local-rag (port 8010)
-- Memory MCP: reads from mcp_obsidian (port 8000) `/chatgpt-mcp`
+- Memory MCP: reads from mcp_obsidian (port 8000) with read-only `/chatgpt-mcp` and write-capable `/chatgpt-mcp-write`
 - Health: `localIntelligence.ok = memoryOk && localRagOk`
 
 **local-rag** (`..\local-rag`):
@@ -401,6 +453,9 @@ cd <repo_root>   # e.g. C:\Users\<YOUR_USER>\Downloads\mcp_obsidian
 .\.venv\Scripts\python scripts/test_phase2_ingest.py   # ingest
 .\.venv\Scripts\python scripts/test_phase3_query.py    # query
 .\.venv\Scripts\python scripts/test_phase4_lint.py     # lint
+
+# 4. Knowledge Graph 빌드 (HVDC STATUS.xlsx + Wiki analyses)
+.\.venv\Scripts\python scripts/build_knowledge_graph.py
 ```
 
 Cursor에서 스킬로 사용:

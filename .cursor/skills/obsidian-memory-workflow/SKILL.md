@@ -2,6 +2,11 @@
 name: obsidian-memory-workflow
 description: Work safely with the Obsidian-backed memory model. Use when implementing markdown writes, daily note appends, or SQLite synchronization.
 ---
+
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> C:\Users\jichu\Downloads\valut
+
 # Obsidian Memory Workflow
 
 ## When to Use

@@ -1,0 +1,6 @@
+fix(standalone): align memory bridge with MCP contract (Phase D blocker fixes)
+
+- server.ts: default memoryMcpPath /chatgpt-mcp-write (not read-only /chatgpt-mcp)
+- server.ts: accept MYAGENT_MEMORY_TOKEN as bearer token alias
+- mcp-memory-client.ts: add list_recent_memories to allowedTools probe set
+- Runtime verified: POST /api/memory/save → 200 OK, MEM-20260408-220830-A83C4E saved

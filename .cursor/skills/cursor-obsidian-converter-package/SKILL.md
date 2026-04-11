@@ -9,6 +9,11 @@ description: >-
   included files before converting chats to vault notes.
 ---
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> C:\Users\jichu\Downloads\valut
+
+
 # Cursor Obsidian converter package
 
 ## Bundle root

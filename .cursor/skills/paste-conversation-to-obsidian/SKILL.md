@@ -18,6 +18,11 @@ metadata:
     - obsidian-memory-workflow
 ---
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> C:\Users\jichu\Downloads\valut
+
+
 # Paste conversation → Obsidian (agent pipeline)
 
 Orchestrate subagents and MCP writes so a **pasted conversation** becomes **raw archive + durable memory notes** on disk, aligned with this repo’s layout (see [`AGENTS.md`](../../../AGENTS.md), [`obsidian-output-contract.md`](../obsidian-conversation-to-memory/references/obsidian-output-contract.md)).

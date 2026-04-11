@@ -1,0 +1,82 @@
+{
+  "generated": "2026-04-09",
+  "total_notes": 12,
+  "findings": [
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "missing_field:created",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "broken_wikilink:내부 링크",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "broken_wikilink:wiki/...",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses\\hvdc-logistics-ontology-guide-v2-round2-140323.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses\\hvdc-logistics-ontology-guide.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\concepts\\karpathy-llm-wiki-operation-round1-140004.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\entities\\gemma-4-llm-series.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\entities\\gemma-4-llm-spec.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\entities\\gemma-4-llm.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\entities\\gemma-4-model-architecture-overview-round3-14065.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses\\karpathy-llm-wiki-query-result.md",
+      "issue": "evidence_gap",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "evidence_gap",
+      "auto_fix": false
+    }
+  ],
+  "duplicates": [
+    [
+      0,
+      1,
+      "두 노트의 제목과 핵심 주제가 동일하며, 서로 다른 slug와 태그 정보만 존재한다."
+    ]
+  ],
+  "contradictions": [],
+  "stale_notes": [],
+  "quality_flags": [],
+  "auto_fixable": 0
+}
