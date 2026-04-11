@@ -7,12 +7,20 @@ flowchart LR
     Read --> Search["search"]
     Read --> Recent["list_recent_memories"]
     Read --> Fetch["fetch"]
+    Read --> SearchWiki["search_wiki"]
+    Read --> FetchWiki["fetch_wiki"]
     Write --> Recent
+    Write --> Search
+    Write --> Fetch
+    Write --> SearchWiki
+    Write --> FetchWiki
     Write --> Save["save_memory"]
     Write --> Get["get_memory"]
     Write --> Update["update_memory"]
     Search --> Vault["Obsidian memory store"]
     Fetch --> Vault
+    SearchWiki --> Wiki["wiki/analyses"]
+    FetchWiki --> Wiki
     Save --> Vault
     Get --> Vault
     Update --> Vault
@@ -36,6 +44,8 @@ flowchart LR
 - `search`
 - `list_recent_memories`
 - `fetch`
+- `search_wiki`
+- `fetch_wiki`
 - resources
   - `resource://wiki/index`
   - `resource://wiki/log/recent`
@@ -59,6 +69,8 @@ flowchart LR
 - `search`
 - `list_recent_memories`
 - `fetch`
+- `search_wiki`
+- `fetch_wiki`
 - `save_memory`
 - `get_memory`
 - `update_memory`
@@ -102,8 +114,10 @@ endpoint:
     - deployment에 따라 host/origin allowlist는 적용될 수 있음
   - verification:
     - `/chatgpt-healthz` -> `200` (liveness only)
-    - direct route/tool probe: `search`, `list_recent_memories`, `fetch`
-    - no-auth read-only verification passed
+    - `python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/` -> pass
+    - `python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /chatgpt-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit` -> pass
+    - current-session read-only surface: `search`, `list_recent_memories`, `fetch`, `search_wiki`, `fetch_wiki`
+    - current-session read-only discoverability: `resources = 5`, `prompts = 4`
 - write-capable sibling:
   - `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write`
   - auth:
@@ -111,7 +125,8 @@ endpoint:
   - verification:
     - `/chatgpt-write-healthz` -> `200` (liveness only)
     - unauthenticated route probe -> `401`
-    - authenticated direct tool verification passed
+    - `python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write/ --token <TOKEN> --profile chatgpt` -> pass
+    - current-session write surface: 13 tools including `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
 
 ## App Creation Fields
 
@@ -122,7 +137,7 @@ endpoint:
 - authentication:
   - `No Authentication`
 - description:
-  - `Obsidian-backed read-only memory search, recent listing, and fetch for ChatGPT`
+  - `Obsidian-backed read-only memory and wiki-analysis search, recent listing, and fetch for ChatGPT`
 
 ## Notes
 
@@ -133,10 +148,14 @@ endpoint:
 - 현재 repo는 ChatGPT write route를 bearer-gated sibling으로 먼저 구현했다.
 - 따라서 ChatGPT app 안에서 실제 write까지 쓰려면 다음 단계에서 mixed-auth 또는 OAuth metadata/runtime을 추가해야 한다.
 - standard `search` / `fetch` naming을 유지하고, recent/list 성격 질문은 `list_recent_memories`로 처리한다.
+- `search_wiki` / `fetch_wiki`는 `wiki/analyses`를 위한 read-only 보조 surface다. unified search는 MCP public tool이 아니라 standalone orchestration layer에서만 합쳐진다.
+- current-session production PASS evidence는 `docs/MCP_RUNTIME_EVIDENCE.md`에 시간순으로 유지한다.
 
-## Verification Command
+## Verification Commands
 
 ```powershell
+python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/
+python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /chatgpt-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit
 python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write/ --token <TOKEN> --profile chatgpt
 ```
 

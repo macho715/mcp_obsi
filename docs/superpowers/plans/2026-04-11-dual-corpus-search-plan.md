@@ -4,13 +4,20 @@
 
 **Goal:** Add `wiki/analyses` read-only search and fetch support without changing canonical memory semantics, then expose a unified search UX through the standalone orchestration layer.
 
-**Architecture:** Keep MCP contracts split by corpus. `app/` gains `search_wiki` and `fetch_wiki` as explicit read-only tools alongside existing memory tools. `myagent-copilot-kit/standalone-package/` performs fan-out, score normalization, dedupe, and click-route branching so the user sees one search experience while fetch stays source-specific.
+**Architecture:** Keep MCP contracts split by corpus. `app/` gains `search_wiki` and `fetch_wiki` as explicit read-only tools alongside existing memory tools. `myagent-copilot-kit/standalone-package/` performs fan-out, score normalization, dedupe, and click-route branching so the user sees one search experience while fetch stays source-specific. This plan intentionally spans two targets in the same workspace: repo-owned MCP runtime under `app/` and the workspace-local companion runtime under `myagent-copilot-kit/standalone-package/`; the companion edits are explicit scope, not accidental ownership expansion.
 
 **Tech Stack:** FastAPI, FastMCP, Python services/tests with pytest, TypeScript + Express + node:test in `standalone-package`
 
 ---
 
 ## File Structure
+
+## Execution Boundary
+
+- `app/`, `tests/`, `scripts/`, and root/docs changes belong to the MCP server contract owned by this repo.
+- `myagent-copilot-kit/standalone-package/` changes are part of this approved implementation scope because unified search is intentionally defined as an orchestration or UI-layer concern.
+- Do not expand beyond the listed companion files in this plan without a new approval pass.
+- Do not treat the companion runtime as a reason to rewrite existing `memory` MCP semantics. MCP remains corpus-split; orchestration is the only merge layer.
 
 ### Create
 
@@ -390,7 +397,7 @@ git add app/mcp_server.py app/chatgpt_mcp_server.py app/claude_mcp_server.py tes
 git commit -m "feat: expose wiki read tools on MCP routes"
 ```
 
-## Task 3: Update Verification Scripts for the New Read-Only Surface
+## Task 3: Update Local Verification Scripts for the New Read-Only Surface
 
 **Files:**
 - Modify: `scripts/verify_chatgpt_mcp_readonly.py`
@@ -425,6 +432,11 @@ Run:
 
 Expected: FAIL on unexpected tool list if Task 2 is not complete yet.
 
+Local-only note:
+
+- This task updates local route verification expectations only.
+- Do not change production expected outcomes here. Deployed production may still lag the local code surface until redeploy.
+
 - [ ] **Step 3: Implement the final verification updates**
 
 ```python
@@ -454,6 +466,8 @@ Run:
 ```
 
 Expected: PASS locally with the expanded read-only tool set.
+
+Do not interpret this as a production pass. This is only the local contract gate.
 
 - [ ] **Step 5: Commit**
 
@@ -824,7 +838,21 @@ Manual flow:
 5. Click wiki hit and confirm wiki fetch path
 6. Confirm badges remain visible
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Run the post-redeploy production gate**
+
+Run only after the updated code has been deployed:
+
+```powershell
+.venv\Scripts\python.exe scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/
+.venv\Scripts\python.exe scripts\verify_claude_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp/
+```
+
+Expected:
+
+- PASS only after the production deployment exposes `search_wiki` and `fetch_wiki`
+- if production still returns the old tool list, stop here and treat it as deployment lag, not implementation failure
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add README.md SYSTEM_ARCHITECTURE.md docs/CHATGPT_MCP.md docs/CLAUDE_MCP.md changelog.md

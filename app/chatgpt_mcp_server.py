@@ -11,6 +11,7 @@ from app.models import MemoryCreate, MemoryPatch
 from app.prompts_server import register_prompts
 from app.resources_server import register_resources
 from app.services.memory_store import MemoryStore
+from app.services.wiki_search_service import WikiSearchService
 from app.utils.specialist_readonly import specialist_search_hits
 from app.wiki_tools import register_wiki_tools
 
@@ -83,6 +84,7 @@ def create_chatgpt_mcp_server(store: MemoryStore, include_write_tools: bool = Fa
         streamable_http_path="/",
         transport_security=transport_security,
     )
+    wiki_search = WikiSearchService(store.vault_path)
 
     @mcp.tool(
         name="search",
@@ -140,6 +142,44 @@ def create_chatgpt_mcp_server(store: MemoryStore, include_write_tools: bool = Fa
             ),
             ensure_ascii=False,
         )
+
+    @mcp.tool(
+        name="search_wiki",
+        title="Search wiki analyses",
+        description=(
+            "Use this when ChatGPT needs compiled wiki notes from wiki/analyses without "
+            "changing canonical memory search behavior."
+        ),
+        annotations=_readonly_annotations(),
+        structured_output=False,
+    )
+    async def search_wiki(query: str, path_prefix: str = "wiki/analyses", limit: int = 8) -> str:
+        return json.dumps(
+            wiki_search.search(query=query, path_prefix=path_prefix, limit=limit),
+            ensure_ascii=False,
+        )
+
+    @mcp.tool(
+        name="fetch_wiki",
+        title="Fetch wiki note",
+        description=(
+            "Use this when ChatGPT needs the full body of a wiki note by path or slug."
+        ),
+        annotations=_readonly_annotations(),
+        structured_output=False,
+    )
+    async def fetch_wiki(
+        path: str | None = None,
+        slug: str | None = None,
+        include_frontmatter: bool = True,
+        include_body: bool = True,
+    ) -> str:
+        payload = wiki_search.fetch(path=path, slug=slug)
+        if not include_frontmatter:
+            payload["frontmatter"] = None
+        if not include_body:
+            payload["body"] = ""
+        return json.dumps(payload, ensure_ascii=False)
 
     if include_write_tools:
 

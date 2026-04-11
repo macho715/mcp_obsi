@@ -66,7 +66,7 @@ async def resolve_expected_memory(
         return {"id": None, "title": expected_title}
 
     headers = {
-        "Accept": "text/event-stream",
+        "Accept": "application/json, text/event-stream",
     }
     if token:
         headers["Authorization"] = token if token.startswith("Bearer ") else f"Bearer {token}"
@@ -89,7 +89,7 @@ async def resolve_expected_memory(
 
 async def run_checks(server_url: str, expected_title: str | None, token: str | None) -> dict:
     normalized_url = server_url.rstrip("/") + "/"
-    headers = {"Accept": "text/event-stream"}
+    headers = {"Accept": "application/json, text/event-stream"}
     expected_memory = await resolve_expected_memory(server_url, token, expected_title)
     resolved_title = str(expected_memory["title"])
 
@@ -100,7 +100,13 @@ async def run_checks(server_url: str, expected_title: str | None, token: str | N
                 await session.initialize()
                 tools = await session.list_tools()
                 tool_names = [tool.name for tool in tools.tools]
-                if tool_names != ["search", "fetch", "list_recent_memories"]:
+                if tool_names != [
+                    "search",
+                    "fetch",
+                    "list_recent_memories",
+                    "search_wiki",
+                    "fetch_wiki",
+                ]:
                     raise RuntimeError(f"unexpected tool set: {tool_names}")
 
                 recent_result = await session.call_tool("list_recent_memories", {"limit": 5})
@@ -129,12 +135,33 @@ async def run_checks(server_url: str, expected_title: str | None, token: str | N
                 if fetch_data.get("id") != memory_id:
                     raise RuntimeError("fetch returned wrong id")
 
+                wiki_search_result = await session.call_tool(
+                    "search_wiki",
+                    {
+                        "query": resolved_title,
+                        "path_prefix": "wiki/analyses",
+                        "limit": 3,
+                    },
+                )
+                wiki_search_data = parse_tool_payload(wiki_search_result)
+                wiki_results = result_items(wiki_search_data)
+                wiki_fetch_data = None
+                if wiki_results:
+                    first = wiki_results[0]
+                    wiki_fetch_result = await session.call_tool(
+                        "fetch_wiki",
+                        {"path": str(first["path"]).removesuffix(".md")},
+                    )
+                    wiki_fetch_data = parse_tool_payload(wiki_fetch_result)
+
                 return {
                     "resolved_title": resolved_title,
                     "tools": tool_names,
                     "recent": recent_data,
                     "search": search_data,
                     "fetch": fetch_data,
+                    "wiki_search": wiki_search_data,
+                    "wiki_fetch": wiki_fetch_data,
                 }
 
 

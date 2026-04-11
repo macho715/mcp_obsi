@@ -5,6 +5,7 @@ from app.models import MemoryCreate, MemoryPatch, RawConversationCreate
 from app.prompts_server import register_prompts
 from app.resources_server import register_resources
 from app.services.memory_store import MemoryStore
+from app.services.wiki_search_service import WikiSearchService
 from app.wiki_tools import register_wiki_tools
 
 try:
@@ -78,6 +79,7 @@ def create_mcp_server(store: MemoryStore):
         streamable_http_path="/",
         transport_security=transport_security,
     )
+    wiki_search = WikiSearchService(store.vault_path)
 
     @mcp.tool()
     async def search_memory(
@@ -248,6 +250,41 @@ def create_mcp_server(store: MemoryStore):
     async def fetch(id: str) -> dict:
         item = store.get(id)
         return build_fetch_wrapper_response(id, item)
+
+    @mcp.tool()
+    async def search_wiki(
+        query: str,
+        path_prefix: str = "wiki/analyses",
+        limit: int = 8,
+        tags: list[str] | None = None,
+        include_snippets: bool = True,
+    ) -> dict:
+        result = wiki_search.search(query=query, path_prefix=path_prefix, limit=limit)
+        if tags:
+            wanted = {tag.casefold() for tag in tags}
+            result["results"] = [
+                item
+                for item in result["results"]
+                if wanted.intersection(tag.casefold() for tag in item.get("tags", []))
+            ]
+        if not include_snippets:
+            for item in result["results"]:
+                item["snippet"] = None
+        return result
+
+    @mcp.tool()
+    async def fetch_wiki(
+        path: str | None = None,
+        slug: str | None = None,
+        include_frontmatter: bool = True,
+        include_body: bool = True,
+    ) -> dict:
+        payload = wiki_search.fetch(path=path, slug=slug)
+        if not include_frontmatter:
+            payload["frontmatter"] = None
+        if not include_body:
+            payload["body"] = ""
+        return payload
 
     register_resources(mcp, store)
     register_prompts(mcp, store)

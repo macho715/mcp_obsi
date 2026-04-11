@@ -53,6 +53,38 @@ Cursor에 **별도의 “Local MCP” 토글이나 내장 서버는 없습니다
 5. **Cursor**  
    프로젝트를 이 레포 루트로 연 뒤 **Settings → MCP** 에서 `obsidian-memory-local` 상태 확인. 환경 변수 바꿨으면 Cursor **재시작**.
 
+## 현재 local route split
+
+현재 코드 기준으로 local runtime은 main `/mcp` 외에도 specialist route를 함께 가진다.
+
+- main Cursor profile:
+  - `http://127.0.0.1:8000/mcp`
+  - repo-local `.cursor/mcp.json`의 `obsidian-memory-local`이 이 경로를 사용한다.
+  - current code 기준 main `/mcp` surface는 15 tools다.
+    - `search_memory`
+    - `save_memory`
+    - `get_memory`
+    - `list_recent_memories`
+    - `update_memory`
+    - `archive_raw`
+    - `search`
+    - `fetch`
+    - `search_wiki`
+    - `fetch_wiki`
+    - `sync_wiki_index`
+    - `append_wiki_log`
+    - `write_wiki_page`
+    - `lint_wiki`
+    - `reconcile_conflict`
+- specialist read-only routes:
+  - `http://127.0.0.1:8000/chatgpt-mcp`
+  - `http://127.0.0.1:8000/claude-mcp`
+  - current code 기준 `search`, `list_recent_memories`, `fetch`, `search_wiki`, `fetch_wiki` + `resources/prompts`
+- specialist write-capable sibling routes:
+  - `http://127.0.0.1:8000/chatgpt-mcp-write`
+  - `http://127.0.0.1:8000/claude-mcp-write`
+  - current code 기준 13-tool authenticated write surface
+
 ## 빠른 검증
 
 ```powershell
@@ -61,7 +93,17 @@ Invoke-WebRequest http://127.0.0.1:8000/healthz -UseBasicParsing
 
 # Cursor 설정·환경·로컬/프로덕션 헬스 한 번에
 powershell -ExecutionPolicy Bypass -File .\scripts\check_cursor_mcp_status.ps1
+
+# local specialist read-only routes
+python scripts\verify_chatgpt_mcp_readonly.py --server-url http://127.0.0.1:8000/chatgpt-mcp/
+python scripts\verify_claude_mcp_readonly.py --server-url http://127.0.0.1:8000/claude-mcp/
+python scripts\mcp_local_tool_smoke.py --base-url http://127.0.0.1:8000 --path /chatgpt-mcp/
+python scripts\mcp_local_tool_smoke.py --base-url http://127.0.0.1:8000 --path /claude-mcp/
 ```
+
+주의:
+- current verifier request header는 `application/json`과 `text/event-stream`를 둘 다 받아야 한다.
+- `text/event-stream`만 보내는 오래된 probe는 route에 따라 `406`을 받을 수 있다.
 
 ## 자주 나는 증상
 
@@ -75,5 +117,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\check_cursor_mcp_status.ps1
 
 - **로컬**: `http://127.0.0.1:8000/mcp` + `MCP_API_TOKEN`, vault는 로컬 `VAULT_PATH`.
 - **프로덕션**: `.cursor/mcp.json` 의 `obsidian-memory-production` + `MCP_PRODUCTION_BEARER_TOKEN` (README `## Cursor MCP`).
+- current-session 기준 specialist production routes(`/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`)도 local과 같은 PASS surface로 다시 확인됐다.
+- current-session production evidence는 `docs/MCP_RUNTIME_EVIDENCE.md`를 기준으로 읽는다.
 
 비밀값·실경로는 문서나 커밋에 넣지 않는다 ([docs/CLAUDE_COWORK_MCP_OUTSOURCE_BRIEF.md](CLAUDE_COWORK_MCP_OUTSOURCE_BRIEF.md)).

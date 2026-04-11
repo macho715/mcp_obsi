@@ -145,8 +145,9 @@ Active work targets the root-level `app/`, `tests/`, `.cursor/`, `docs/`, `examp
 | KG SPARQL Tests | `scripts/test_kg_queries.py` | SPARQL validations on generated Knowledge Graph |
 | Vault Consolidation | `scripts/consolidate_vaults.py` | Merges multiple test vaults |
 | KB canonical writes | `vault/wiki/` | Direct file writes, not via MCP tools |
-| Wiki overlay runtime surface | `app/resources_server.py`, `app/prompts_server.py`, `app/wiki_tools.py`, `app/services/wiki_store.py`, `app/services/wiki_index_service.py`, `app/services/wiki_log_service.py`, `app/services/conflict_service.py`, `app/services/lint_service.py` | Compiled wiki overlay resources, prompts, and write tools |
-| Specialist write verification | `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1`, `scripts/mcp_local_tool_smoke.py` | Live tool-surface verification for main and specialist MCP routes |
+| Wiki overlay runtime surface | `app/services/wiki_search_service.py`, `app/resources_server.py`, `app/prompts_server.py`, `app/wiki_tools.py`, `app/services/wiki_store.py`, `app/services/wiki_index_service.py`, `app/services/wiki_log_service.py`, `app/services/conflict_service.py`, `app/services/lint_service.py` | Compiled wiki overlay read/search resources, prompts, and write tools |
+| Specialist readonly verification | `scripts/verify_chatgpt_mcp_readonly.py`, `scripts/verify_claude_mcp_readonly.py`, `scripts/mcp_local_tool_smoke.py` | Live read-only tool-surface verification for ChatGPT/Claude mounts |
+| Specialist write verification | `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1` | Live write-capable tool-surface verification for specialist sibling routes |
 | KB operational byproducts | `runtime/patches/`, `runtime/audits/` | Lint patch plan JSON, audit logs, outside vault |
 | KB Cursor rules | `.cursor/rules/kb-core.mdc` | KB routing + LLM runtime policy |
 | KB Cursor skills | `.cursor/skills/obsidian-ingest/`, `obsidian-query/`, `obsidian-lint/` | Gemma 4-based KB workflows |
@@ -178,8 +179,9 @@ Active work targets the root-level `app/`, `tests/`, `.cursor/`, `docs/`, `examp
 | local-rag runtime reference | `local-rag/` | workspace-local companion 사본. health, retrieval, cache behavior 확인용 |
 | standalone runtime reference | `myagent-copilot-kit/standalone-package/` | workspace-local companion 사본. `docs-browser.ts`, `server.ts`, memory bridge, local route 확인용 |
 | KB canonical 쓰기 | `vault/wiki/` | 직접 파일 쓰기. MCP tool 미경유. `obsidian-ingest` 스킬이 관리 |
-| Wiki overlay runtime surface | `app/resources_server.py`, `app/prompts_server.py`, `app/wiki_tools.py`, `app/services/wiki_store.py`, `app/services/wiki_index_service.py`, `app/services/wiki_log_service.py`, `app/services/conflict_service.py`, `app/services/lint_service.py` | compiled wiki overlay resources, prompts, and tools |
-| Specialist write verification | `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1`, `scripts/mcp_local_tool_smoke.py` | main/specialist MCP write verification and smoke checks |
+| Wiki overlay runtime surface | `app/services/wiki_search_service.py`, `app/resources_server.py`, `app/prompts_server.py`, `app/wiki_tools.py`, `app/services/wiki_store.py`, `app/services/wiki_index_service.py`, `app/services/wiki_log_service.py`, `app/services/conflict_service.py`, `app/services/lint_service.py` | compiled wiki overlay read/search resources, prompts, and tools |
+| Specialist readonly verification | `scripts/verify_chatgpt_mcp_readonly.py`, `scripts/verify_claude_mcp_readonly.py`, `scripts/mcp_local_tool_smoke.py` | ChatGPT/Claude read-only MCP verification and smoke checks |
+| Specialist write verification | `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1` | main/specialist MCP write verification |
 | KB 운영 산출물 | `runtime/patches/`, `runtime/audits/` | lint 패치 플랜 JSON, 감사 로그. vault 바깥 |
 | KB Cursor 규칙 | `.cursor/rules/kb-core.mdc` | KB 라우팅 + LLM 런타임 정책 |
 | KB Cursor 스킬 | `.cursor/skills/obsidian-ingest/`, `obsidian-query/`, `obsidian-lint/` | Gemma 4 기반 KB ingest / query / lint 워크플로우 |
@@ -246,6 +248,7 @@ The mermaid diagram above shows the top-level repository structure:
 - `vault/wiki/` is exclusively for long-term KB canonical content. Do not mix roles with `memory/` or `mcp_raw/`.
 - `runtime/` is exclusively for operational byproducts outside the vault. Do not expose this path in vault-based MCP contracts.
 - `/chatgpt-mcp` and `/claude-mcp` read-only mounts have no bearer auth. In production, restrict at the network/proxy layer or add a dedicated read token (auth changes require `AGENTS.md` approval gate).
+- current production PASS evidence for readonly/write parity belongs in `docs/MCP_RUNTIME_EVIDENCE.md`. Root docs should summarize that result, not restate pre-redeploy failure as the current state.
 - `local-rag` and `standalone-package` are workspace-local verification copies. They are useful for local verification but are NOT owned by this repo.
 - The `local-rag/` and `myagent-copilot-kit/standalone-package/` copies exist in the current local workspace. Treat them as reference runtimes, not as tracked repo ownership.
 - companion route defaults and bridge mounts belong in the companion project docs and verification scripts; this layout file only records the integration boundary.
@@ -296,12 +299,16 @@ Keeping existing layout description, only newly added responsibilities from the 
   - single query string에서 structured filter 추출
 - `app/services/wiki_store.py`, `app/services/wiki_index_service.py`, `app/services/wiki_log_service.py`
   - compiled wiki overlay storage, index, and log helpers
+- `app/services/wiki_search_service.py`
+  - `wiki/analyses` 전용 read-only search/fetch surface
 - `app/resources_server.py`, `app/prompts_server.py`
   - wiki overlay resources and prompts
 - `app/wiki_tools.py`, `app/services/conflict_service.py`, `app/services/lint_service.py`
   - wiki overlay write tools and report generation
-- `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1`, `scripts/mcp_local_tool_smoke.py`
-  - specialist write verification and smoke checks
+- `scripts/verify_chatgpt_mcp_readonly.py`, `scripts/verify_claude_mcp_readonly.py`, `scripts/mcp_local_tool_smoke.py`
+  - specialist read-only verification and smoke checks
+- `scripts/verify_specialist_mcp_write.py`, `scripts/run_mcp_verification_round.ps1`
+  - specialist write verification
 - `app/services/path_backfill.py`
   - legacy `20_AI_Memory/...` -> `memory/<YYYY>/<MM>/...` migration planner / applier
 - `scripts/backfill_memory_paths.py`

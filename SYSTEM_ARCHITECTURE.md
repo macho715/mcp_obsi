@@ -26,20 +26,21 @@
 - `/chatgpt-healthz`, `/claude-healthz`는 hosted specialist read-only profile 상태 확인용 경로다.
 - `/chatgpt-write-healthz`, `/claude-write-healthz`는 hosted specialist write-capable sibling profile 상태 확인용 경로다.
 - `/mcp`는 FastMCP 스트리머블 HTTP 앱을 마운트한 경로다.
-- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
+- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` profile이다.
 - `/chatgpt-mcp`는 현재 코드 기준으로 read-only tools 외에 `resources`와 `prompts` discoverability surface도 함께 가진다.
 - `/chatgpt-mcp-write`는 ChatGPT용 authenticated specialist write-capable sibling profile이다.
-- `/claude-mcp`는 Claude용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
+- `/claude-mcp`는 Claude용 read-only `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` profile이다.
 - `/claude-mcp`는 현재 코드 기준으로 read-only tools 외에 `resources`와 `prompts` discoverability surface도 함께 가진다.
 - `/claude-mcp-write`는 Claude용 authenticated specialist write-capable sibling profile이다.
 - 인증은 route별 effective token이 비어 있지 않을 때 Bearer token으로 적용된다. `/mcp`는 `MCP_API_TOKEN`, `/chatgpt-mcp-write`는 `CHATGPT_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`, `/claude-mcp-write`는 `CLAUDE_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`을 사용한다.
 - 현재 Bearer auth는 `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` 경로에 적용된다.
 - `/chatgpt-mcp`와 `/claude-mcp`는 현재 코드에서 bearer 없이 노출되는 read-only specialist mounts다. 이 경로들은 auth middleware 대상이 아니다.
-- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`를 노출한다.
+- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`와 wiki-native tools를 노출한다.
 - `app/resources_server.py`는 `wiki/index`, `wiki/log/recent`, `wiki/topic/{slug}`, `schema/memory`, `ops/verification/latest`, `ops/routes/profile-matrix` resource를 노출한다.
 - `app/prompts_server.py`는 `ingest_memory_to_wiki`, `reconcile_conflict`, `weekly_lint_report`, `summarize_recent_project_state` prompt를 노출한다.
+- `app/services/wiki_search_service.py`는 `wiki/analyses` 범위의 read-only search/fetch를 담당한다.
 - `app/wiki_tools.py`는 write profile 전용 `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict` tool을 노출한다.
-- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch` / `list_recent_memories` + `resources/prompts`와 authenticated sibling `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`, wiki-native tools 조합을 제공한다.
+- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` + `resources/prompts`와 authenticated sibling `search`, `fetch`, `list_recent_memories`, `search_wiki`, `fetch_wiki`, `save_memory`, `get_memory`, `update_memory`, wiki-native tools 조합을 제공한다.
 - `app/chatgpt_mcp_server.py`와 `app/claude_mcp_server.py`에서 write tools는 `include_write_tools=True`일 때만 등록된다.
 - `app/config.py`는 `WIKI_OVERLAY_DIRNAME`을 노출하며, 현재 기본값은 `wiki`다.
 - `MemoryStore`는 저장·조회·검색·업데이트를 묶는 서비스 계층이다.
@@ -53,6 +54,7 @@
 - Railway preview에서는 `Dockerfile` 기반 컨테이너가 실행되고, volume `/data`가 vault/index 저장소를 제공한다.
 - Railway production에서는 `/mcp`, `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`가 같은 volume `/data`를 공유한다.
 - Railway public domain에서는 FastMCP DNS rebinding protection 때문에 explicit host/origin allowlist가 필요하다.
+- 2026-04-11 current session에서는 production redeploy 후 read-only/write-side surfaces가 local current code와 일치했다. 아래의 2026-04-11 failure 기록은 redeploy 이전 snapshot이고, 이후 PASS 기록이 current-session final state다.
 - `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
 - optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
 - 현재 local code 기준으로 `WIKI_OVERLAY_DIRNAME`이 가리키는 overlay root는 compiled wiki layer다. `WikiStore`는 `index.md`, `log.md`, `topics/`, `entities/`, `conflicts/`, `reports/`를 만든다.
@@ -210,6 +212,7 @@ sequenceDiagram
 - `app/services/wiki_index_service.py`는 recent memory pointers를 바탕으로 `wiki/index.md`를 다시 만든다.
 - `app/services/wiki_log_service.py`는 recent memory activity를 `wiki/log.md`에 반영하고, append-style log entry도 추가한다.
 - `app/resources_server.py`의 wiki resources는 overlay를 직접 읽는 것이 아니라 compiled overlay surface를 읽는 용도다.
+- `search_wiki` / `fetch_wiki`는 기존 `memory` search/fetch semantics를 바꾸지 않고 `wiki/analyses`를 별도 corpus로 읽는 용도다.
 - `app/wiki_tools.py`의 write tools는 compiled wiki overlay만 갱신한다. raw archive나 memory SSOT를 직접 대체하지 않는다.
 - `schemas/`는 raw/memory note contract의 단일 기준선이다.
 - `app/utils/ids.py`, `app/utils/sanitize.py`, `app/utils/time.py`는 계약 보조 헬퍼다.
@@ -225,13 +228,12 @@ sequenceDiagram
 
 ### 2026-04-11 current session — local code vs deployed production surface
 
-- current local code 기준 `/mcp`는 13개 tool을 가진다: `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- current local code 기준 `/mcp`는 15개 tool을 가진다: `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
 - current local `/chatgpt-mcp`, `/claude-mcp`는 read-only tools 외에 `resources`와 `prompts`도 노출한다.
 - current local write-capable sibling mounts는 `save_memory`, `get_memory`, `update_memory`와 wiki-native tools를 함께 노출한다.
-- current session에서 `scripts/verify_specialist_mcp_write.py`를 production `/chatgpt-mcp-write/`에 대해 실행했을 때 FAIL이 났다.
-- 실패 이유는 production `/chatgpt-mcp-write`가 아직 `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`까지만 노출하고, wiki-native tools는 아직 배포되지 않았기 때문이다.
-- current session에서 `scripts/run_mcp_verification_round.ps1 -Round 1`를 돌렸을 때 local observe/read checks는 통과했고, production observe에서는 read-only routes의 resources/prompts count가 아직 `0`으로 관찰됐다.
-- 따라서 현재 문서 해석 기준은 `local code is ahead of deployed production surface`다. production은 redeploy와 smoke recheck가 끝나기 전까지 local과 같은 상태로 보지 않는다.
+- current session의 final state에서는 `railway up -d` 이후 production `/chatgpt-mcp`와 `/claude-mcp` read-only recheck가 PASS였고, 두 route 모두 `search`, `fetch`, `list_recent_memories`, `search_wiki`, `fetch_wiki`, `resources = 5`, `prompts = 4` surface를 노출했다.
+- current session의 final state에서는 production `/chatgpt-mcp-write`와 `/claude-mcp-write` write-side recheck도 PASS였고, 두 route 모두 `save_memory`, `get_memory`, `update_memory`와 wiki-native tools를 포함한 same 13-tool surface를 노출했다.
+- 같은 세션 안의 earlier fail snapshot은 redeploy 전 배포 지연과 verifier header/tool expectation mismatch를 보여 준 중간 증거다. 현재 상태 판정은 later PASS 기준으로 읽고, earlier fail detail은 `docs/MCP_RUNTIME_EVIDENCE.md`에 시간순으로 남긴다.
 
 ### 2026-04-08 companion ingest + local route verification
 
@@ -312,7 +314,7 @@ sequenceDiagram
   - `/chatgpt-mcp-write` authenticated `search` / `fetch` / `save_memory` / `get_memory` / `update_memory` -> pass
   - `/claude-mcp` read-only `search` / `fetch` -> pass
   - `/claude-mcp-write` authenticated `search` / `fetch` / `save_memory` / `get_memory` / `update_memory` -> pass
-- note: 위 항목은 2026-03-28 historical specialist verification이다. 2026-04-11 current session에서는 production write sibling route가 아직 wiki-native tools를 노출하지 않는다는 점이 별도로 확인됐다.
+- note: 위 항목은 2026-03-28 historical specialist verification이다. 2026-04-11 current session의 earlier snapshot에서는 production write sibling route가 아직 wiki-native tools를 노출하지 않는다는 점이 확인됐고, later redeploy snapshot에서는 PASS로 갱신됐다.
 
 ```mermaid
 flowchart TD
@@ -351,6 +353,7 @@ delivery snapshot의 내용 중 아래는 현재 루트 계약에 맞지 않아 
 - 현재 local code와 production deployment의 검증은 분리해서 봐야 한다. local code의 tool/resource surface는 이 문서의 기준이며, production은 별도 redeploy와 smoke recheck가 있어야 같은 상태로 판정할 수 있다.
 - `tests/test_auth.py`는 bearer-required route와 bearer-free specialist read-only route를 검증한다.
 - `tests/test_wiki_overlay_surface.py`와 `tests/test_wiki_write_surface.py`는 compiled wiki overlay resource/prompt surface와 write-only wiki tool surface를 검증한다.
+- `tests/test_wiki_search_service.py`와 `tests/test_dual_corpus_mcp.py`는 wiki read surface와 dual-corpus MCP contract를 검증한다.
 
 ## 2026-03-28 Search V2 And Path Migration Addendum
 
@@ -425,7 +428,7 @@ flowchart TD
 - `GET /claude-mcp/` with `Accept: text/event-stream` -> `400 Missing session ID`
 - `GET /chatgpt-mcp-write/` without bearer -> `401 unauthorized`
 - `GET /claude-mcp-write/` without bearer -> `401 unauthorized`
-- authenticated full tool smoke는 `scripts/verify_specialist_mcp_write.py` 경로가 현재 기준 런북이며, 이번 워크스페이스에서는 `MCP_BEARER_TOKEN`이 없어 재실행하지 않았다.
+- 위 2026-03-28 항목은 historical snapshot이다. current 2026-04-11 session에서는 `scripts/verify_specialist_mcp_write.py`로 production `/chatgpt-mcp-write/`와 `/claude-mcp-write/` authenticated full tool smoke를 다시 실행했고, 결과는 `docs/MCP_RUNTIME_EVIDENCE.md`에 current-session PASS로 기록했다.
 
 ### Latest verification evidence tied to this addendum
 

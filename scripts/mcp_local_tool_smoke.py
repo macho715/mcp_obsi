@@ -1,7 +1,7 @@
 """Live MCP Streamable HTTP smoke: tools + read paths + discoverability surfaces.
 
-- mode=full: /mcp style (search_memory, list_recent_memories, get_memory, fetch).
-- mode=wrapper: ChatGPT/Claude read-only (search + fetch + list_recent_memories).
+- mode=full: /mcp style (search_memory, list_recent_memories, get_memory, fetch, wiki read tools).
+- mode=wrapper: ChatGPT/Claude read-only (search + fetch + list_recent_memories + wiki read tools).
 - also reports resource and prompt counts so read-side capability drift is visible.
 """
 
@@ -86,7 +86,7 @@ async def smoke_one(
     path = path if path.startswith("/") else f"/{path}"
     path = path.rstrip("/") + "/"
     url = origin.rstrip("/") + path
-    headers: dict[str, str] = {"Accept": "text/event-stream"}
+    headers: dict[str, str] = {"Accept": "application/json, text/event-stream"}
     if token:
         headers["Authorization"] = token if token.startswith("Bearer ") else f"Bearer {token}"
 
@@ -118,6 +118,22 @@ async def smoke_one(
                         mid = hits[0]["id"]
                         parse_tool_payload(await session.call_tool("fetch", {"id": mid}))
                         extra = True
+                    wiki_search = parse_tool_payload(
+                        await session.call_tool(
+                            "search_wiki",
+                            {"query": "hazmat", "path_prefix": "wiki/analyses", "limit": 1},
+                        )
+                    )
+                    wiki_fetch_called = False
+                    wiki_hits = result_items(wiki_search)
+                    if wiki_hits:
+                        parse_tool_payload(
+                            await session.call_tool(
+                                "fetch_wiki",
+                                {"path": str(wiki_hits[0]["path"]).removesuffix(".md")},
+                            )
+                        )
+                        wiki_fetch_called = True
                     return {
                         "label": label,
                         "url": url,
@@ -133,6 +149,8 @@ async def smoke_one(
                         "recent_count": len(recent_items),
                         "recent_titles": [item.get("title") for item in recent_items[:3]],
                         "search_hits": len(hits),
+                        "wiki_search_hits": len(wiki_hits),
+                        "wiki_fetch_called": wiki_fetch_called,
                         "read_path_verified": extra,
                         "fetch_called": extra,
                     }
@@ -155,6 +173,22 @@ async def smoke_one(
                     if "fetch" in names:
                         parse_tool_payload(await session.call_tool("fetch", {"id": mid}))
                     extra = True
+                wiki_search = parse_tool_payload(
+                    await session.call_tool(
+                        "search_wiki",
+                        {"query": "hazmat", "path_prefix": "wiki/analyses", "limit": 1},
+                    )
+                )
+                wiki_fetch_called = False
+                wiki_hits = result_items(wiki_search)
+                if wiki_hits:
+                    parse_tool_payload(
+                        await session.call_tool(
+                            "fetch_wiki",
+                            {"path": str(wiki_hits[0]["path"]).removesuffix(".md")},
+                        )
+                    )
+                    wiki_fetch_called = True
 
                 return {
                     "label": label,
@@ -169,6 +203,8 @@ async def smoke_one(
                     "recent_count": len(recent_items),
                     "recent_titles": [item.get("title") for item in recent_items[:3]],
                     "search_hits": len(hits),
+                    "wiki_search_hits": len(wiki_hits),
+                    "wiki_fetch_called": wiki_fetch_called,
                     "read_path_verified": extra,
                     "get_fetch_called": extra,
                 }
@@ -176,8 +212,8 @@ async def smoke_one(
 
 def _required_tools(mode: Mode) -> set[str]:
     if mode == "wrapper":
-        return {"search", "fetch", "list_recent_memories"}
-    return {"search_memory", "list_recent_memories", "get_memory"}
+        return {"search", "fetch", "list_recent_memories", "search_wiki", "fetch_wiki"}
+    return {"search_memory", "list_recent_memories", "get_memory", "search_wiki", "fetch_wiki"}
 
 
 async def async_main() -> int:

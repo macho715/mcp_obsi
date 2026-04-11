@@ -22,6 +22,8 @@ def test_create_chatgpt_mcp_server_exposes_read_only_search_fetch_and_recent_lis
         "search",
         "fetch",
         "list_recent_memories",
+        "search_wiki",
+        "fetch_wiki",
     ]
 
 
@@ -37,6 +39,8 @@ def test_create_chatgpt_mcp_server_write_profile_exposes_memory_write_tools(tmp_
         "search",
         "fetch",
         "list_recent_memories",
+        "search_wiki",
+        "fetch_wiki",
         "save_memory",
         "get_memory",
         "update_memory",

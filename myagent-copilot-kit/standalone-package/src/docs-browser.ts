@@ -183,6 +183,14 @@ export function renderChatHtml(): string {
       </div>
     </div>
     <div class="card">
+      <strong>Unified Search</strong>
+      <div class="controls" style="margin-top:10px">
+        <input id="search-query" type="text" placeholder="예: hazmat shu 2025-11-26" />
+        <button id="run-search" class="secondary" type="button">검색</button>
+      </div>
+      <ul id="search-results" style="margin-top:10px"></ul>
+    </div>
+    <div class="card">
       <strong>근거 문서</strong>
       <ul id="sources"></ul>
     </div>
@@ -206,6 +214,9 @@ export function renderChatHtml(): string {
     const spinnerEl = document.getElementById("spinner");
     const saveMemEl = document.getElementById("save-memory");
     const memIndicatorEl = document.getElementById("memory-indicator");
+    const searchQueryEl = document.getElementById("search-query");
+    const runSearchEl = document.getElementById("run-search");
+    const searchResultsEl = document.getElementById("search-results");
 
     // Load persisted state
     function loadHistory() {
@@ -266,6 +277,43 @@ export function renderChatHtml(): string {
         var score = item && typeof item.score !== "undefined" ? String(item.score) : "-";
         li.textContent = file + " (score: " + score + ")";
         sourcesEl.appendChild(li);
+      });
+    }
+
+    function renderSearchResults(items, headers) {
+      searchResultsEl.innerHTML = "";
+      if (!Array.isArray(items) || items.length === 0) {
+        var empty = document.createElement("li");
+        empty.textContent = "검색 결과 없음";
+        searchResultsEl.appendChild(empty);
+        return;
+      }
+      items.forEach(function(item) {
+        var li = document.createElement("li");
+        li.style.marginBottom = "8px";
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary";
+        var badges = Array.isArray(item.badges) ? item.badges.map(function(badge) {
+          return "[" + badge + "]";
+        }).join("") : "";
+        button.textContent = badges + " " + (item.title || "(untitled)");
+        button.addEventListener("click", async function() {
+          var route = item.source === "wiki"
+            ? "/api/wiki/fetch?path=" + encodeURIComponent(String(item.path || "").replace(/\.md$/, ""))
+            : "/api/memory/fetch?id=" + encodeURIComponent(String(item.id || ""));
+          var fetchRes = await fetch(route, { headers: headers });
+          var fetchPayload = await fetchRes.json();
+          answerEl.textContent = fetchPayload.body || fetchPayload.text || JSON.stringify(fetchPayload, null, 2);
+        });
+        li.appendChild(button);
+        if (item.path) {
+          var meta = document.createElement("div");
+          meta.className = "status";
+          meta.textContent = String(item.path);
+          li.appendChild(meta);
+        }
+        searchResultsEl.appendChild(li);
       });
     }
 
@@ -338,10 +386,31 @@ export function renderChatHtml(): string {
       renderHistory(messages);
       answerEl.textContent = "";
       sourcesEl.innerHTML = "";
+      searchResultsEl.innerHTML = "";
       hideError();
       statusEl.textContent = "채팅 지워짐";
       if (saveMemEl) { saveMemEl.style.display = "none"; }
       if (memIndicatorEl) { memIndicatorEl.style.display = "none"; }
+    });
+
+    runSearchEl && runSearchEl.addEventListener("click", async function() {
+      var query = searchQueryEl && typeof searchQueryEl.value === "string" ? searchQueryEl.value.trim() : "";
+      if (!query) { return; }
+      hideError();
+      var headers = {};
+      var tokenVal = tokenEl && typeof tokenEl.value === "string" ? tokenEl.value.trim() : "";
+      if (tokenVal) { headers["x-ai-proxy-token"] = tokenVal; }
+      try {
+        var response = await fetch("/api/search/unified?q=" + encodeURIComponent(query), { headers: headers });
+        var payload = await response.json();
+        if (!response.ok) {
+          showError("검색 오류: HTTP " + response.status + " — " + (payload && payload.error ? payload.error : JSON.stringify(payload)));
+          return;
+        }
+        renderSearchResults(payload.results || [], headers);
+      } catch (error) {
+        showError("검색 네트워크 오류: " + String(error));
+      }
     });
 
     // Show save button when answer is ready
@@ -367,7 +436,7 @@ export function renderChatHtml(): string {
         }
         var saveBody = JSON.stringify({
           title: "[Chat] " + (lastUser ? lastUser.slice(0, 60) : "standalone chat"),
-          content: "User: " + (lastUser || "N/A") + "\n\nAI: " + (lastAnswer || "N/A"),
+          content: "User: " + (lastUser || "N/A") + "\\n\\nAI: " + (lastAnswer || "N/A"),
           source: "standalone-chat",
           topics: ["standalone", "chat"],
         });

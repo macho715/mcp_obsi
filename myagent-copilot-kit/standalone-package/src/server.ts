@@ -13,10 +13,12 @@ import {
 import { createHvdcPredictService } from "./hvdc-predict.js";
 import { fetchLocalRagHealth, runLocalRagChat } from "./local-rag.js";
 import {
+  fetchWiki,
   getMemory,
   probeMemoryClient,
   saveMemory,
   searchMemory,
+  searchWiki,
   type MemoryClientOptions,
 } from "./mcp-memory-client.js";
 import {
@@ -25,6 +27,7 @@ import {
   createPreSendDlpMiddleware,
   createRoutingGateMiddleware,
 } from "./proxy-middleware.js";
+import { mergeSearchResults } from "./unified-search.js";
 import { fetchMemoryServiceHealth } from "./memory-service.js";
 import type { ProxyOperationalLogger } from "./ops-log.js";
 
@@ -431,6 +434,93 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
     }
   });
 
+  app.get("/api/wiki/search", authTokenMiddleware, async (req, res) => {
+    const query = readSingleValue(req.query.q);
+    if (!query) {
+      res.status(400).json({
+        error: "WIKI_QUERY_REQUIRED",
+        detail: "Pass a non-empty `q` query string.",
+      });
+      return;
+    }
+    try {
+      const payload = await searchWiki(memoryClientOptions, {
+        query,
+        pathPrefix: "wiki/analyses",
+        limit: 8,
+      });
+      res.json(payload);
+    } catch (error) {
+      res.status(502).json({
+        error: "WIKI_SEARCH_FAILED",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.get("/api/wiki/fetch", authTokenMiddleware, async (req, res) => {
+    const path = readSingleValue(req.query.path);
+    const slug = readSingleValue(req.query.slug);
+    if (!path && !slug) {
+      res.status(400).json({
+        error: "WIKI_PATH_OR_SLUG_REQUIRED",
+        detail: "Pass a non-empty `path` or `slug` query string.",
+      });
+      return;
+    }
+    try {
+      const payload = await fetchWiki(memoryClientOptions, path ? { path } : { slug });
+      const isNotFound = payload.status === "not_found";
+      res.status(isNotFound ? 404 : 200).json(payload);
+    } catch (error) {
+      res.status(502).json({
+        error: "WIKI_FETCH_FAILED",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.get("/api/search/unified", authTokenMiddleware, async (req, res) => {
+    const query = readSingleValue(req.query.q);
+    if (!query) {
+      res.status(400).json({
+        error: "SEARCH_QUERY_REQUIRED",
+        detail: "Pass a non-empty `q` query string.",
+      });
+      return;
+    }
+    try {
+      const [memory, wiki] = await Promise.all([
+        searchMemory(memoryClientOptions, { query }),
+        searchWiki(memoryClientOptions, {
+          query,
+          pathPrefix: "wiki/analyses",
+          limit: 8,
+        }),
+      ]);
+      const results = mergeSearchResults({
+        memory: memory.results,
+        wiki: wiki.results,
+        limit: 10,
+      });
+      res.json({
+        query,
+        results,
+        meta: {
+          sources_searched: ["memory", "wiki"],
+          memory_result_count: memory.results.length,
+          wiki_result_count: wiki.results.length,
+          merge_strategy: "memory_priority",
+        },
+      });
+    } catch (error) {
+      res.status(502).json({
+        error: "UNIFIED_SEARCH_FAILED",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   app.post("/api/memory/save", authTokenMiddleware, async (req, res) => {
     try {
       const body = req.body as Record<string, unknown>;
@@ -682,6 +772,9 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
             console.log("GET  /api/memory/health");
             console.log("GET  /api/memory/search?q=...");
             console.log("GET  /api/memory/fetch?id=...");
+            console.log("GET  /api/wiki/search?q=...");
+            console.log("GET  /api/wiki/fetch?path=...");
+            console.log("GET  /api/search/unified?q=...");
             console.log("POST /api/hvdc/predict");
             console.log("GET  /api/hvdc/predict/:jobId");
             console.log("POST /api/hvdc/predict/:jobId/cancel");

@@ -14,7 +14,44 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - SearchPlan query DSL
 - `memory/YYYY/MM` write path + legacy compatibility
 - read-first, write-with-intent specialist profiles
-- Railway production recheck is currently partial: local code is ahead of the deployed production surface
+- Railway production recheck is current-session PASS: deployed read-only/write surfaces now match the local code surface after redeploy
+
+## GitHub Snapshot
+
+쉽게 말하면, 지금 이 저장소는 "Obsidian Markdown을 진실 원본으로 쓰는 MCP memory server"이고, 현재 세션 기준 production Railway 경로도 latest surface로 다시 맞춰진 상태다.
+
+- main runtime:
+  - FastAPI + FastMCP
+  - Markdown SSOT
+  - SQLite JSON1 + FTS5 derived index
+- current code main `/mcp` surface:
+  - 15 tools
+  - `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- current-session production specialist read-only routes:
+  - ChatGPT: `/chatgpt-mcp`
+  - Claude: `/claude-mcp`
+  - both passed with `search`, `list_recent_memories`, `fetch`, `search_wiki`, `fetch_wiki`, `resources = 5`, `prompts = 4`
+- current-session production specialist write sibling routes:
+  - ChatGPT: `/chatgpt-mcp-write`
+  - Claude: `/claude-mcp-write`
+  - both passed with 13-tool authenticated write surface
+- current hosted production base:
+  - `https://mcp-server-production-90cb.up.railway.app`
+- current evidence source:
+  - [docs/MCP_RUNTIME_EVIDENCE.md](docs/MCP_RUNTIME_EVIDENCE.md)
+
+## Start Here
+
+- local setup와 Cursor 연결부터 보면:
+  - [docs/LOCAL_MCP.md](docs/LOCAL_MCP.md)
+- production 운영 기준을 보면:
+  - [docs/PRODUCTION_RAILWAY_RUNBOOK.md](docs/PRODUCTION_RAILWAY_RUNBOOK.md)
+- current-session runtime PASS 증거를 보면:
+  - [docs/MCP_RUNTIME_EVIDENCE.md](docs/MCP_RUNTIME_EVIDENCE.md)
+- runtime 구조와 route 계약을 보면:
+  - [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md)
+- 전체 변경 이력을 보면:
+  - [changelog.md](changelog.md)
 
 ## Document Map
 
@@ -55,6 +92,14 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `scripts/ollama_kb.py`: Gemma 4 / Ollama 공용 어댑터
 
 ## Current State
+
+쉽게 말하면, 현재 기준 핵심 상태는 아래와 같다.
+
+- production Railway specialist routes는 current-session PASS다.
+- read-only specialist routes는 `search_wiki` / `fetch_wiki`와 `resources/prompts`까지 current local과 같은 수준으로 올라왔다.
+- write-capable sibling routes도 current local과 같은 13-tool authenticated surface로 다시 확인됐다.
+- main `/mcp` current code surface는 15 tools다.
+- 아래 본문에는 latest 상태와 historical snapshot이 함께 있다. 현재 상태만 빨리 보려면 위 `GitHub Snapshot`과 [docs/MCP_RUNTIME_EVIDENCE.md](docs/MCP_RUNTIME_EVIDENCE.md)를 먼저 보면 된다.
 
 ## Current State (English Summary)
 
@@ -117,12 +162,12 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - Railway production split dry run도 완료된 상태다.
 - Railway production volume backup/restore drill도 완료된 상태다.
 - Railway generated production domain이 현재 공식 interim production endpoint로 채택된 상태다.
-- current session 기준 local code는 resources/prompts와 wiki-native write tools를 노출하지만, production deployment는 아직 그 surface를 따라오지 못했다.
+- current session 기준 local code와 production deployment가 둘 다 resources/prompts와 wiki-native write tools를 노출한다.
 - `docs/HMAC_PHASE_2.md`에 optional signed-write contract가 정리돼 있다. 현재 루트 runtime surface에서는 adjacent contract 문서로 유지한다.
 - local direct save와 `production -> local vault` pull sync를 병행할 수 있게 정리한 상태다.
 - ChatGPT용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write` endpoint는 현재도 살아 있다.
 - Claude용 hosted read-only route `https://mcp-server-production-90cb.up.railway.app/claude-mcp`와 authenticated write sibling `https://mcp-server-production-90cb.up.railway.app/claude-mcp-write` endpoint는 현재도 살아 있다.
-- 다만 2026-04-11 current session 기준 production write surface는 아직 `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`를 노출하지 않는다.
+- 2026-04-11 current session 기준 production write surface는 `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`를 포함한 13-tool wiki-native surface로 확인됐다.
 - Cursor는 이제 repo의 project-local `.cursor/mcp.json` 기준으로 local/production을 함께 사용한다.
 - 현재 운영 결정은 `Railway = production path`, `VPS + reverse proxy = alternate self-managed reference`다.
 - proposal/reference 성격의 루트 문서는 `docs/reference/`와 `docs/history/`로 정리된 상태를 기준으로 삼는다.
@@ -148,12 +193,14 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `.venv\Scripts\python.exe -m ruff format --check .` → **fail** (`3` files would be reformatted, `58` files already formatted)
 - `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp` ✅
 
-### 2026-04-11 current code vs production deployment check
+### 2026-04-11 current session production parity recheck
 
-- current local code `/mcp` tool set → `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- current local code `/mcp` tool set → `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
 - current local `/chatgpt-mcp` and `/claude-mcp` mounts expose resources and prompts in addition to the read-only tool surface
-- current-session `verify_specialist_mcp_write.py` against production `/chatgpt-mcp-write/` failed because production still exposed only `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory`
-- current-session round script stopped at the ChatGPT specialist write step, so the Claude specialist write step was not reached in that run
+- current-session `verify_chatgpt_mcp_readonly.py` + `verify_claude_mcp_readonly.py` recheck passed after redeploy, and production read-only routes now expose `search`, `fetch`, `list_recent_memories`, `search_wiki`, `fetch_wiki` with `resources = 5`, `prompts = 4`
+- current-session `mcp_local_tool_smoke.py` recheck passed against production `/chatgpt-mcp/` and `/claude-mcp/`, confirming the same read-only surface from the current session
+- current-session `verify_specialist_mcp_write.py` against production `/chatgpt-mcp-write/` and `/claude-mcp-write/` passed after redeploy, with both routes exposing the 13-tool wiki-native write surface
+- current-session round script completed the ChatGPT and Claude specialist write steps, so both write routes were rechecked in the same production session
 
 ### 2026-04-08 production specialist route recheck
 
@@ -162,7 +209,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - generic recent query fallback
   - `search("2026 03 memory memo")` → recent browse 결과와 같은 5건 반환
   - 첫 결과 `fetch(id)` → 본문 반환 확인
-- note: 위 결과는 2026-04-08 current Codex session에서 production `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`에 직접 붙어서 확인했다. 2026-04-11 current session에서는 production `/chatgpt-mcp-write`가 최신 wiki-native tools를 아직 노출하지 않는다는 점을 다시 확인했다.
+- note: 위 결과는 2026-04-08 current Codex session에서 production `https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`에 직접 붙어서 확인했다. 2026-04-11 current session에서는 production read-only/write routes가 모두 local과 같은 wiki-native surface로 올라왔음을 다시 확인했다.
 
 ### 2026-04-08 companion ingest + local-rag + standalone 검증 결과 (previous temp runtime evidence)
 
@@ -207,7 +254,8 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `pytest -q` → **65 passed, 0 failed** ✅
 - `from app.main import app` → import OK ✅
 - MCP tool surface: 8개 (`search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`) ✅
-- current code 기준으로 read-side `resources/prompts` surface와 write-side wiki-native tools (`sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`)가 추가됐다. targeted local pytest/ruff/import 검증은 통과했지만, current-session production recheck에서는 `/chatgpt-mcp-write`가 아직 새 wiki-native tools를 따라오지 못했다.
+- current code 기준으로 read-side `resources/prompts` surface와 write-side wiki-native tools (`sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`)가 추가됐고, current-session production recheck에서도 same 13-tool write surface가 확인됐다. targeted local pytest/ruff/import 검증은 통과했다.
+- current local code 기준 specialist read-only routes에는 `search_wiki` / `fetch_wiki`가 추가됐고, current-session production read-only recheck에서도 같은 surface가 확인됐다. unified search는 standalone orchestration layer에서만 합쳐진다.
 - Auth: `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` bearer 적용; `/chatgpt-mcp`, `/claude-mcp` read-only 무인증 (네트워크 레이어 차단 권장)
 - `vault/raw/`, `vault/mcp_raw/`, `vault/wiki/`, `vault/memory/` 4계층 정상 ✅
 - `.cursor/skills/obsidian-{ingest,query,lint}/SKILL.md` YAML frontmatter 수정 완료 ✅
@@ -272,7 +320,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - ChatGPT authenticated write route `/chatgpt-mcp-write` -> pass
 - Claude hosted route `/claude-mcp` -> pass
 - Claude authenticated write route `/claude-mcp-write` -> pass
-- note: 위 specialist write pass는 2026-03-28 historical verification 결과다. 2026-04-11 current session에서는 production `/chatgpt-mcp-write`가 아직 예전 6-tool write profile에 머물러 있는 것이 다시 확인됐다.
+- note: 위 specialist write pass는 2026-03-28 historical verification 결과다. 2026-04-11 current session에서는 production `/chatgpt-mcp-write`와 `/claude-mcp-write`가 모두 13-tool wiki-native write profile로 재확인됐다.
 
 ## Hybrid Layers
 
@@ -303,7 +351,7 @@ flowchart LR
     OpenAI --> GMCP["FastAPI /chatgpt-mcp"]
     Anthropic --> CMCP
 
-    MCP --> Tools["13-tool main MCP surface"]
+    MCP --> Tools["15-tool main MCP surface"]
     GMCP --> GTools["read-only search/fetch/recent + resources/prompts"]
     CMCP --> CTools["read-only search/fetch/recent + resources/prompts"]
     Tools --> MemoryStore[MemoryStore]

@@ -411,6 +411,30 @@ curl "http://127.0.0.1:3010/api/memory/fetch?id=MEM-20260408-001753-89F237" \
 }
 ```
 
+### 12.5 `GET /api/wiki/search`
+```bash
+curl "http://127.0.0.1:3010/api/wiki/search?q=hazmat" \
+  -H "x-ai-proxy-token: <MYAGENT_PROXY_AUTH_TOKEN>"
+```
+
+`standalone-package`가 `mcp_obsidian`의 read-only `search_wiki` tool을 호출해 `wiki/analyses` 범위를 검색합니다.
+
+### 12.6 `GET /api/wiki/fetch`
+```bash
+curl "http://127.0.0.1:3010/api/wiki/fetch?path=wiki/analyses/logistics_issue_shu_2025-11-26_3" \
+  -H "x-ai-proxy-token: <MYAGENT_PROXY_AUTH_TOKEN>"
+```
+
+`standalone-package`가 `mcp_obsidian`의 read-only `fetch_wiki` tool을 호출해 wiki note 본문과 frontmatter를 가져옵니다.
+
+### 12.7 `GET /api/search/unified`
+```bash
+curl "http://127.0.0.1:3010/api/search/unified?q=hazmat" \
+  -H "x-ai-proxy-token: <MYAGENT_PROXY_AUTH_TOKEN>"
+```
+
+이 route는 public MCP tool이 아닙니다. `standalone-package` orchestration layer가 내부 fan-out으로 `searchMemory()`와 `searchWiki()`를 둘 다 호출하고, 결과를 source badge와 함께 병합해서 반환합니다.
+
 ### 12.5 `GET /api/memory/health`
 ```bash
 curl http://127.0.0.1:3010/api/memory/health \

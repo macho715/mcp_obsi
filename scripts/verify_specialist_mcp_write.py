@@ -17,6 +17,8 @@ SPECIALIST_PROFILES = {
             "search",
             "fetch",
             "list_recent_memories",
+            "search_wiki",
+            "fetch_wiki",
             "save_memory",
             "get_memory",
             "update_memory",
@@ -35,6 +37,8 @@ SPECIALIST_PROFILES = {
             "search",
             "fetch",
             "list_recent_memories",
+            "search_wiki",
+            "fetch_wiki",
             "save_memory",
             "get_memory",
             "update_memory",
@@ -91,7 +95,7 @@ async def run_flow(server_url: str, token: str, profile_name: str) -> dict:
 
     headers = {
         "Authorization": token if token.startswith("Bearer ") else f"Bearer {token}",
-        "Accept": "text/event-stream",
+        "Accept": "application/json, text/event-stream",
     }
 
     async with httpx.AsyncClient(headers=headers, timeout=30.0) as client:
