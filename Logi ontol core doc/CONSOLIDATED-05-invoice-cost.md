@@ -41,23 +41,27 @@ oute_type + wh_handling_cnt.
 
 **온톨로지-퍼스트 청구서 시스템**은 "**멀티-키 아이덴티티 그래프**(BL/Container/DO/Invoice/Case/Booking/ShipmentID/.../hvdc_code 아무 키든 OK)" 위에서 **Invoice→Line→OD Lane→RateRef→Δ%→Risk**로 한 번에 캐스케이드합니다.
 
-### Flow Code v3.5 in Cost Analysis
+### Route-Based Cost Analysis
 
-**Flow Code directly impacts logistics costs** in the HVDC project. Different Flow Codes indicate different routing patterns, each with distinct cost structures:
+Route type (`ShipmentRoutingPattern`) and warehouse handling class (`WarehouseHandlingProfile`) are cost driver evidence. Different routing patterns carry distinct cost structures — the cost domain reads `routeBasedCostDriver` and `WarehouseHandlingProfile.wh_handling_cnt` as inputs but does NOT own or assign `confirmedFlowCode`.
 
-| Flow Code | Routing | Cost Components | Cost Impact |
-|-----------|---------|-----------------|-------------|
+> **[Cost Domain Rule]**: Cost domain reads `routeBasedCostDriver` and `WarehouseHandlingProfile.wh_handling_cnt` as inputs.
+> Cost domain does NOT extract or assign `confirmedFlowCode`.
+> Invoice OCR extracts `routeEvidence` and `destinationEvidence`, not Flow Code.
+
+| Route Type | Routing | Cost Components | Cost Impact |
+|------------|---------|-----------------|-------------|
 | **route_type: DIRECT** | Port → Site | Port fees + Direct trucking | **Lowest** (single hop) |
 | **route_type: WH_ONLY** | Port → WH → Site | Port + Warehouse + 2× Trucking | **Medium** (warehouse handling) |
 | **route_type: MOSB_DIRECT** | Port → MOSB → Site | Port + MOSB + LCT/Barge | **High** (offshore transport) |
 | **route_type: WH_MOSB** | Port → WH → MOSB → Site | Port + WH + MOSB + Trucking + LCT | **Highest** (full chain) |
 | **route_type: MIXED** | Incomplete | Variable (staging costs) | **Unpredictable** |
 
-**Cost Verification by Flow Code**:
-- Flow Code extracted from invoice documents (OCR)
-- Cost structure validated against Flow Code routing
-- MOSB leg charges verified for route_type MOSB_DIRECT/WH_MOSB (MOSB = Offshore Staging, not Warehouse)
-- Warehouse handling charges validated for route_type WH_ONLY/WH_MOSB (source: WarehouseHandlingProfile.wh_handling_cnt)
+**Cost Evidence by Route Type**:
+- Invoice OCR extracts `routeEvidence` (port-to-port routing info) and `destinationEvidence` (delivery site code)
+- These feed `WarehouseHandlingProfile` as evidence after M110 — not as direct cost drivers
+- MOSB leg charges verified for route_type MOSB_DIRECT/WH_MOSB via `routeBasedCostDriver` (MOSB = Offshore Staging, not Warehouse)
+- Warehouse handling charges validated via `WarehouseHandlingProfile.wh_handling_cnt` for route_type WH_ONLY/WH_MOSB
 
 --- \(EN\-KR: Any\-key in → Resolve → Lane&Rate join → Δ% risk band\.\)
 표준요율은 __Air/Container/Bulk 계약 레퍼런스__와 __Inland Trucking\(OD×Unit\) 테이블__을 온톨로지 클래스로 들고, 모든 계산은 __USD 기준·고정환율 1\.00 USD=3\.6725 AED__ 규칙을 따릅니다\.

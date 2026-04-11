@@ -38,7 +38,7 @@ oute_type, shipment_stage, leg_sequence, JourneyLeg)
 
 ### Route Type in Barge & Bulk Cargo Operations
 
-Barge and bulk cargo operations in the HVDC project primarily utilize **Flow Code 3 and 4**, as most bulk materials require **MOSB transit** for offshore delivery to AGI/DAS sites. The barge/LCT transport model inherently follows the **Port → MOSB → Site** pattern, making MOSB the critical staging and consolidation point for all offshore bulk cargo.
+Barge and bulk cargo operations in the HVDC project use `MarineRoutingPattern` and `offshoreDeliveryPattern` as primary routing classifiers. Most bulk materials require **MOSB transit** for offshore delivery to AGI/DAS sites. The barge/LCT transport model inherently follows the **Port → MOSB → Site** pattern, with MOSB serving as an **Offshore Staging / Marine Interface Node** — it does not own `confirmedFlowCode` and is not a warehouse node. MOSB staging is recorded via Milestone **M115 (MOSB Staged)**.
 
 **Key Routing Patterns:**
 - **route_type: MOSB_DIRECT**: Port → MOSB → AGI/DAS (Direct bulk cargo to offshore)
@@ -107,10 +107,15 @@ Maritime Logistics
 
 ### Bulk Cargo Route Type Patterns
 
-Bulk and project cargo in the HVDC logistics network predominantly follow **Flow Code 3 and 4** due to the inherent requirements of offshore transportation via MOSB.
+> **[Marine/Bulk Domain Rule]**: Marine and bulk cargo use `MarineRoutingPattern` and `offshoreDeliveryPattern`.
+> MOSB is NOT a warehouse and does NOT trigger `confirmedFlowCode`.
+> MOSB staging is recorded via Milestone M115 (MOSB Staged).
+> Marine domain does NOT assign `confirmedFlowCode`.
 
-| Flow Code | Bulk Cargo Pattern | Typical Cargo | Routing |
-|-----------|-------------------|---------------|---------|
+Bulk and project cargo in the HVDC logistics network use `MarineRoutingPattern` descriptors for offshore routing classification. All routing evidence feeds `WarehouseHandlingProfile` for warehouse-class assignments — the marine domain does NOT assign `confirmedFlowCode`.
+
+| MarineRoutingPattern | Bulk Cargo Pattern | Typical Cargo | Routing |
+|----------------------|-------------------|---------------|---------|
 | **route_type: MOSB_DIRECT** | Direct MOSB Transit | Heavy machinery, transformers, pre-assembled structures | Zayed Port → MOSB → LCT → AGI/DAS |
 | **route_type: WH_MOSB** | Warehouse + MOSB | Bulk materials requiring consolidation | Zayed Port → AAA Storage → MOSB → LCT → AGI/DAS |
 | **route_type: MIXED** | Incomplete/Awaiting | Bulk cargo at MOSB pending site assignment | MOSB staging area (temporary) |
@@ -130,25 +135,25 @@ LCT Operation Process:
 5. Sea Passage → MOSB → AGI/DAS (8-12 hour transit)
 6. Offshore Discharge → Final delivery (route_type MOSB_DIRECT/WH_MOSB completed)
 
-Flow Code Determination:
-- If cargo went directly from Port to MOSB: route_type = MOSB_DIRECT
-- If cargo stopped at warehouse before MOSB: route_type = WH_MOSB
+Marine Routing Classification:
+- If cargo went directly from Port to MOSB: MarineRoutingPattern = MOSB_DIRECT
+- If cargo stopped at warehouse before MOSB: MarineRoutingPattern = WH_MOSB
 ```
 
-#### MOSB as Route Type Anchor
+#### MOSB as Offshore Staging / Marine Interface Node
 
-MOSB (Mussafah Offshore Supply Base) is the **mandatory transit point** for all AGI/DAS bulk cargo, making it the **Flow Code anchor** for offshore logistics:
+MOSB (Mussafah Offshore Supply Base) is the **mandatory transit point** for all AGI/DAS bulk cargo. MOSB is an **Offshore Staging / Marine Interface Node** — it is NOT a warehouse and does NOT trigger `confirmedFlowCode`. MOSB staging is recorded via Milestone **M115 (MOSB Staged)**.
 
 ```
 MOSB Functional Role:
 - Consolidation: Aggregate bulk cargo from multiple ports/warehouses
-- Staging: Prepare cargo for LCT loading (lashing, seafastening)
+- Staging: Prepare cargo for LCT loading (lashing, seafastening); recorded via M115
 - Quality Control: Inspect cargo condition before offshore transport
 - Compliance: Verify FANR (nuclear), ADNOC permits, gate passes
 
-Flow Code Impact:
-- MOSB presence = route_type IN (MOSB_DIRECT, WH_MOSB, MIXED) (automatic)
-- AGI/DAS destination + MOSB = route_type MOSB_DIRECT or WH_MOSB (enforced)
+Marine Routing Impact:
+- MOSB presence → MarineRoutingPattern IN (MOSB_DIRECT, WH_MOSB, MIXED)
+- AGI/DAS destination + MOSB → offshoreDeliveryPattern = MOSB_DIRECT or WH_THEN_MOSB
 - Non-MOSB bulk cargo = Invalid for AGI/DAS (domain rule violation)
 ```
 
@@ -162,15 +167,14 @@ Flow Code Impact:
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# Route Type for Bulk Cargo
+# Marine Routing Pattern for Bulk Cargo
 debulk:hasRouteType a owl:DatatypeProperty ;
-    rdfs:label "Bulk Cargo Route Type" ;
-    rdfs:comment "Route type for bulk cargo operations (MOSB_DIRECT, WH_MOSB, MIXED)" ;
+    rdfs:label "Marine Routing Pattern" ;
+    rdfs:comment "Marine routing pattern for bulk cargo operations" ;
     rdfs:domain debulk:Cargo ;
-    rdfs:range xsd:integer ;
-    sh:minInclusive 3 ;
-    sh:maxInclusive 5 ;
-    sh:message "Bulk cargo to AGI/DAS must use route_type MOSB_DIRECT, WH_MOSB, or MIXED" .
+    rdfs:range xsd:string ;
+    sh:in ("MOSB_DIRECT" "WH_MOSB" "BARGE_ONLY" "LCT_DIRECT" "HEAVY_LIFT" "MIXED") ;
+    sh:message "Bulk cargo to AGI/DAS must use a valid MarineRoutingPattern value" .
 
 
 debulk:offshoreDeliveryPattern a owl:DatatypeProperty ;
@@ -219,7 +223,7 @@ debulk:hasRouteDescription a owl:DatatypeProperty ;
 debulk:AGIDASBulkConstraint a sh:NodeShape ;
     sh:targetClass debulk:Cargo ;
     sh:sparql [
-        sh:message "AGI/DAS bulk cargo must transit through MOSB (Flow Code >= 3)" ;
+        sh:message "AGI/DAS bulk cargo must transit through MOSB (MarineRoutingPattern: MOSB_DIRECT or WH_MOSB)" ;
         sh:select """
             PREFIX debulk: <https://hvdc-project.com/ontology/bulk-cargo/>
             SELECT $this
@@ -273,9 +277,9 @@ debulk:operation/MOSB-STAGING-T1 a debulk:OperationTask ;
     debulk:seafasteningApproved true .
 ```
 
-### SPARQL Queries for Bulk Cargo Flow Code
+### SPARQL Queries for Bulk Cargo Marine Routing
 
-#### 1. Bulk Cargo Flow Code Distribution
+#### 1. Bulk Cargo Marine Routing Distribution
 
 ```sparql
 PREFIX debulk: <https://hvdc-project.com/ontology/bulk-cargo/>
@@ -343,34 +347,34 @@ GROUP BY ?lct ?origin ?destination ?departureDate ?arrivalDate
 ORDER BY DESC(?cargoCount)
 ```
 
-### Bulk Cargo KPIs with Flow Code
+### Bulk Cargo KPIs with Marine Routing
 
-| KPI Metric | Target | Calculation | Flow Code Relevance |
-|------------|--------|-------------|---------------------|
-| **MOSB Throughput** | 90-95% | (Flow Code 3 + route_type WH_MOSB) / Total Bulk Cargo | MOSB staging efficiency |
-| **MOSB_DIRECT Ratio** | 60-70% | Flow Code 3 / (Flow Code 3 + route_type WH_MOSB) | Direct MOSB transit rate |
-| **WH_MOSB Ratio** | 30-40% | Flow Code 4 / (Flow Code 3 + route_type WH_MOSB) | Warehouse consolidation rate |
-| **MOSB Staging Time** | <48 hours | Avg(Departure - Arrival) at MOSB | Staging efficiency |
-| **AGI/DAS Compliance** | 100% | AGI/DAS with Flow Code ≥3 / Total AGI/DAS | Mandatory MOSB rule |
+| KPI Metric | Target | Calculation | Marine Routing Relevance |
+|------------|--------|-------------|--------------------------|
+| **MOSB Throughput** | 90-95% | (MOSB_DIRECT + WH_MOSB) / Total Bulk Cargo | MOSB staging efficiency |
+| **MOSB_DIRECT Ratio** | 60-70% | MOSB_DIRECT / (MOSB_DIRECT + WH_MOSB) | Direct MOSB transit rate |
+| **WH_MOSB Ratio** | 30-40% | WH_MOSB / (MOSB_DIRECT + WH_MOSB) | Warehouse consolidation rate |
+| **MOSB Staging Time** | <48 hours | Avg(Departure - Arrival) at MOSB (M115 interval) | Staging efficiency |
+| **AGI/DAS Compliance** | 100% | AGI/DAS with MOSB leg verified / Total AGI/DAS | Mandatory MOSB rule |
 | **LCT Utilization** | 80-85% | LCT trips with cargo / Total LCT trips | Transport efficiency |
-| **MIXED route_type Resolution** | <3 days | Avg(Site Assignment - MOSB Arrival) | Incomplete routing resolution |
+| **MIXED Routing Resolution** | <3 days | Avg(Site Assignment - MOSB Arrival) | Incomplete routing resolution |
 
 ### Integration with Bulk Cargo Operations
 
-#### Stowage & Lashing (Flow Code 3, 4)
+#### Stowage & Lashing (MOSB_DIRECT, WH_MOSB patterns)
 - MOSB staging area stowage planning
 - Seafastening calculations for LCT transport
-- route_type determines stowage priority (route_type MOSB_DIRECT = urgent offshore)
+- MarineRoutingPattern determines stowage priority (MOSB_DIRECT = urgent offshore)
 
-#### Stability Control (Flow Code 3, 4)
+#### Stability Control (MOSB_DIRECT, WH_MOSB patterns)
 - LCT stability verification before departure
 - Cargo COG (Center of Gravity) adjustments at MOSB
-- route_type impacts stability calculations (route_type WH_MOSB may have multiple items)
+- MarineRoutingPattern impacts stability calculations (WH_MOSB may have multiple items)
 
-#### Lifting & Transport Handling (Flow Code 3, 4)
+#### Lifting & Transport Handling (MOSB_DIRECT, WH_MOSB patterns)
 - MOSB crane operations for LCT loading
 - Rigging plans specific to offshore transport
-- route_type defines handling sequence (route_type MOSB_DIRECT loads first)
+- MarineRoutingPattern defines handling sequence (MOSB_DIRECT loads first)
 
 ---
 
