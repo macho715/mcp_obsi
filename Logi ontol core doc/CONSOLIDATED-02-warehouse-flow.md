@@ -1,4 +1,4 @@
----
+﻿---
 title: "HVDC Warehouse & Flow Code Ontology - Consolidated"
 type: "ontology-design"
 domain: "warehouse-flow-logistics"
@@ -8,15 +8,27 @@ date: "2025-10-31"
 tags: ["ontology", "hvdc", "warehouse", "flow-code", "logistics", "mosb", "consolidated", "agi-das"]
 standards: ["RDF", "OWL", "SHACL", "SPARQL", "JSON-LD", "Turtle", "XSD", "Python-Algorithm", "Pandas", "NumPy"]
 status: "active"
+spine_ref: "CONSOLIDATED-00-master-ontology.md"
+extension_of: "hvdc-master-ontology-v1.0"
 source_files: ["1_CORE-03-hvdc-warehouse-ops.md", "1_CORE-08-flow-code.md", "FLOW_CODE_V35_ALGORITHM.md"]
 version_history: ["v1.0: consolidated", "v3.5: domain-rules-extended"]
 ---
 
-# hvdc-warehouse-flow · CONSOLIDATED-02
+> **MASTER GOVERNANCE RULE**
+> 1. **Flow Code is a warehouse-handling classification only.** Restricted to WarehouseHandlingProfile. No other domain may own or assign Flow Code as primary language.
+> 2. **Program-wide shipment visibility shall use Journey Stage, Route Type, Milestone, and Leg.** (
+oute_type, shipment_stage, leg_sequence, JourneyLeg)
+> 3. **Port, Customs, Document, Cost, Marine, and Communication domains** may reference warehouse-flow *evidence*, but shall NOT own or assign Flow Code.
+> 4. **MOSB is an Offshore Staging / Marine Interface Node**, not a Warehouse in the top-level logistics ontology.
+
+> **Extension Document** — 이 문서는 [`CONSOLIDATED-00-master-ontology.md`](CONSOLIDATED-00-master-ontology.md)의 도메인 확장입니다.
+> RoutingPattern Dictionary, Milestone M10~M160, Identifier Policy 정의는 CONSOLIDATED-00을 참조하세요.
+
+# hvdc-warehouse-routing · CONSOLIDATED-02
 
 ## 📑 Table of Contents
 1. [Warehouse Operations](#section-1)
-2. [Flow Code Algorithm](#section-2)
+2. [WarehouseHandlingProfile Algorithm](#section-2)
 
 ---
 
@@ -28,21 +40,21 @@ version_history: ["v1.0: consolidated", "v3.5: domain-rules-extended"]
 - **Date**: 2025-10-25
 
 아래는 __HVDC 프로젝트 창고 물류 시스템(UAE 창고 네트워크)__를 __온톨로지 관점__으로 정의한 "작동 가능한 설계서"입니다.
-핵심은 __Warehouse(창고)·Site(현장)·OffshoreBase(MOSB)__ 를 하나의 그래프(KG)로 엮고, __Flow Code(0~5)·재고 추적·위험물 관리·용량 제어·AGI/DAS 도메인 룰__ 같은 제약을 **Constraints**로 운영하는 것입니다.
+핵심은 __Warehouse(창고)·Site(현장)·OffshoreBase(MOSB = Offshore Staging Node)__ 를 하나의 그래프(KG)로 엮고, __WarehouseHandlingProfile·재고 추적·위험물 관리·용량 제어·AGI/DAS 도메인 룰__ 같은 제약을 **Constraints**로 운영하는 것입니다.
 
 __1) Visual — Ontology Stack (요약표)__
 
 | __Layer__                         | __표준/근거__                                    | __범위__                                       | __HVDC 창고 업무 매핑(예)__                                        |
 | --------------------------------- | ------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------- |
-| __Upper__                         | __IOF/BFO Supply Chain Ontology__, __ISO 15926__ | 상위 개념(행위자/행위/자산/이벤트)·플랜트 라이프사이클 | 창고(Indoor/Outdoor)·이벤트(Transport/Stock)·상태(Flow Code) 프레임 |
+| __Upper__                         | __IOF/BFO Supply Chain Ontology__, __ISO 15926__ | 상위 개념(행위자/행위/자산/이벤트)·플랜트 라이프사이클 | 창고(Indoor/Outdoor)·이벤트(Transport/Stock)·상태(WarehouseHandlingProfile) 프레임 |
 | __Reference Data (Warehouse)__    | __UN/LOCODE__, __ISO 3166__                      | 창고·지역 코드 표준화                          | DSV Al Markaz, DSV Indoor, MOSB, Site 좌표             |
 | __Inventory Management__          | __ISO 9001__, __ISO 14001__                      | 재고 관리, 품질 관리 시스템                   | StockSnapshot, TransportEvent, Case/Item 추적                |
-| __Flow Control__                  | __HVDC Flow Code System v3.5__                   | 물류 흐름 코드(0~5) 표준화                   | Port→WH→MOSB→Site 경로 추적, WH Handling Count 관리, AGI/DAS 도메인 룰         |
+| __WarehouseHandling__             | __HVDC WarehouseHandlingProfile v3.5__            | WH 처리 이력 분류(0~5)                       | WH In/Out 이벤트 기록, wh_handling_cnt, confirmedFlowCode, AGI/DAS 규칙         |
 | __Dangerous Cargo__               | __IMDG Code__, __IATA DGR__                      | 위험물 보관·운송 규정                         | DangerousCargoWarehouse, 특수 보관 조건, HSE 절차                           |
 | __Data Validation__               | __SHACL__, __SPARQL__                            | 데이터 검증·질의 언어                         | Flow Code 검증, 재고 정확성, PKG Accuracy ≥99%            |
 | __Integration__                   | __JSON-LD__, __RDF/XML__                         | 데이터 교환·통합 표준                         | Excel→RDF 매핑, API 연동, 실시간 동기화            |
 
-Hint: MOSB는 **OffshoreBase**이면서 동시에 **특수 창고성 노드**로, ADNOC L&S 운영 Yard(20,000㎡)에서 해상화물 집하·적재를 담당합니다.
+Hint: MOSB는 **Offshore Staging / Marine Interface Node**로, ADNOC L&S 운영 Yard(20,000㎡)에서 해상화물 집하·적재를 담당합니다.
 
 __2) Domain Ontology — 클래스/관계(창고 단위 재정의)__
 
@@ -51,34 +63,62 @@ __핵심 클래스 (Classes)__
 - __Node__(Warehouse/Site/OffshoreBase)
 - __Warehouse__(IndoorWarehouse/OutdoorWarehouse/DangerousCargoWarehouse)
 - __Site__(AGI/DAS/MIR/SHU)
-- __OffshoreBase__(MOSB)
+- __OffshoreBase__(MOSB) — Offshore Staging / Marine Interface Node (**창고 분류에서 제외**)
 - __TransportEvent__(노드 간 이동 및 상태 변경 이벤트)
 - __StockSnapshot__(특정 시점 노드의 수량·중량·CBM 스냅샷)
 - __Case__(패키지 단위 식별 개체)
 - __Item__(개별 아이템 단위)
 - __Invoice__(InvoiceLineItem/ChargeSummary)
 - __Location__(UN/LOCODE, Warehouse Name, Storage Type)
-- __FlowCode__(0~5 물류 흐름 코드, v3.5)
-- __KPI__(PKG_Accuracy/Flow_Code_Coverage/WH_Handling_Count/Data_Quality)
+- __WarehouseHandlingProfile__(Flow Code 유일 소유 클래스 — confirmedFlowCode 0~5, wh_handling_cnt, flowConfirmationStatus)
+- __KPI__(PKG_Accuracy/WarehouseProfile_Coverage/wh_handling_cnt/Data_Quality)
 
-**참조**: Flow Code 알고리즘 상세 구현은 [`1_CORE-08-flow-code.md`](1_CORE-08-flow-code.md)를 참조하세요.
+**참조**: WarehouseHandlingProfile 상세 구현은 [`Section 2: WarehouseHandlingProfile Algorithm`](#section-2)을 참조하세요.
 
+
+#### WarehouseHandlingProfile 클래스 정의
+
+```turtle
+hvdc:WarehouseHandlingProfile a owl:Class ;
+    rdfs:label "Warehouse Handling Profile" ;
+    rdfs:comment "Flow Code의 유일한 소유 클래스. WH In 이벤트 기반으로 생성·확정됨." .
+
+hvdc:confirmedFlowCode a owl:DatatypeProperty ;
+    rdfs:domain hvdc:WarehouseHandlingProfile ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "0=Pre-Arrival, 1=WH bypass, 2=Single WH, 3=WH+Offshore, 4=Multi-WH+Offshore, 5=Mixed/Pending" .
+
+hvdc:flowConfirmationStatus a owl:DatatypeProperty ;
+    rdfs:domain hvdc:WarehouseHandlingProfile ;
+    rdfs:range xsd:string ;   # "tentative" | "confirmed" | "overridden"
+    rdfs:comment "WH In 이벤트 기록 전: tentative. 확정 후: confirmed." .
+
+hvdc:flowEvidenceSource a owl:DatatypeProperty ;
+    rdfs:domain hvdc:WarehouseHandlingProfile ;
+    rdfs:range xsd:string ;   # TransportEvent ID
+    rdfs:comment "confirmedFlowCode 결정의 근거 이벤트 ID" .
+
+hvdc:warehouseDwellDays a owl:DatatypeProperty ;
+    rdfs:domain hvdc:WarehouseHandlingProfile ;
+    rdfs:range xsd:integer .
+```
 __대표 관계 (Object Properties)__
 
 - TransportEvent → hasLocation → Node (이벤트 발생 위치)
 - Case → transportedBy → TransportEvent (케이스 이동 이벤트)
 - StockSnapshot → capturedAt → Node (재고 스냅샷 위치)
-- TransportEvent → hasLogisticsFlowCode → FlowCode (물류 흐름 코드)
+- Case/ShipmentUnit → hasWarehouseHandlingProfile → WarehouseHandlingProfile (Flow Code 유일 소유)
 - Warehouse → handles → DangerousCargo (위험물 처리)
 - Site → receivesFrom → Warehouse (현장 수령)
-- OffshoreBase → consolidates → Warehouse (MOSB 집하)
-- TransportEvent → hasWHHandling → Integer (창고 경유 횟수)
+- OffshoreBase(MOSB) → receivesFrom → Warehouse (WH→MOSB 출고 경로, Offshore Staging 역할)
+- WarehouseHandlingProfile → wh_handling_cnt → Integer (실제 WH In 이벤트 횟수)
 - Case → hasHVDCCode → String (HVDC 식별 코드)
 - Invoice → refersTo → TransportEvent (송장 연계)
 
 __데이터 속성 (Data Properties)__
 
-- hasCase, hasRecordId, hasHVDCCode, hasDate, hasOperationMonth, hasStartDate, hasFinishDate, hasLocation, hasWarehouseName, hasStorageType, hasQuantity, hasPackageCount, hasWeight, hasCBM, hasAmount, hasRateUSD, hasTotalUSD, hasCategory, hasVendor, hasTransactionType, hasLogisticsFlowCode, hasWHHandling, hasStackStatus, hasDHLWarehouse.
+- hasCase, hasRecordId, hasHVDCCode, hasDate, hasOperationMonth, hasStartDate, hasFinishDate, hasLocation, hasWarehouseName, hasStorageType, hasQuantity, hasPackageCount, hasWeight, hasCBM, hasAmount, hasRateUSD, hasTotalUSD, hasCategory, hasVendor, hasTransactionType, hasStackStatus, hasDHLWarehouse.
+**WarehouseHandlingProfile**: confirmedFlowCode (0~5), wh_handling_cnt (0~3), flowConfirmationStatus, flowEvidenceSource, warehouseDwellDays.
 
 __3) Use-case별 제약(Constraints) = 운영 가드레일__
 
@@ -90,22 +130,24 @@ __3.1 Warehouse Capacity Management__
 
 __3.2 Stock Tracking & Accuracy__
 
-- __Rule-4__: 모든 TransportEvent는 hasCase + hasDate + hasLocation + hasLogisticsFlowCode 필수. 미충족 시 *이벤트 생성 차단*.
+- __Rule-4__: 모든 TransportEvent는 hasCase + hasDate + hasLocation 필수. WarehouseHandlingProfile은 WH In 이벤트 발생 시 자동 생성됨. 미충족 시 *이벤트 생성 차단*.
 - __Rule-5__: StockSnapshot → hasQuantity + hasWeight + hasCBM 필수. 음수 값 금지.
 - __Rule-6__: PKG Accuracy ≥ 99% = 시스템 PKG / 실제수입PKG. 미달 시 *재고 실사* 필수.
 
-__3.3 Flow Code Validation (v3.5)__
+__3.3 WarehouseHandlingProfile Validation__
 
-- __Rule-7__: hasLogisticsFlowCode ∈ {0,1,2,3,4,5}. 비표준 값(예: 6) 감지 시 *자동 정규화* 또는 *데이터 검증 실패*.
-- __Rule-8__: hasWHHandling = 경유 창고 횟수(0~3). Flow Code와 일치 필수.
-  - Flow Code 0: WH Handling = 0 (Pre Arrival)
-  - Flow Code 1: WH Handling = 0 (Direct Port→Site)
-  - Flow Code 2: WH Handling ≥1 (Port→WH→Site)
-  - Flow Code 3: WH Handling = 0~1 (Port→MOSB→Site 또는 Port→WH→MOSB→Site)
-  - Flow Code 4: WH Handling ≥1 (Port→WH→MOSB→Site)
-  - Flow Code 5: WH Handling 변동 (혼합/미완료 케이스)
-- __Rule-8A__: **AGI/DAS 도메인 룰** - Final_Location이 AGI 또는 DAS인 경우 Flow Code는 3 이상 필수.
-- __Rule-8B__: Flow Code 5는 MOSB 있으나 Site 없음 또는 WH 2개 이상 + MOSB 없음 조건으로 분류.
+> **[핵심]** 이 규칙들은 `WarehouseHandlingProfile` 클래스 안에서만 적용됨. 다른 도메인(Port, Document, Cost, Marine)에 직접 적용 금지.
+
+- __Rule-7__: `WarehouseHandlingProfile.confirmedFlowCode` ∈ {0,1,2,3,4,5}. 비표준 값 감지 시 *데이터 검증 실패*.
+  - **0**: Pre-Arrival — WH 입고 없음 (잠정)
+  - **1**: WH bypass confirmed — 창고 미경유 확정
+  - **2**: Single WH handling — WH 1회 경유
+  - **3**: WH-linked offshore pattern — WH+MOSB 복합
+  - **4**: Multi-WH + offshore pattern — WH 2회 이상 + MOSB
+  - **5**: Mixed / pending / unresolved warehouse pattern
+- __Rule-8__: `wh_handling_cnt` = 실제 WH In 이벤트 횟수(0~3). `confirmedFlowCode`와 일치 필수. 계획 경유 포함 금지.
+- __Rule-8A__: **AGI/DAS 도메인 룰** — `route_type ∈ {MOSB_DIRECT, WH_MOSB, MIXED}` 필수. (Shipment 레이어에서 검증)
+- __Rule-8B__: `confirmedFlowCode=5` 분류 조건: MOSB 있으나 Site 없음 OR WH 2회 이상 + MOSB 없음. 반드시 사유 플래그 필요.
 
 __3.4 Dangerous Cargo Handling__
 
@@ -122,7 +164,7 @@ __4) 최소 예시(표현) — JSON-LD (요지)__
     "hasCase": "hvdc:hasCase",
     "hasDate": {"@id": "hvdc:hasDate", "@type": "xsd:dateTime"},
     "hasLocation": {"@id": "hvdc:hasLocation", "@type": "@id"},
-    "hasLogisticsFlowCode": {"@id": "hvdc:hasLogisticsFlowCode", "@type": "xsd:integer"}
+    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"}
   },
   "@type": "hvdc:TransportEvent",
   "id": "EVT_208221_1",
@@ -136,7 +178,7 @@ __4) 최소 예시(표현) — JSON-LD (요지)__
   "hasQuantity": 2,
   "hasWeight": 694.00,
   "hasCBM": 12.50,
-  "hasLogisticsFlowCode": 3,
+  "confirmedFlowCode": 2,
   "hasWHHandling": 1,
   "hasHVDCCode": "HE-208221"
 }
@@ -237,7 +279,7 @@ hvdc:TransportEventShape a sh:NodeShape ;
     sh:message "Location must be a valid Node"
   ] ;
   sh:property [
-    sh:path hvdc:hasLogisticsFlowCode ;
+    sh:path hvdc:confirmedFlowCode ;
     sh:datatype xsd:integer ;
     sh:minInclusive 0 ;
     sh:maxInclusive 5 ;
@@ -253,14 +295,14 @@ hvdc:FlowCodeConsistencyShape a sh:NodeShape ;
     sh:select """
       SELECT $this
       WHERE {
-        $this hvdc:hasLogisticsFlowCode ?flow .
+        $this hvdc:confirmedFlowCode ?fc .
         $this hvdc:hasWHHandling ?wh .
         FILTER (
-          (?flow = 0 && ?wh != 0) ||
-          (?flow = 1 && ?wh != 0) ||
-          (?flow = 2 && ?wh != 1) ||
-          (?flow = 3 && (?wh < 1 || ?wh > 2)) ||
-          (?flow = 4 && (?wh < 2 || ?wh > 3))
+          (?fc = 0 && ?wh != 0) ||
+          (?fc = 1 && ?wh != 0) ||
+          (?fc = 2 && ?wh != 1) ||
+          (?fc = 3 && (?wh < 1 || ?wh > 2)) ||
+          (?fc = 4 && (?wh < 2 || ?wh > 3))
         )
       }
     """
@@ -327,7 +369,7 @@ __14) 다음 액션(짧게)__
 
 ---
 
-## Section 2: Flow Code Algorithm
+## Section 2: WarehouseHandlingProfile Algorithm
 
 ### Source
 - **Original File**: `1_CORE-08-flow-code.md`
@@ -345,7 +387,7 @@ Flow Code Algorithm Ontology는 HVDC 프로젝트의 복잡한 물류 흐름을 
 │  Part 1: Ontology System  │  Part 2: Implementation  │  Part 3: Integration  │
 ├─────────────────────────────────────────────────────────────┤
 │  • FlowCode Classes (0~5) │  • v3.5 Algorithm       │  • Warehouse vs MOSB │
-│  • Flow Path Relations    │  • AGI/DAS Domain Rules │  • KPI Applications   │
+│  • Routing Path Relations    │  • AGI/DAS Domain Rules │  • KPI Applications   │
 │  • Constraint Rules       │  • Data Preprocessing    │  • Event Injection    │
 │  • Event-based Tracking   │  • Final Location Extract│  • Cross-references   │
 └─────────────────────────────────────────────────────────────┘
@@ -363,7 +405,7 @@ hvdc:FlowCode a owl:Class ;
     rdfs:label "Flow Code" ;
     rdfs:comment "물류 흐름 패턴을 나타내는 코드 (0~5)"@ko .
 
-hvdc:LogisticsFlow a owl:Class ;
+hvdc:LogisticsRoute a owl:Class ;
     rdfs:label "Logistics Flow" ;
     rdfs:comment "물류 흐름 경로"@ko .
 
@@ -379,36 +421,36 @@ hvdc:PreArrival a owl:Class ;
     rdfs:label "Pre Arrival" ;
     rdfs:comment "선적 전 단계"@ko .
 
-hvdc:MixedIncompleteFlow a owl:Class ;
+hvdc:MixedIncompleteRoute a owl:Class ;
     rdfs:label "Mixed/Incomplete Flow" ;
-    rdfs:comment "혼합/미완료 물류 흐름 (Flow 5)"@ko .
+    rdfs:comment "혼합/미완료 물류 흐름 (Flow Code 5)"@ko .
 ```
 
 #### Data Properties
 
 ```turtle
 # Flow Code Properties (v3.5)
-hvdc:hasFlowCode a owl:DatatypeProperty ;
-    rdfs:label "has flow code" ;
+hvdc:hasFlowCodeRef a owl:DatatypeProperty ;
+    rdfs:label "has Flow Code" ;
     rdfs:comment "물류 흐름 코드 값 (0~5)"@ko ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range xsd:integer .
 
 hvdc:hasFlowCodeOriginal a owl:DatatypeProperty ;
-    rdfs:label "has flow code original" ;
+    rdfs:label "has Flow Code original" ;
     rdfs:comment "도메인 룰 적용 전 원본 Flow Code (v3.5 추적용)"@ko ;
     rdfs:domain hvdc:Case ;
     rdfs:range xsd:integer .
 
-hvdc:hasFlowOverrideReason a owl:DatatypeProperty ;
-    rdfs:label "has flow override reason" ;
+hvdc:hasRouteOverrideReason a owl:DatatypeProperty ;
+    rdfs:label "has route override reason" ;
     rdfs:comment "Flow Code 오버라이드 사유 (예: AGI/DAS requires MOSB leg)"@ko ;
     rdfs:domain hvdc:Case ;
     rdfs:range xsd:string .
 
-hvdc:hasFlowDescription a owl:DatatypeProperty ;
-    rdfs:label "has flow description" ;
-    rdfs:comment "물류 흐름 설명 (예: Flow 3: Port → MOSB → Site)"@ko ;
+hvdc:hasRouteDescription a owl:DatatypeProperty ;
+    rdfs:label "has route description" ;
+    rdfs:comment "물류 흐름 설명 (예: Flow Code 3: Port → MOSB → Site)"@ko ;
     rdfs:domain hvdc:Case ;
     rdfs:range xsd:string .
 
@@ -421,36 +463,36 @@ hvdc:hasFinalLocation a owl:DatatypeProperty ;
 hvdc:hasWHHandling a owl:DatatypeProperty ;
     rdfs:label "has warehouse handling count" ;
     rdfs:comment "창고 처리 횟수"@ko ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range xsd:integer .
 
 hvdc:hasOffshoreFlag a owl:DatatypeProperty ;
     rdfs:label "has offshore flag" ;
     rdfs:comment "MOSB 해상운송 여부"@ko ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range xsd:boolean .
 ```
 
 #### Object Properties
 
 ```turtle
-# Flow Path Relations
+# Routing Relations Relations
 hvdc:hasWarehouseHop a owl:ObjectProperty ;
     rdfs:label "has warehouse hop" ;
     rdfs:comment "창고 경유 관계" ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range hvdc:WarehouseHop .
 
 hvdc:hasOffshoreTransport a owl:ObjectProperty ;
     rdfs:label "has offshore transport" ;
     rdfs:comment "해상운송 관계" ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range hvdc:OffshoreTransport .
 
 hvdc:isPreArrival a owl:ObjectProperty ;
     rdfs:label "is pre arrival" ;
     rdfs:comment "선적 전 단계 여부" ;
-    rdfs:domain hvdc:LogisticsFlow ;
+    rdfs:domain hvdc:LogisticsRoute ;
     rdfs:range hvdc:PreArrival .
 ```
 
@@ -459,9 +501,9 @@ hvdc:isPreArrival a owl:ObjectProperty ;
 #### Rule-20: Flow Code Range Constraint (v3.5)
 ```turtle
 hvdc:FlowCodeRangeShape a sh:NodeShape ;
-    sh:targetClass hvdc:LogisticsFlow ;
+    sh:targetClass hvdc:LogisticsRoute ;
     sh:property [
-        sh:path hvdc:hasFlowCode ;
+        sh:path hvdc:hasFlowCodeRef ;
         sh:minInclusive 0 ;
         sh:maxInclusive 5 ;
         sh:message "Flow Code는 0~5 범위 내에 있어야 함"
@@ -473,12 +515,12 @@ hvdc:FlowCodeRangeShape a sh:NodeShape ;
 hvdc:FlowCode5MixedCaseShape a sh:NodeShape ;
     sh:targetClass hvdc:Case ;
     sh:property [
-        sh:path hvdc:hasFlowCode ;
+        sh:path hvdc:hasFlowCodeRef ;
         sh:hasValue "5" ;
         sh:property [
-            sh:path hvdc:hasFlowDescription ;
-            sh:pattern "Flow 5:.*Mixed.*Incomplete" ;
-            sh:message "Flow 5는 Mixed/Incomplete 패턴을 가져야 함"
+            sh:path hvdc:hasRouteDescription ;
+            sh:pattern "Flow Code 5:.*Mixed.*Incomplete" ;
+            sh:message "Flow Code 5는 Mixed/Incomplete 패턴을 가져야 함"
         ]
     ] .
 ```
@@ -495,7 +537,7 @@ hvdc:Flow5ExceptionDetectionShape a sh:NodeShape ;
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             SELECT $this ?reason
             WHERE {
-                $this hvdc:hasFlowCode "5"^^xsd:integer .
+                $this hvdc:hasFlowCodeRef "5"^^xsd:integer .
                 {
                     # 패턴 1: WH 이벤트 다중 혼재
                     {
@@ -530,7 +572,7 @@ hvdc:Flow5ExceptionDetectionShape a sh:NodeShape ;
         """
     ] ;
     sh:property [
-        sh:path hvdc:hasFlowOverrideReason ;
+        sh:path hvdc:hasRouteOverrideReason ;
         sh:minCount 1 ;
         sh:message "Flow-5 예외 케이스는 반드시 Override Reason을 기록해야 함"
     ] .
@@ -549,8 +591,8 @@ hvdc:AGIDASFlowRuleShape a sh:NodeShape ;
             WHERE {
                 $this hvdc:hasFinalLocation ?loc .
                 FILTER(?loc IN ("AGI", "DAS"))
-                $this hvdc:hasFlowCode ?flow .
-                FILTER(xsd:integer(?flow) < 3)
+                $this hvdc:hasFlowCodeRef ?fc .
+                FILTER(xsd:integer(?fc) < 3)
             }
         """
     ] .
@@ -570,7 +612,7 @@ hvdc:AGIDASFlow1BanShape a sh:NodeShape ;
             WHERE {
                 $this hvdc:hasDestination ?site .
                 FILTER(?site IN ("AGI", "DAS"))
-                $this hvdc:hasFlowCode ?flowCode .
+                $this hvdc:hasFlowCodeRef ?flowCode .
                 FILTER(xsd:integer(?flowCode) = 1)
             }
         """
@@ -580,14 +622,14 @@ hvdc:AGIDASFlow1BanShape a sh:NodeShape ;
 #### Rule-21: Flow Code Calculation Consistency
 ```turtle
 hvdc:FlowCodeConsistencyShape a sh:NodeShape ;
-    sh:targetClass hvdc:LogisticsFlow ;
+    sh:targetClass hvdc:LogisticsRoute ;
     sh:property [
-        sh:path hvdc:hasFlowCode ;
+        sh:path hvdc:hasFlowCodeRef ;
         sh:equals [
             sh:sparql """
                 SELECT ?flowCode WHERE {
-                    ?flow hvdc:hasWHHandling ?whCount .
-                    ?flow hvdc:hasOffshoreFlag ?offshore .
+                    ?fc hvdc:hasWHHandling ?whCount .
+                    ?fc hvdc:hasOffshoreFlag ?offshore .
                     BIND(IF(?offshore = true, 1, 0) + ?whCount + 1 AS ?calculated) .
                     BIND(IF(?calculated > 4, 4, ?calculated) AS ?flowCode) .
                 }
@@ -600,12 +642,12 @@ hvdc:FlowCodeConsistencyShape a sh:NodeShape ;
 #### Rule-22: Pre Arrival Flow Code Constraint
 ```turtle
 hvdc:PreArrivalFlowCodeShape a sh:NodeShape ;
-    sh:targetClass hvdc:LogisticsFlow ;
+    sh:targetClass hvdc:LogisticsRoute ;
     sh:property [
         sh:path hvdc:isPreArrival ;
         sh:hasValue true ;
         sh:property [
-            sh:path hvdc:hasFlowCode ;
+            sh:path hvdc:hasFlowCodeRef ;
             sh:hasValue 0 ;
             sh:message "Pre Arrival은 Flow Code 0이어야 함"
         ]
@@ -618,12 +660,12 @@ hvdc:PreArrivalFlowCodeShape a sh:NodeShape ;
 
 ```python
 flow_codes_v35 = {
-    0: "Flow 0: Pre Arrival",
-    1: "Flow 1: Port → Site",
-    2: "Flow 2: Port → WH → Site",
-    3: "Flow 3: Port → MOSB → Site",
-    4: "Flow 4: Port → WH → MOSB → Site",
-    5: "Flow 5: Mixed / Waiting / Incomplete leg",
+    0: "Flow Code 0: Pre Arrival",
+    1: "Flow Code 1: Port → Site",
+    2: "Flow Code 2: Port → WH → Site",
+    3: "Flow Code 3: Port → MOSB → Site",
+    4: "Flow Code 4: Port → WH → MOSB → Site",
+    5: "Flow Code 5: Mixed / Waiting / Incomplete leg",
 }
 ```
 
@@ -735,7 +777,7 @@ logger.info(f" Pre Arrival 정확 판별: {is_pre_arrival.sum()}건")
 | **Flow Code 범위** | 0~4 | **0~5** |
 | **계산 방식** | 산술 계산 + clip | **관측 기반 규칙 적용** |
 | **AGI/DAS 처리** | 없음 | **도메인 룰 강제 적용** |
-| **혼합 케이스** | 없음 | **Flow 5로 명시적 분류** |
+| **혼합 케이스** | 없음 | **Flow Code 5로 명시적 분류** |
 | **원본 값 보존** | 없음 | **FLOW_CODE_ORIG 컬럼** |
 | **오버라이드 추적** | 없음 | **FLOW_OVERRIDE_REASON 컬럼** |
 
@@ -753,17 +795,17 @@ logger.info(f" Pre Arrival 정확 판별: {is_pre_arrival.sum()}건")
 **AGI/DAS 도메인 룰**:
 > Final_Location이 "AGI" 또는 "DAS"인 경우, Flow Code 0/1/2는 무조건 3으로 승급 (MOSB 레그 필수)
 
-**Flow 5 케이스**:
+**Flow Code 5 케이스**:
 - MOSB 있으나 Site 없음
 - WH 2개 이상 + MOSB 없음
 
 **변환 결과** (실제 데이터 755건):
-- Flow 0: 71건 (Pre Arrival)
-- Flow 1: 255건 (직송)
-- Flow 2: 152건 (창고경유)
-- Flow 3: 131건 (MOSB경유)
-- Flow 4: 65건 (창고+MOSB)
-- Flow 5: 81건 (혼합/미완료)
+- Flow Code 0: 71건 (Pre Arrival)
+- Flow Code 1: 255건 (직송)
+- Flow Code 2: 152건 (창고경유)
+- Flow Code 3: 131건 (MOSB경유)
+- Flow Code 4: 65건 (창고+MOSB)
+- Flow Code 5: 81건 (혼합/미완료)
 - AGI/DAS 강제 승급: 31건
 
 ## Part 3: Operational Integration
@@ -797,7 +839,7 @@ def calculate_direct_delivery(self, df: pd.DataFrame) -> Dict:
             # 현장으로 직접 이동한 항목들
 ```
 
-#### Flow 분석 시트 (Lines 1937-1957)
+#### Routing Analysis 시트 (Lines 1937-1957)
 
 ```python
 def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
@@ -808,7 +850,7 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
     )
 ```
 
-#### Flow Traceability Dashboard (Lines 1739-1885)
+#### Routing Traceability Dashboard (Lines 1739-1885)
 
 **KPI 계산에 활용:**
 - MOSB 통과율 (MOSB Pass Rate)
@@ -821,7 +863,7 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 2. **견고한 예외 처리**: null 값, 빈 문자열 사전 정규화
 3. **정확한 Pre Arrival 판별**: ATA 또는 날짜 컬럼 기반 검증
 4. **AGI/DAS 도메인 룰**: 해상 현장 강제 MOSB 승급 자동화
-5. **혼합 케이스 분류**: Flow 5로 비정상 패턴 명시적 분류
+5. **혼합 케이스 분류**: Flow Code 5로 비정상 패턴 명시적 분류
 6. **원본 값 보존**: FLOW_CODE_ORIG 및 FLOW_OVERRIDE_REASON 추적
 7. **컬럼명 유연성**: 자동 정규화 및 다중 후보 지원
 8. **추적 가능성**: 분포 로그, 검증 메커니즘, TTL 속성 내장
@@ -836,7 +878,7 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 
 ## JSON-LD Examples
 
-### Example 1: 일반 창고 경유 (Flow 2)
+### Example 1: 일반 창고 경유 (Flow Code 2)
 
 ```json
 {
@@ -845,12 +887,12 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
     "owl": "http://www.w3.org/2002/07/owl#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
   },
-  "@id": "hvdc:flow-example-001",
-  "@type": "hvdc:LogisticsFlow",
-  "hvdc:hasFlowCode": 2,
+  "@id": "hvdc:LogisticsRoute-example-001",
+  "@type": "hvdc:LogisticsRoute",
+  "hvdc:hasFlowCodeRef": 2,
   "hvdc:hasWHHandling": 1,
   "hvdc:hasOffshoreFlag": false,
-  "hvdc:hasFlowDescription": "Flow 2: Port → WH → Site",
+  "hvdc:hasRouteDescription": "Flow Code 2: Port → WH → Site",
   "hvdc:hasWarehouseHop": {
     "@type": "hvdc:WarehouseHop",
     "hvdc:warehouseName": "DSV Indoor"
@@ -858,19 +900,19 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 }
 ```
 
-### Example 2: AGI 강제 승급 (Flow 3)
+### Example 2: AGI 강제 승급 (Flow Code 3)
 
 ```json
 {
   "@context": {
     "hvdc": "http://samsung.com/project-logistics#"
   },
-  "@id": "hvdc:flow-example-002",
+  "@id": "hvdc:LogisticsRoute-example-002",
   "@type": "hvdc:Case",
-  "hvdc:hasFlowCode": 3,
+  "hvdc:hasFlowCodeRef": 3,
   "hvdc:hasFlowCodeOriginal": 1,
-  "hvdc:hasFlowDescription": "Flow 3: Port → MOSB → Site (AGI/DAS forced)",
-  "hvdc:hasFlowOverrideReason": "AGI/DAS requires MOSB leg",
+  "hvdc:hasRouteDescription": "Flow Code 3: Port → MOSB → Site (AGI/DAS forced)",
+  "hvdc:hasRouteOverrideReason": "AGI/DAS requires MOSB leg",
   "hvdc:hasFinalLocation": "AGI",
   "hvdc:hasInboundEvent": {
     "@type": "hvdc:StockEvent",
@@ -881,18 +923,18 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 }
 ```
 
-### Example 3: 혼합 케이스 (Flow 5)
+### Example 3: 혼합 케이스 (Flow Code 5)
 
 ```json
 {
   "@context": {
     "hvdc": "http://samsung.com/project-logistics#"
   },
-  "@id": "hvdc:flow-example-003",
+  "@id": "hvdc:LogisticsRoute-example-003",
   "@type": "hvdc:Case",
-  "hvdc:hasFlowCode": 5,
+  "hvdc:hasFlowCodeRef": 5,
   "hvdc:hasFlowCodeOriginal": 2,
-  "hvdc:hasFlowDescription": "Flow 5: Mixed / Waiting / Incomplete leg"
+  "hvdc:hasRouteDescription": "Flow Code 5: Mixed / Waiting / Incomplete leg"
 }
 ```
 
@@ -902,10 +944,10 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 ```sparql
 PREFIX hvdc: <https://hvdc-project.com/ontology/>
 
-SELECT ?flowCode ?description (COUNT(?flow) AS ?count)
+SELECT ?flowCode ?description (COUNT(?fc) AS ?count)
 WHERE {
-    ?flow hvdc:hasFlowCode ?flowCode .
-    ?flow hvdc:hasFlowDescription ?description .
+    ?fc hvdc:hasFlowCodeRef ?flowCode .
+    ?fc hvdc:hasRouteDescription ?description .
 }
 GROUP BY ?flowCode ?description
 ORDER BY ?flowCode
@@ -916,13 +958,13 @@ ORDER BY ?flowCode
 PREFIX hvdc: <https://hvdc-project.com/ontology/>
 
 SELECT
-    (COUNT(?offshoreFlow) AS ?offshoreCount)
-    (COUNT(?totalFlow) AS ?totalCount)
-    ((COUNT(?offshoreFlow) * 100.0 / COUNT(?totalFlow)) AS ?mosbPassRate)
+    (COUNT(?offshoreRoute) AS ?offshoreCount)
+    (COUNT(?totalRoute) AS ?totalCount)
+    ((COUNT(?offshoreRoute) * 100.0 / COUNT(?totalRoute)) AS ?mosbPassRate)
 WHERE {
-    ?totalFlow a hvdc:LogisticsFlow .
+    ?totalRoute a hvdc:LogisticsRoute .
     OPTIONAL {
-        ?offshoreFlow hvdc:hasOffshoreFlag true .
+        ?offshoreRoute hvdc:hasOffshoreFlag true .
     }
 }
 ```
@@ -940,7 +982,7 @@ WHERE {
 - **Average Flow Complexity**: 평균 Flow Code 값
 - **Flow Code Variance**: Flow Code 분산 (물류 패턴 다양성)
 - **Optimization Potential**: Flow Code 4 → 1 전환 가능성
-- **AGI/DAS Compliance**: AGI/DAS 케이스 중 Flow ≥3 비율 (도메인 룰 준수)
+- **AGI/DAS Compliance**: AGI/DAS 케이스 중 Flow Code ≥3 비율 (도메인 룰 준수)
 
 ### AGI/DAS Domain Rule Validation (v3.5)
 
@@ -954,10 +996,10 @@ SELECT
     ((COUNT(?agiCompliant) * 100.0 / COUNT(?agi)) AS ?complianceRate)
 WHERE {
     ?case hvdc:hasFinalLocation "AGI" .
-    ?case hvdc:hasFlowCode ?flow .
+    ?case hvdc:hasFlowCodeRef ?fc .
     BIND(?case AS ?agi)
     OPTIONAL {
-        ?case hvdc:hasFlowCode ?flowComp .
+        ?case hvdc:hasFlowCodeRef ?flowComp .
         FILTER(xsd:integer(?flowComp) >= 3)
         BIND(?case AS ?agiCompliant)
     }
@@ -969,7 +1011,7 @@ WHERE {
 - `/flow-code analyze --distribution` [Flow Code 분포 분석 (0~5)]
 - `/flow-code validate --strict` [Flow Code 일관성 검증]
 - `/flow-code agi-das-compliance` [AGI/DAS 도메인 룰 검증]
-- `/flow-code mixed-case-analysis` [Flow 5 혼합 케이스 분석]
+- `/flow-code mixed-case-analysis` [Flow Code 5 혼합 케이스 분석]
 - `/mosb-pass-rate calculate` [MOSB 통과율 계산]
 - `/warehouse-efficiency analyze` [창고 효율성 분석]
 
@@ -989,3 +1031,5 @@ WHERE {
 ---
 
 이 Flow Code 알고리즘(v3.5)은 HVDC 프로젝트의 복잡한 물류 흐름을 정량화하여 창고 경유 패턴, 직송 비율, MOSB 해상운송 활용도, AGI/DAS 도메인 룰 준수, 혼합 케이스 분석 등 핵심 KPI 산출의 기반이 됩니다.
+
+

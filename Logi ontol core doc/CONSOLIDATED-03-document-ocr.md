@@ -1,4 +1,4 @@
----
+﻿---
 title: "HVDC Document Guardian & OCR Pipeline Ontology - Consolidated"
 type: "ontology-design"
 domain: "document-processing"
@@ -8,8 +8,20 @@ date: "2025-11-01"
 tags: ["ontology", "hvdc", "ldg", "trust-layer", "semantic-reasoning", "knowledge-graph", "ocr", "document-processing", "validation", "cost-guard", "regtech", "flow-code", "consolidated"]
 standards: ["RDF", "OWL", "SHACL", "SPARQL", "JSON-LD", "Turtle", "XSD"]
 status: "active"
+spine_ref: "CONSOLIDATED-00-master-ontology.md"
+extension_of: "hvdc-master-ontology-v1.0"
 source_files: ["1_CORE-06-hvdc-doc-guardian.md", "1_CORE-07-hvdc-ocr-pipeline.md", "docs/flow_code_v35/FLOW_CODE_V35_ALGORITHM.md"]
 ---
+
+> **MASTER GOVERNANCE RULE**
+> 1. **Flow Code is a warehouse-handling classification only.** Restricted to WarehouseHandlingProfile. No other domain may own or assign Flow Code as primary language.
+> 2. **Program-wide shipment visibility shall use Journey Stage, Route Type, Milestone, and Leg.** (
+oute_type, shipment_stage, leg_sequence, JourneyLeg)
+> 3. **Port, Customs, Document, Cost, Marine, and Communication domains** may reference warehouse-flow *evidence*, but shall NOT own or assign Flow Code.
+> 4. **MOSB is an Offshore Staging / Marine Interface Node**, not a Warehouse in the top-level logistics ontology.
+
+> **Extension Document** — 이 문서는 [`CONSOLIDATED-00-master-ontology.md`](CONSOLIDATED-00-master-ontology.md)의 도메인 확장입니다.
+> RoutingPattern Dictionary, Milestone M10~M160, Identifier Policy 정의는 CONSOLIDATED-00을 참조하세요.
 
 # hvdc-document-ocr · CONSOLIDATED-03
 
@@ -31,55 +43,59 @@ Logistics documents (Invoice, BOL, Packing List, Customs Declaration) contain **
 3. **MOSB References**: Explicit MOSB leg mentioned in shipping instructions
 4. **Site Codes**: AGI/DAS codes trigger mandatory Flow Code ≥3 validation
 
-### OCR Extraction Fields for Flow Code
+> **[Document/OCR Domain Rule]** Documents extract 
+outeEvidence and destinationEvidence only.
+> Documents do NOT assign confirmedFlowCode. OCR output feeds WarehouseHandlingProfile as evidence source after WH In event.
+
+### OCR Extraction Fields for Route Evidence
 
 | Document Type | Flow Code Relevant Fields | Extraction Priority | Validation Rule |
 |---------------|---------------------------|---------------------|-----------------|
-| **Bill of Lading (BOL)** | Final Destination, Consignee Site | HIGH | Site code → Flow Code assignment |
-| **Commercial Invoice** | Delivery Address, Project Site | HIGH | AGI/DAS → Flow ≥3 required |
-| **Packing List** | Destination Site, MOSB Transit Flag | MEDIUM | MOSB flag → Flow 3 or 4 |
-| **Customs Declaration** | Final Location, Transport Route | MEDIUM | Customs destination → Flow validation |
-| **Delivery Order** | Site Code, Routing Instructions | HIGH | Explicit Flow Code field |
+| **Bill of Lading (BOL)** | Final Destination, Consignee Site | HIGH | Site code → route_type assignment |
+| **Commercial Invoice** | Delivery Address, Project Site | HIGH | AGI/DAS → route_type MOSB_DIRECT/WH_MOSB/MIXED required |
+| **Packing List** | Destination Site, MOSB Transit Flag | MEDIUM | MOSB flag → route_type MOSB_DIRECT or WH_MOSB |
+| **Customs Declaration** | Final Location, Transport Route | MEDIUM | Customs destination → route_type validation |
+| **Delivery Order** | Site Code, Routing Instructions | HIGH | Explicit route_type field |
 
-### Flow Code Validation in LDG Pipeline
+### Route Type Validation in LDG Pipeline
 
 ```
-OCR Pipeline with Flow Code:
+OCR Pipeline with Route Type:
 1. Document Ingestion → Extract text/tables
 2. Field Classification → Identify destination/route fields
-3. Flow Code Extraction → Parse Final_Location, MOSB flags
+3. Route Type Extraction → Parse Final_Location, MOSB flags
 4. Business Rule Validation:
-   - IF destination = AGI/DAS AND Flow < 3 → FAIL
-   - IF MOSB_Transit = TRUE AND Flow < 3 → FAIL
-   - IF destination = MIR/SHU AND Flow = 3 or 4 → WARNING
+   - IF destination = AGI/DAS AND route_type NOT IN (MOSB_DIRECT,WH_MOSB,MIXED) → FAIL
+   - IF MOSB_Transit = TRUE AND route_type NOT IN (MOSB_DIRECT,WH_MOSB,MIXED) → FAIL
+   - IF destination = MIR/SHU AND route_type IN (MOSB_DIRECT,WH_MOSB) → WARNING
 5. Cross-Document Verification:
-   - Invoice Flow Code = BOL Flow Code (must match)
+   - Invoice route_type = BOL route_type (must match)
    - Packing List destination = Invoice destination
 6. Trust Layer Update:
-   - Flow Code confidence score
-   - Cross-document Flow consistency check
+   - route evidence confidence score
+   - Cross-Document route evidence consistency check
 
-KPI Gates for Flow Code OCR:
+KPI Gates for Route Type OCR:
 - Field Extraction Accuracy: ≥98% for destination fields
-- Flow Code Inference Accuracy: ≥95%
+- Route Type Inference Accuracy: ≥95%
 - Cross-Document Consistency: 100% (strict)
 ```
 
-### RDF/OWL Properties for Document Flow Code
+### RDF/OWL Properties for Document StreamCODE_GUARD
 
 ```turtle
 @prefix ldg: <https://hvdc-project.com/ontology/document-guardian/> .
 @prefix hvdc: <https://hvdc-project.com/ontology/core/> .
 
-ldg:extractedFlowCode a owl:DatatypeProperty ;
-    rdfs:label "Extracted Flow Code from Document" ;
-    rdfs:comment "Flow Code value extracted via OCR" ;
+ldg:routeEvidence a owl:DatatypeProperty ;
+    rdfs:label "Route Evidence Extracted from Document" ;
+    rdfs:comment "Route evidence (destination, MOSB flag, route indicator) extracted via OCR" ;
     rdfs:domain ldg:Document ;
     rdfs:range xsd:integer .
 
-ldg:flowCodeConfidence a owl:DatatypeProperty ;
-    rdfs:label "Flow Code Extraction Confidence" ;
-    rdfs:comment "OCR confidence for Flow Code field (0-1)" ;
+ldg:routeEvidenceConfidence a owl:DatatypeProperty ;
+    rdfs:label "Route Evidence Confidence" ;
+    rdfs:comment "OCR confidence for route evidence fields (0-1)" ;
     rdfs:domain ldg:Document ;
     rdfs:range xsd:decimal .
 
@@ -95,55 +111,55 @@ ldg:mosbTransitFlag a owl:DatatypeProperty ;
     rdfs:domain ldg:Document ;
     rdfs:range xsd:boolean .
 
-# SHACL: AGI/DAS Documents Must Have Flow ≥3
-ldg:DocumentFlowCodeConstraint a sh:NodeShape ;
+# SHACL: AGI/DAS Documents Must Have route_type MOSB_DIRECT+
+ldg:DocumentRouteEvidenceConstraint a sh:NodeShape ;
     sh:targetClass ldg:Document ;
     sh:sparql [
-        sh:message "Documents for AGI/DAS must indicate Flow Code ≥3" ;
+        sh:message "Documents for AGI/DAS must provide route evidence indicating MOSB leg requirement" ;
         sh:select """
             PREFIX ldg: <https://hvdc-project.com/ontology/document-guardian/>
             SELECT $this
             WHERE {
                 $this ldg:destinationExtracted ?dest ;
-                      ldg:extractedFlowCode ?flowCode .
-                FILTER(?dest IN ("AGI", "DAS") && ?flowCode < 3)
+                      ldg:routeEvidence ?routeEvidence .
+                FILTER(?dest IN ("AGI", "DAS") && ?routeEvidence NOT IN ("MOSB_DIRECT","WH_MOSB","MIXED","offshore","MOSB"))
             }
         """ ;
     ] .
 ```
 
-### SPARQL Query: Cross-Document Flow Code Verification
+### SPARQL Query: Cross-Document Route Evidence Verification
 
 ```sparql
 PREFIX ldg: <https://hvdc-project.com/ontology/document-guardian/>
 
-# Verify Flow Code consistency across Invoice, BOL, Packing List
+# Verify route evidence consistency across Invoice, BOL, Packing List
 SELECT ?shipment ?invoice ?bol ?pl
-       ?invoiceFlow ?bolFlow ?plFlow ?consistent
+       ?invoiceRE ?bolRE ?plRE ?consistent
 WHERE {
     ?shipment ldg:hasInvoice ?invoice ;
               ldg:hasBOL ?bol ;
               ldg:hasPackingList ?pl .
-    ?invoice ldg:extractedFlowCode ?invoiceFlow .
-    ?bol ldg:extractedFlowCode ?bolFlow .
-    ?pl ldg:extractedFlowCode ?plFlow .
-    BIND(IF(?invoiceFlow = ?bolFlow && ?bolFlow = ?plFlow, "PASS", "FAIL") AS ?consistent)
+    ?invoice ldg:routeEvidence ?invoiceRE .
+    ?bol ldg:routeEvidence ?bolRE .
+    ?pl ldg:routeEvidence ?plRE .
+    BIND(IF(?invoiceRE = ?bolRE && ?bolRE = ?plRE, "PASS", "FAIL") AS ?consistent)
 }
 ORDER BY ?consistent
 ```
 
 ### Integration with Document Guardian
 
-**LDG Flow Code Checks**:
-- **Extraction Phase**: OCR identifies Flow Code fields in documents
-- **Validation Phase**: Cross-reference Flow Code with destination
-- **Trust Layer**: Flow Code consistency across documents = higher trust score
-- **Audit Trail**: Flow Code mismatches flagged for manual review
+**LDG Route Type Checks**:
+- **Extraction Phase**: OCR identifies route evidence fields in documents
+- **Validation Phase**: Cross-reference route_type with destination
+- **Trust Layer**: route evidence consistency across documents = higher trust score
+- **Audit Trail**: route evidence mismatches flagged for manual review
 
 **Cost Guard Integration**:
-- Flow Code impacts logistics costs
-- Invoice verification includes Flow Code-based rate validation
-- Flow 3/4 (MOSB leg) has additional MOSB handling charges
+- route_type impacts logistics costs
+- Invoice verification includes route-evidence-based rate validation
+- route_type MOSB_DIRECT/WH_MOSB has additional MOSB handling charges
 
 ---
 
@@ -1251,3 +1267,5 @@ ORDER BY DESC(?avgExceedPct)
 - `/regtech-analysis --hs-classification` [규제 기술 분석]
 
 이 통합 온톨로지는 HVDC 프로젝트의 문서 가디언과 OCR 파이프라인을 하나의 지식 그래프로 연결하여 문서 처리의 신뢰성, 정확성, 추적성을 높입니다.
+
+
