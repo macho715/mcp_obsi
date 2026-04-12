@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -799,7 +799,7 @@ def _collect_external_ontology_overlay() -> tuple[dict[str, Any], list[dict[str,
         external_properties=set(snapshot.properties),
         stage=stage,
     )
-    base["mapping_warnings"] = [warning.__dict__ for warning in mapping_warnings]
+    base["mapping_warnings"] = [asdict(warning) for warning in mapping_warnings]
 
     filters: list[dict[str, Any]] = []
     if stage == "beta":
@@ -810,7 +810,7 @@ def _collect_external_ontology_overlay() -> tuple[dict[str, Any], list[dict[str,
             )
             return base, filters
         shacl_turtle = Path(shacl_path).read_text(encoding="utf-8")
-        filters = [item.__dict__ for item in shacl_subset_to_ui_filters(shacl_turtle)]
+        filters = [asdict(item) for item in shacl_subset_to_ui_filters(shacl_turtle)]
     return base, filters
 
 

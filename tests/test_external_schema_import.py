@@ -1,8 +1,10 @@
 from app.services.external_schema_import import (
+    ExternalSchemaSnapshot,
     find_mapping_warnings,
     load_external_schema,
     shacl_subset_to_ui_filters,
 )
+from scripts.build_dashboard_graph_data import _collect_external_ontology_overlay
 
 
 class _FakeResponse:
@@ -89,3 +91,24 @@ def test_find_mapping_warnings_respects_stage():
     warnings_beta = find_mapping_warnings(external_properties=set(), stage="beta")
     warning_fields_beta = {item.domain_field for item in warnings_beta}
     assert "atd" in warning_fields_beta
+
+
+def test_collect_external_ontology_overlay_serializes_mapping_warnings(monkeypatch):
+    monkeypatch.setenv("KG_EXTERNAL_ONTOLOGY_STAGE", "poc")
+    monkeypatch.setenv("KG_EXTERNAL_SPARQL_ENDPOINT", "https://example.org/sparql")
+    monkeypatch.setattr(
+        "scripts.build_dashboard_graph_data.load_external_schema",
+        lambda endpoint: ExternalSchemaSnapshot(
+            endpoint=endpoint,
+            classes=["http://example.org/ClassA"],
+            properties=[],
+            sample_queries=[],
+        ),
+    )
+
+    overlay, filters = _collect_external_ontology_overlay()
+
+    assert overlay["stage"] == "poc"
+    assert overlay["loaded_classes"] == 1
+    assert filters == []
+    assert overlay["mapping_warnings"][0]["domain_field"] == "coe"
