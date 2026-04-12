@@ -1,0 +1,19 @@
+{
+  "unmapped_lessons": [
+    "logistics-lightning-mirfa-warehouse",
+    "logistics-lightning-tr-impact-recorder",
+    "logistics_issue_project_lightning_2024-08-27_1",
+    "logistics_issue_project_lightning_2024-09-10_2",
+    "logistics_issue_project_lightning_2024-09-11_3",
+    "logistics_issue_project_lightning_2024-09-20_4",
+    "logistics_issue_project_lightning_2024-09-20_5"
+  ],
+  "unresolved_compatibility_mappings": [],
+  "knowledge_counts": {
+    "guides": 0,
+    "rules": 0,
+    "lessons": 13,
+    "evidence": 13,
+    "patterns": 0
+  }
+}

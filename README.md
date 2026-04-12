@@ -128,11 +128,21 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
   - `HVDC STATUS.xlsx`의 선적/오더/벤더/선박/허브/현장(Site) 데이터를 파싱하여 기본 그래프 생성
   - Wiki 분석 노트(`vault/wiki/analyses/*.md`)의 YAML Frontmatter(Tags, Slug 등)를 파싱하여 `LogisticsIssue`(물류 지연/사고) 엔티티 추가
   - `occursAt`, `relatedTo` 등의 관계(Edge)를 통해 물류 지연 이슈와 물리적 노드를 연결하여 통합 시맨틱 그래프(`vault/knowledge_graph.ttl`, 18,000+ Triples) 생성
+- **Source workbooks:** 그래프 입력은 다음 4개 파일을 기준으로 한다.
+  - `Logi ontol core doc/HVDC STATUS.xlsx`
+  - `Logi ontol core doc/HVDC WAREHOUSE STATUS.xlsx`
+  - `Logi ontol core doc/JPT-reconciled_v6.0.xlsx`
+  - `Logi ontol core doc/HVDC Logistics cost(inland,domestic).xlsx`
+- **Wiki analysis role:** `vault/wiki/analyses/`는 지식 그래프의 해석/사례/교훈 레이어다. 원천 요약이 아니라, 분석 노트와 사건 레슨을 TTL에 얹는 입력으로 사용한다.
+- **Canonical export path:** `scripts/build_dashboard_graph_data.py`가 shipment-centric TTL export의 기준 진입점이다. 이 스크립트가 `vault/knowledge_graph.ttl`, `kg-dashboard/public/data/nodes.json`, `kg-dashboard/public/data/edges.json`, 그리고 `runtime/audits/hvdc_ttl_*.json`을 함께 생성한다.
+- **Legacy wrappers:** `scripts/build_knowledge_graph.py`와 `scripts/ttl_to_json.py`는 호환용 wrapper로 남아 있으며, 실행 시 canonical entrypoint를 안내하는 deprecated 메시지를 출력한다.
+- **Audit outputs:** source, resolution, projection, mapping audit은 각각 `runtime/audits/hvdc_ttl_source_audit.json`, `runtime/audits/hvdc_ttl_resolution_audit.json`, `runtime/audits/hvdc_ttl_projection_audit.json`, `runtime/audits/hvdc_ttl_mapping_audit.json`에 기록된다.
 - **`scripts/test_kg_queries.py`:** SPARQL을 활용한 그래프 데이터 질의 테스트 스크립트
 
 #### 3. KG Visualization Dashboard (`kg-dashboard`)
 - **Phase 1 In-Memory Browser App:** React(Vite) + Cytoscape.js 기반의 고성능 시각화 대시보드
-- **데이터 변환 (`scripts/ttl_to_json.py`):** 무거운 TTL/RDF 데이터를 프론트엔드용 JSON(`nodes.json`, `edges.json`)으로 변환
+- **데이터 export (`scripts/build_dashboard_graph_data.py`):** Excel + wiki 분석 노트에서 TTL과 프론트엔드용 JSON(`nodes.json`, `edges.json`)을 함께 생성
+- **Legacy 변환 (`scripts/ttl_to_json.py`):** 기존 TTL 파일만 다시 JSON으로 렌더링해야 할 때 쓰는 보조 경로
 - **주요 UX/UI 기능:**
   - **Color Coding:** 엔티티 타입별 명시적 색상 (예: `LogisticsIssue`=Red, `Site/Warehouse`=Green)
   - **4가지 View Mode 지원 (동적 렌더링):**
@@ -502,8 +512,8 @@ cd <repo_root>   # e.g. C:\Users\<YOUR_USER>\Downloads\mcp_obsidian
 .\.venv\Scripts\python scripts/test_phase3_query.py    # query
 .\.venv\Scripts\python scripts/test_phase4_lint.py     # lint
 
-# 4. Knowledge Graph 빌드 (HVDC STATUS.xlsx + Wiki analyses)
-.\.venv\Scripts\python scripts/build_knowledge_graph.py
+# 4. Knowledge Graph export (canonical path for kg-dashboard/public/data)
+.\.venv\Scripts\python scripts/build_dashboard_graph_data.py
 ```
 
 Cursor에서 스킬로 사용:
