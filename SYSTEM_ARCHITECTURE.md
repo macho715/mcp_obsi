@@ -54,10 +54,14 @@
 - Railway preview에서는 `Dockerfile` 기반 컨테이너가 실행되고, volume `/data`가 vault/index 저장소를 제공한다.
 - Railway production에서는 `/mcp`, `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`가 같은 volume `/data`를 공유한다.
 - Railway public domain에서는 FastMCP DNS rebinding protection 때문에 explicit host/origin allowlist가 필요하다.
-- 2026-04-11 current session에서는 production redeploy 후 read-only/write-side surfaces가 local current code와 일치했다. 아래의 2026-04-11 failure 기록은 redeploy 이전 snapshot이고, 이후 PASS 기록이 current-session final state다.
-- `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
-- optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
-- 현재 local code 기준으로 `WIKI_OVERLAY_DIRNAME`이 가리키는 overlay root는 compiled wiki layer다. `WikiStore`는 `index.md`, `log.md`, `topics/`, `entities/`, `conflicts/`, `reports/`를 만든다.
+### 2026-04-12 KG Dashboard UI Alignment Addendum
+
+이 섹션은 기존 설명을 지우지 않고, 현재 코드 기준의 dashboard UI 변화만 덧붙인다.
+
+- **Dashboard UI Rule Alignment**:
+  - `kg-dashboard` 앱의 UI 구조를 도구형 애플리케이션으로 정비했다. 
+  - hero 패널 제거, nested-card 중첩 해소, radius 8px 이하 적용, letter-spacing 초기화, GraphView의 불필요한 장식용 프레임 제거가 완료되었다.
+  - 현재 코드는 그 위에 field-aware search, `Graph / Table / Timeline / Schema` companion view, `Node / Edge / Evidence / Related` inspector, manual `Pin / Hide / Expand 1-hop / Reset` node controls를 얹는다.
 
 ## Companion Runtime Boundary
 
@@ -201,6 +205,8 @@ sequenceDiagram
 - `app/config.py`는 `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`를 CSV env로 읽는다.
 - `app/config.py`는 `MCP_HMAC_SECRET`와 `mcp_hmac_enabled` flag를 제공한다. 실제 signed-write runtime 적용 여부는 별도 contract / implementation 확인이 필요하다.
 - `app/config.py`는 `WIKI_OVERLAY_DIRNAME`으로 wiki overlay root를 바꿀 수 있게 한다. 현재 구현의 기본값은 `wiki`다.
+- optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
+- `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
 - `app/mcp_server.py`는 allowlist가 있으면 `TransportSecuritySettings`를 명시적으로 주입한다.
 - `app/services/memory_store.py`는 normalize, path build, save, get, recent, update 책임을 가진다.
 - `app/services/raw_archive_store.py`는 raw conversation frontmatter/body를 `mcp_raw/`에 저장한다.
@@ -225,6 +231,11 @@ sequenceDiagram
 - `.venv\Scripts\python.exe -m ruff check .` → **fail** (`11` existing issues, including tracked `app.py`)
 - `.venv\Scripts\python.exe -m ruff format --check .` → **fail** (`3` files would be reformatted, `58` files already formatted)
 - `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp`
+
+### 2026-04-12 workbook and dashboard snapshot
+
+- Outlook Email Ontology Pipeline은 현재 [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) 문서에 구현 계획(Plan)으로 정리되어 있다.
+- current KG dashboard 검증은 로컬 frontend 기준으로 `npm test`, `npm run lint`, `npm run build`, local preview 확인으로 따로 관리한다.
 
 ### 2026-04-11 current session — local code vs deployed production surface
 
@@ -781,13 +792,17 @@ flowchart TD
    - **엔진**: `react-cytoscapejs` 라이브러리를 사용하여 네트워크 그래프를 고성능으로 렌더링한다. (초기 계획안의 Cosmograph 대신 채택)
    - **그래프 인덱싱 및 최적화 (`buildGraphIndex`)**: 전체 노드와 엣지를 O(1) 조회가 가능하도록 `nodeById`, `degreeById` 인덱스를 사전 구축하여 렌더링 성능을 확보한다.
    - **다이나믹 스타일링**: 노드 타입별 컬러 코딩을 적용하고(`LogisticsIssue`는 빨간색, `Shipment`는 파란색 등), 줌 아웃 시 노드 라벨 텍스트가 겹치는 Hairball 현상을 막기 위해 `min-zoomed-font-size` 속성을 적용해 확대 시에만 라벨이 보이도록 최적화했다. 선택된 노드는 애니메이션(`cy.animate`)을 통해 화면 중앙으로 포커스된다.
+   - **App-level orchestration (`App.tsx`)**: `dashboard-state.ts`를 사용해 `q`, `field`, `view`, `panel`, `node`, `edge`를 URL query에 반영하고, `graph-companion-data.ts`와 `graph-manual-controls.ts`를 조합해 base slice 위에 companion view와 manual override를 얹는다.
+   - **구조화 검색 (`GraphSidebar.tsx` + `graph-model.ts`)**: 자유 검색 외에 `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA` field chip을 제공하고, quick result마다 `Matched in ...` 이유를 함께 표시한다.
    - **4가지 View Modes (뷰 모드)**:
      - **Summary (요약 뷰)**: 기본 모드. 하위 노드를 숨기고 이슈와 핵심 인프라(허브) 위주로 보여주며, issue-context infra anchor에 붙은 lesson만 유지한다. `getCollapsedCountLabel`을 통해 생략된 선박/화물 개수(Shipment, Vessel, Vendor 등)를 요약 라벨로 제공한다. (concentric 레이아웃)
      - **Issues (이슈 중심 뷰)**: `LogisticsIssue`, 이슈와 직접 연결된 핵심 인프라 anchor, 그리고 그 anchor에 붙은 lesson만 남겨 문제 흐름을 좁혀 시각화한다.
      - **Search (검색 뷰)**: `useDeferredValue`를 활용해 검색어(`searchTerm`) 입력 시 렌더링 지연을 방지하는 지연 검색(Deferred Search)을 구현했다. `buildSearchView`를 통해 검색된 노드와 주변 맥락(1-depth 이웃)만 필터링하여 보여준다.
      - **Ego (선택 노드 뷰)**: 노드를 선택했을 때 활성화되며, 해당 노드 주변 1~2 hop의 이웃만 남겨 허브를 명확히 읽을 수 있도록 한다. 선택 노드에 직접 연결된 lesson은 유지하되, 무관한 lesson은 확장하지 않는다. (`breadthfirst` 레이아웃 적용)
+   - **Companion Views**: `GraphCompanionTabs.tsx`, `GraphDataTable.tsx`, `GraphTimeline.tsx`, `GraphSchemaSummary.tsx`가 같은 visible slice를 각각 graph, row, timeline, schema count surface로 렌더링한다.
+   - **수동 node 제어 (`graph-manual-controls.ts`)**: 사용자가 선택한 node를 `Pin`, `Hide`, `Expand 1-hop`, `Reset`으로 직접 조작하고, 이 상태를 sidebar의 `Pinned`, `Hidden`, `Expanded` 목록에서 다시 해제할 수 있다.
    - **동적 메트릭 도출 (`deriveMetrics`)**: 현재 뷰(visibleGraph)에 맞춰 표시/숨김 상태의 노드 및 엣지 개수, 핫스팟(이슈 및 허브 개수) 지표를 실시간 연산하여 대시보드 상단 Stat Grid에 제공한다.
-   - **Obsidian 딥링크 연동**: `LogisticsIssue`와 `IncidentLesson` 노드는 exporter가 제공한 `analysisVault`, `analysisPath` metadata를 사용해 원본 마크다운 위키 파일을 직접 연다. 현재 구현은 URL 인코딩까지 포함해 공백/특수문자가 있는 외부 vault 경로도 처리한다.
+   - **탭형 인스펙터 (`NodeInspector.tsx`)**: inspector는 `Node`, `Edge`, `Evidence`, `Related` 탭으로 나뉘며, issue/lesson note는 `analysisVault`, `analysisPath` metadata를 사용해 encoded Obsidian 링크로 연다. `VESSEL NAME/ FLIGHT No.` 계열 raw metadata는 node detail에서 숨긴다.
 
 ### 2026-04-12 current implementation addendum
 
@@ -800,7 +815,13 @@ flowchart TD
   - `IncidentLesson` nodes `102`, metadata 포함 `102`
 - current dashboard verification:
   - Python contract `5 passed`
-  - dashboard tests `18 passed`
+  - dashboard tests `37 passed`
   - lint / build pass
-  - preview `http://127.0.0.1:4175/` HTTP `200`
+  - preview `http://127.0.0.1:4177/` HTTP `200`
   - Playwright snapshot에서 Summary visible nodes `227`, Issues visible nodes `216`
+- current dashboard usability additions:
+  - field-aware search chips `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA`
+  - quick-result reason labels `Matched in ...`
+  - companion views `Graph`, `Table`, `Timeline`, `Schema`
+  - manual node controls `Pin`, `Hide`, `Expand 1-hop`, `Reset`
+  - tabbed inspector `Node`, `Edge`, `Evidence`, `Related`

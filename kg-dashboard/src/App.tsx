@@ -31,6 +31,7 @@ import {
   buildTableRows,
   buildTimelineRows,
 } from './utils/graph-companion-data';
+import { applyManualGraphState } from './utils/graph-manual-controls';
 import {
   buildEgoView,
   buildGraphIndex,
@@ -84,6 +85,9 @@ function App() {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(initialUrlState.selectedEdgeId);
   const [searchTerm, setSearchTerm] = useState(initialUrlState.query);
   const [searchField, setSearchField] = useState<GraphSearchField>(initialUrlState.searchField);
+  const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
+  const [hiddenNodeIds, setHiddenNodeIds] = useState<string[]>([]);
+  const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>([]);
 
   const deferredSearch = useDeferredValue(searchTerm);
 
@@ -143,7 +147,7 @@ function App() {
     [allNodes, deferredSearch, searchField],
   );
 
-  const visibleGraph = useMemo(() => {
+  const baseVisibleGraph = useMemo(() => {
     if (!allNodes.length) {
       return { nodes: [], edges: [] };
     }
@@ -171,6 +175,16 @@ function App() {
         return buildSummaryView(allNodes, allEdges);
     }
   }, [allEdges, allNodes, deferredSearch, searchField, selectedNodeId, viewMode]);
+
+  const visibleGraph = useMemo(
+    () =>
+      applyManualGraphState(allNodes, allEdges, baseVisibleGraph, {
+        pinnedNodeIds: new Set(pinnedNodeIds),
+        hiddenNodeIds: new Set(hiddenNodeIds),
+        expandedNodeIds: new Set(expandedNodeIds),
+      }),
+    [allEdges, allNodes, baseVisibleGraph, expandedNodeIds, hiddenNodeIds, pinnedNodeIds],
+  );
 
   const selectedNode = selectedNodeId ? index.nodeById.get(selectedNodeId) ?? null : null;
   const selectedNodeLabel = selectedNode ? getNodeLabel(selectedNode) : undefined;
@@ -223,6 +237,30 @@ function App() {
   const schemaSummary = useMemo(
     () => buildSchemaSummaryRows(visibleGraph.nodes, visibleGraph.edges),
     [visibleGraph.edges, visibleGraph.nodes],
+  );
+  const pinnedNodes = useMemo(
+    () =>
+      pinnedNodeIds.map((id) => ({
+        id,
+        label: index.nodeById.get(id) ? getNodeLabel(index.nodeById.get(id)!) : id,
+      })),
+    [pinnedNodeIds, index.nodeById],
+  );
+  const hiddenNodes = useMemo(
+    () =>
+      hiddenNodeIds.map((id) => ({
+        id,
+        label: index.nodeById.get(id) ? getNodeLabel(index.nodeById.get(id)!) : id,
+      })),
+    [hiddenNodeIds, index.nodeById],
+  );
+  const expandedNodes = useMemo(
+    () =>
+      expandedNodeIds.map((id) => ({
+        id,
+        label: index.nodeById.get(id) ? getNodeLabel(index.nodeById.get(id)!) : id,
+      })),
+    [expandedNodeIds, index.nodeById],
   );
 
   useEffect(() => {
@@ -317,6 +355,49 @@ function App() {
     setViewMode('ego');
   };
 
+  const addUniqueNodeId = (current: string[], nodeId: string): string[] =>
+    current.includes(nodeId) ? current : [...current, nodeId];
+
+  const removeNodeId = (current: string[], nodeId: string): string[] =>
+    current.filter((value) => value !== nodeId);
+
+  const handlePinSelection = () => {
+    if (!selectedNodeId) {
+      return;
+    }
+
+    setPinnedNodeIds((current) => addUniqueNodeId(current, selectedNodeId));
+    setHiddenNodeIds((current) => removeNodeId(current, selectedNodeId));
+  };
+
+  const handleHideSelection = () => {
+    if (!selectedNodeId) {
+      return;
+    }
+
+    setPinnedNodeIds((current) => removeNodeId(current, selectedNodeId));
+    setExpandedNodeIds((current) => removeNodeId(current, selectedNodeId));
+    setHiddenNodeIds((current) => addUniqueNodeId(current, selectedNodeId));
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setViewMode(deferredSearch.trim() ? 'search' : 'summary');
+  };
+
+  const handleExpandSelection = () => {
+    if (!selectedNodeId) {
+      return;
+    }
+
+    setHiddenNodeIds((current) => removeNodeId(current, selectedNodeId));
+    setExpandedNodeIds((current) => addUniqueNodeId(current, selectedNodeId));
+  };
+
+  const handleResetManualState = () => {
+    setPinnedNodeIds([]);
+    setHiddenNodeIds([]);
+    setExpandedNodeIds([]);
+  };
+
   return (
     <div className="dashboard-shell">
       <GraphSidebar
@@ -336,6 +417,19 @@ function App() {
         canClearSelection={Boolean(selectedNode || selectedEdge)}
         onClearSelection={handleClearSelection}
         clearSelectionLabel={deferredSearch.trim() ? 'Back to search' : 'Clear'}
+        canPinSelection={Boolean(selectedNodeId)}
+        canHideSelection={Boolean(selectedNodeId)}
+        canExpandSelection={Boolean(selectedNodeId)}
+        onPinSelection={handlePinSelection}
+        onHideSelection={handleHideSelection}
+        onExpandSelection={handleExpandSelection}
+        onResetManualState={handleResetManualState}
+        pinnedNodes={pinnedNodes}
+        hiddenNodes={hiddenNodes}
+        expandedNodes={expandedNodes}
+        onRemovePinnedNode={(nodeId) => setPinnedNodeIds((current) => removeNodeId(current, nodeId))}
+        onRemoveHiddenNode={(nodeId) => setHiddenNodeIds((current) => removeNodeId(current, nodeId))}
+        onRemoveExpandedNode={(nodeId) => setExpandedNodeIds((current) => removeNodeId(current, nodeId))}
       />
 
       <main className="dashboard-main">

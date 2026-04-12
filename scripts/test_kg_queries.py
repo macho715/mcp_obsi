@@ -1,5 +1,7 @@
 import os
+
 from rdflib import Graph
+
 
 def run_queries():
     graph_path = "vault/knowledge_graph.ttl"
@@ -91,6 +93,7 @@ def run_queries():
         print(f"선박명: {row.vesselLabel} | 연관된 이슈 수: {row.issueCount}건")
     if count3 == 0:
         print("연관된 이슈가 있는 선박이 없습니다.")
+
 
 if __name__ == "__main__":
     run_queries()

@@ -276,7 +276,9 @@
 .infra-summary-actions,
 .infra-filter-chips,
 .inspector-badges,
-.selection-summary {
+.selection-summary,
+.manual-node-actions,
+.manual-node-list {
   display: grid;
   gap: 0.6rem;
 }

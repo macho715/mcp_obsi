@@ -99,9 +99,7 @@ async def smoke_one(
                 names = sorted(t.name for t in tools.tools)
                 resources_result = await session.list_resources()
                 prompts_result = await session.list_prompts()
-                resource_uris = sorted(
-                    str(resource.uri) for resource in resources_result.resources
-                )
+                resource_uris = sorted(str(resource.uri) for resource in resources_result.resources)
                 prompt_names = sorted(prompt.name for prompt in prompts_result.prompts)
 
                 if mode == "wrapper":

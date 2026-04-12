@@ -69,12 +69,7 @@ def test_search_wiki_uses_frontmatter_title_when_heading_is_missing(tmp_path: Pa
     analyses = vault / "wiki" / "analyses"
     analyses.mkdir(parents=True)
     (analyses / "frontmatter-only.md").write_text(
-        "---\n"
-        "title: Frontmatter Title\n"
-        "tags:\n"
-        "  - hazmat\n"
-        "---\n\n"
-        "Body without markdown heading\n",
+        "---\ntitle: Frontmatter Title\ntags:\n  - hazmat\n---\n\nBody without markdown heading\n",
         encoding="utf-8",
     )
 

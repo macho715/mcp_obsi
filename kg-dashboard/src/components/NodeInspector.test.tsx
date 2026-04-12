@@ -80,4 +80,26 @@ describe('NodeInspector', () => {
       'href="obsidian://open?vault=ops%20vault&amp;file=analysis%2Flessons%2Fexported%20lesson%20%23456.md"',
     );
   });
+
+  it('hides vessel and flight raw metadata fields from node details', () => {
+    const markup = renderInspector(
+      {
+        data: {
+          id: 'shipment/with-hidden-fields',
+          label: 'Shipment with hidden fields',
+          type: 'Shipment',
+          'VESSEL NAME/ FLIGHT No.': 'MSC_SAMPLE',
+          vesselName: 'MSC_SAMPLE',
+          flightNo: 'EY123',
+          portOfLoading: 'Le Havre',
+        },
+      },
+      null,
+    );
+
+    expect(markup).not.toContain('VESSEL NAME/ FLIGHT No.');
+    expect(markup).not.toContain('vesselName');
+    expect(markup).not.toContain('flightNo');
+    expect(markup).toContain('portOfLoading');
+  });
 });

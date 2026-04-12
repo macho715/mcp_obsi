@@ -13,6 +13,11 @@ export interface NodeInspectorProps {
 type InspectorTab = 'node' | 'edge' | 'evidence' | 'related';
 
 const STANDARD_FIELDS = new Set(['id', 'label', 'type', 'rdf-schema#label']);
+const HIDDEN_METADATA_FIELDS = new Set([
+  'VESSEL NAME/ FLIGHT No.',
+  'vesselName',
+  'flightNo',
+]);
 const TABS: Array<{ id: InspectorTab; label: string }> = [
   { id: 'node', label: 'Node' },
   { id: 'edge', label: 'Edge' },
@@ -74,7 +79,13 @@ export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProp
   const collapsedCounts = node ? getCollapsedCountSummary(node) : null;
   const extraFields = node
     ? Object.entries(node.data)
-        .filter(([key, value]) => !STANDARD_FIELDS.has(key) && value !== undefined && value !== null)
+        .filter(
+          ([key, value]) =>
+            !STANDARD_FIELDS.has(key) &&
+            !HIDDEN_METADATA_FIELDS.has(key) &&
+            value !== undefined &&
+            value !== null,
+        )
         .sort(([left], [right]) => left.localeCompare(right))
     : [];
   const evidenceItems: string[] = [];

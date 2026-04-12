@@ -1,7 +1,7 @@
-import os
-
-path = 'C:/Users/jichu/Downloads/mcp_obsidian/vault/wiki/analyses/logistics_issue_project_lightning_2024-10-01_10.md'
-content = '''---
+# ruff: noqa: E501
+# ruff: noqa: E501
+path = "C:/Users/jichu/Downloads/mcp_obsidian/vault/wiki/analyses/logistics_issue_project_lightning_2024-10-01_10.md"
+content = """---
 slug: logistics_issue_project_lightning_2024-10-01_10
 title: 저조위(Low Tide)로 인한 램프 접안 및 하역 지연 (JPT71)
 tags: [LogisticsIssue, ProjectLightning, AGI, JPT71, TideDelay]
@@ -26,7 +26,7 @@ tags: [LogisticsIssue, ProjectLightning, AGI, JPT71, TideDelay]
 - **교훈 및 권고사항 (Lessons Learned)**:
   - 조수간만의 차이가 큰 부두(Jetty)에서는 사전에 조석표(Tide table)를 확인하여 하역 가능 시간대를 선박 도착 시간과 동기화함으로써 불필요한 대기 시간을 최소화해야 함.
   - 이와 같은 조위 변동에 따른 일정 지연 시, 연관된 현장 및 하역팀에 즉각적인 상황 공유 체계 유지 필요.
-'''
+"""
 
-with open(path, 'w', encoding='utf-8') as f:
+with open(path, "w", encoding="utf-8") as f:
     f.write(content)

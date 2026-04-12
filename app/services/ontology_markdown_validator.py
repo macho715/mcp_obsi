@@ -78,7 +78,7 @@ def _expand_prefixed_path_names(block: str, prefix_preamble: str) -> str:
     normalized = block
     for prefix_name, iri in prefix_map.items():
         pattern = re.compile(rf"\b{re.escape(prefix_name)}:([A-Za-z0-9._-]+/[A-Za-z0-9._/\-]+)")
-        normalized = pattern.sub(lambda match: f"<{iri}{match.group(1)}>", normalized)
+        normalized = pattern.sub(lambda match, iri=iri: f"<{iri}{match.group(1)}>", normalized)
     return normalized
 
 

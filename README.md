@@ -82,6 +82,7 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - [docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md](docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md): sibling `local-rag` cache/guard design 기록
 - [docs/superpowers/specs/2026-04-08-local-rag-retrieval-benchmark.md](docs/superpowers/specs/2026-04-08-local-rag-retrieval-benchmark.md): local-rag lexical retrieval benchmark 기록
 - [docs/superpowers/specs/2026-04-09-kg-visualization-design.md](docs/superpowers/specs/2026-04-09-kg-visualization-design.md): 지식 그래프(Knowledge Graph) 대시보드 시각화 아키텍처 설계 명세서
+- [docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md): Outlook Email Ontology Workbook 파이프라인 설계 및 구현 계획안
 - [docs/MASTER_LOGISTICS_PLAN.md](docs/MASTER_LOGISTICS_PLAN.md): UAE HVDC Logistics WhatsApp 지식화 및 지식 그래프 통합 마스터 플랜
 - [docs/WRITE_TOOL_GATE.md](docs/WRITE_TOOL_GATE.md): preview write gate와 rollback 기준
 - [docs/reference/](docs/reference): 제안/참고 문서 보관 영역
@@ -145,18 +146,25 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - **Legacy 변환 (`scripts/ttl_to_json.py`):** 기존 TTL 파일만 다시 JSON으로 렌더링해야 할 때 쓰는 보조 경로
 - **주요 UX/UI 기능:**
   - **Color Coding:** 엔티티 타입별 명시적 색상 (예: `LogisticsIssue`=Red, `Site/Warehouse`=Green)
+  - **구조화 검색:** `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA` field chip을 통해 검색 대상을 직접 고를 수 있고, quick result에는 `Matched in ...` 이유를 함께 표시한다.
   - **4가지 View Mode 지원 (동적 렌더링):**
     - **요약 뷰 (Summary View):** 연결성(Degree)이 200 이상(`HUB_THRESHOLD`)인 노드를 허브로 취급하여 크게 표시하고, 이슈와 핵심 인프라 위주로 그래프를 축소하여 전체 관계 표시
     - **이슈 중심 뷰 (Issues View):** LogisticsIssue 노드와 그에 연결된 핵심 엣지만 남겨 문제 흐름에 집중하고, issue-context lesson은 summary/issues에 남긴다.
     - **검색 뷰 (Search View):** 검색어 매칭 노드 및 가까운 이웃만 동심원(Concentric) 레이아웃으로 표시해 맥락 제공 (지연 검색 `deferredSearch` 적용)
     - **선택 노드 뷰 (Ego View):** 특정 노드 클릭 시 주변 1~2 Hop만 BFS 레이아웃으로 전개하여 허브 노드의 상세 탐색 지원하고, direct lesson은 ego에 유지한다.
+  - **Companion Views:** 같은 visible slice를 기준으로 `Graph`, `Table`, `Timeline`, `Schema`를 전환할 수 있다. `Table`은 route/timing row, `Timeline`은 shipment timing, `Schema`는 node/edge type count를 보여 준다.
+  - **수동 node 제어:** 선택한 node에 대해 `Pin`, `Hide`, `Expand 1-hop`, `Reset`을 쓸 수 있고, sidebar에 `Pinned`, `Hidden`, `Expanded` 목록이 따로 보인다.
   - **허브(Hub) 시각적 강조:** 연결이 많은 허브 노드(`degree >= hubThreshold`)는 노드 크기 확대 및 굵은 폰트를 적용하여 한눈에 식별 가능하도록 개선
-  - **사이드바 및 통합 인스펙터:** 좌측 사이드바(`GraphSidebar`)에서 메트릭스(가시 노드/엣지, 허브/이슈 카운트)와 허브 서머리를 제공하며, 우측 패널(`NodeInspector`)에서 exported metadata를 바탕으로 issue note와 lesson note를 여는 encoded Obsidian 링크를 지원한다.
+  - **사이드바 및 통합 인스펙터:** 좌측 사이드바(`GraphSidebar`)에서 메트릭스, 허브 서머리, 수동 node 제어를 제공하며, 우측 패널(`NodeInspector`)은 `Node`, `Edge`, `Evidence`, `Related` 탭으로 세부 정보를 나눈다.
+  - **URL 상태 복원:** `q`, `field`, `view`, `panel`, `node`, `edge`를 URL query에 반영해 같은 조사 화면으로 돌아올 수 있게 한다.
 - **트러블슈팅:** 거대 그래프 렌더링 시 발생하는 `react-cytoscapejs` 호환성 문제를 해결하기 위해 React Strict Mode(`main.tsx`) 해제 적용
 
 - **`app/services/graph_projection_builder.py`:** dashboard projection에서 lesson metadata를 보존하여, 노드 인스펙터와 뷰 분기에서 이슈-레슨 맥락이 끊기지 않도록 한다.
 - **`kg-dashboard/src/utils/graph-model.ts`:** issue-context lessons는 summary/issues에 유지하고, direct lessons는 ego에 유지하도록 graph model과 테스트를 맞췄다.
-- **`kg-dashboard/src/components/NodeInspector.tsx`:** issue 및 lesson 노트를 exported metadata와 encoded Obsidian link로 연다. 잘못 이스케이프된 경로가 있더라도 링크가 깨지지 않도록 인코딩을 적용한다.
+- **`kg-dashboard/src/utils/dashboard-state.ts`:** dashboard URL state parse/serialize를 담당한다.
+- **`kg-dashboard/src/utils/graph-companion-data.ts`:** visible slice를 `Table`, `Timeline`, `Schema`에 맞는 파생 row로 변환한다.
+- **`kg-dashboard/src/utils/graph-manual-controls.ts`:** base slice 위에 `Pin`, `Hide`, `Expand 1-hop` 상태를 덧씌워 수동 node 제어를 적용한다.
+- **`kg-dashboard/src/components/NodeInspector.tsx`:** issue 및 lesson 노트를 exported metadata와 encoded Obsidian link로 열고, `VESSEL NAME/ FLIGHT No.` 계열 raw metadata는 inspector에서 숨긴다.
 
 #### 4. Vault 관리 유틸리티
 - **`scripts/consolidate_vaults.py`:** 분산된 다수의 테스트용 Vault 폴더(`vault`, `vault-test`, `vault-test2` 등)를 수정 시간(mtime) 기준으로 최신 파일을 식별하여 단일 타겟 디렉토리(`C:\Users\jichu\Downloads\valut`)로 병합하는 자동화 스크립트
@@ -222,16 +230,23 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - `scripts/build_dashboard_graph_data.py` now prefers `C:\Users\jichu\Downloads\valut\wiki\analyses`, falls back to `vault/wiki/analyses`, tolerates malformed YAML frontmatter, emits `selected_analyses_dir` and `analyses_dir_fallback_used`, exports `analysisPath` and `analysisVault`, and the CLI `__main__` path calls `export_dashboard_graph_data(ttl_path=None)`.
 - `kg-dashboard/src/utils/graph-model.ts` and its tests now keep issue-context lessons in `summary/issues` and direct lessons in `ego`.
 - `kg-dashboard/src/components/NodeInspector.tsx` now opens issue and lesson notes using exported metadata and encoded Obsidian links.
+- `kg-dashboard/src/App.tsx`, `GraphSidebar.tsx`, `GraphCompanionTabs.tsx`, `GraphDataTable.tsx`, `GraphTimeline.tsx`, `GraphSchemaSummary.tsx`, `dashboard-state.ts`, `graph-companion-data.ts`, and `graph-manual-controls.ts` now provide field-aware search, companion views, tabbed inspector flows, and manual `Pin / Hide / Expand 1-hop / Reset` node controls.
 - Verification completed in this session:
   - `.venv\Scripts\python.exe -m pytest tests/test_dashboard_graph_export.py -q` -> 5 passed
   - `.venv\Scripts\python.exe scripts/build_dashboard_graph_data.py` -> exit 0 after the CLI default adjustment
-  - `cd kg-dashboard; npm test` -> 18 passed
+  - `cd kg-dashboard; npm test` -> 37 passed
   - `cd kg-dashboard; npm run lint` -> pass
   - `cd kg-dashboard; npm run build` -> pass
-  - browser preview `http://127.0.0.1:4175/` -> HTTP 200
+  - browser preview `http://127.0.0.1:4177/` -> HTTP 200
   - `runtime/audits/hvdc_ttl_source_audit.json` -> `loaded_notes = 115`, `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`, `analyses_dir_fallback_used = false`
   - exported node metadata counts -> issue nodes `113` with metadata, lesson nodes `102` with metadata
-  - current workspace result: the kg-dashboard graph now keeps lesson context visible in the right places, and the export path is using the intended analysis vault directory.
+  - current workspace result: the kg-dashboard graph now keeps lesson context visible in the right places, exposes `Graph / Table / Timeline / Schema`, and lets the user manually pin, hide, and expand selected nodes.
+
+### 2026-04-12 Outlook Email Ontology Workbook Pipeline Plan
+
+- Outlook 이메일 기반 물류 데이터(`.xlsx`)를 파싱하여 지식 그래프(Knowledge Graph)와 위키(Wiki)로 통합하기 위한 파이프라인 구현 계획이 수립되었습니다.
+- 관련 코드는 아직 이 저장소에 구현되지 않았으나, 전체 파이프라인 아키텍처 및 세부 설계안은 [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) 문서에 보관되어 있습니다.
+- 향후 구현될 경우 `Logi ontol core doc/OUTLOOK_HVDC_ALL_*.xlsx` 데이터를 기반으로 분류 로직과 엔티티 매핑을 수행할 예정입니다.
 
 ### 2026-04-08 production specialist route recheck
 

@@ -49,6 +49,19 @@ describe('kg-dashboard UI rule alignment', () => {
         canClearSelection={false}
         onClearSelection={() => {}}
         clearSelectionLabel="Clear"
+        canPinSelection={false}
+        canHideSelection={false}
+        canExpandSelection={false}
+        onPinSelection={() => {}}
+        onHideSelection={() => {}}
+        onExpandSelection={() => {}}
+        onResetManualState={() => {}}
+        pinnedNodes={[]}
+        hiddenNodes={[]}
+        expandedNodes={[]}
+        onRemovePinnedNode={() => {}}
+        onRemoveHiddenNode={() => {}}
+        onRemoveExpandedNode={() => {}}
       />,
     );
 
@@ -84,6 +97,19 @@ describe('kg-dashboard UI rule alignment', () => {
         canClearSelection={true}
         onClearSelection={() => {}}
         clearSelectionLabel="Clear"
+        canPinSelection={false}
+        canHideSelection={false}
+        canExpandSelection={false}
+        onPinSelection={() => {}}
+        onHideSelection={() => {}}
+        onExpandSelection={() => {}}
+        onResetManualState={() => {}}
+        pinnedNodes={[]}
+        hiddenNodes={[]}
+        expandedNodes={[]}
+        onRemovePinnedNode={() => {}}
+        onRemoveHiddenNode={() => {}}
+        onRemoveExpandedNode={() => {}}
       />,
     );
     const inspectorMarkup = renderToStaticMarkup(

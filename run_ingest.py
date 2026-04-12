@@ -1,24 +1,23 @@
-import sys
-import os
-import pathlib
+# ruff: noqa: E501
 import json
-import re
+import pathlib
+import sys
 from datetime import date
 
 sys.path.insert(0, str(pathlib.Path(".").absolute()))
 
-from scripts.ollama_kb import generate, MODELS, normalize_ascii_slug
 from app.config import settings
+from app.models import MemoryCreate, RawConversationCreate
 from app.services.memory_store import MemoryStore
-from app.models import RawConversationCreate, MemoryCreate
+from scripts.ollama_kb import MODELS, generate, normalize_ascii_slug
 
 files_to_process = [
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_Abu_Dhabi_Logistics.txt",
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_DSV_Delivery.txt",
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_HVDC_Project_Lightning.txt",
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_Jopetwil_71_Group.txt",
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_MIR_Logistics.txt",
-    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_SHU_Logistics.txt"
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_Abu_Dhabi_Logistics.txt",  # noqa: E501
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_DSV_Delivery.txt",  # noqa: E501
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_HVDC_Project_Lightning.txt",  # noqa: E501
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_Jopetwil_71_Group.txt",  # noqa: E501
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_MIR_Logistics.txt",  # noqa: E501
+    r"c:\Users\jichu\Downloads\mcp_obsidian\whatsapp groupchat\Guideline_SHU_Logistics.txt",
 ]
 
 store = MemoryStore(vault_path=settings.vault_path, index_db_path=settings.index_db_path)
@@ -32,20 +31,20 @@ for file_path in files_to_process:
         continue
     print(f"\nProcessing {p.name}...")
     input_text = p.read_text(encoding="utf-8")
-    
+
     # Simple check on input length to not blow up Ollama context window
     # Actually, we'll slice [:4000] for classify but pass whole for extract
     slug = normalize_ascii_slug(p.stem)
-    
+
     # 1a. Copy to vault/raw/articles/
     raw_path = pathlib.Path(f"vault/raw/articles/{slug}.md")
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     raw_path.write_text(
         f"---\nslug: {slug}\ndate: {today}\nsource: obsidian-ingest\n---\n\n{input_text}",
-        encoding="utf-8"
+        encoding="utf-8",
     )
     print(f"  raw copy  : {raw_path}")
-    
+
     # 1b. Archive raw via memory_store
     mcp_id = f"convo-ingest-{slug}-{today}"
     raw_payload = RawConversationCreate(
@@ -72,21 +71,21 @@ for file_path in files_to_process:
         },
         {"role": "user", "content": f"Classify this:\n\n{input_text[:4000]}"},
     ]
-    
+
     category = "sources"
     title = slug
     summary = "No summary provided."
     tags = []
-    
+
     try:
         class_resp = generate(messages=classify_prompt, model=MODELS["primary"])
         start = class_resp.find("{")
         end = class_resp.rfind("}")
         if start != -1 and end != -1:
-            classification = json.loads(class_resp[start:end+1])
+            classification = json.loads(class_resp[start : end + 1])
         else:
             classification = json.loads(class_resp)
-        
+
         category = classification.get("category", "sources")
         if category not in ["sources", "concepts", "entities", "analyses"]:
             category = "sources"
@@ -160,10 +159,13 @@ for file_path in files_to_process:
             with log_path.open("a", encoding="utf-8") as f:
                 f.write(log_line)
         else:
-            log_path.write_text(f"| Date | Action | Note | Source | Summary |\n|---|---|---|---|---|\n{log_line}", encoding="utf-8")
+            log_path.write_text(
+                f"| Date | Action | Note | Source | Summary |\n|---|---|---|---|---|\n{log_line}",
+                encoding="utf-8",
+            )
     except Exception as e:
         print(f"  Log update failed: {e}")
-        
+
     index_path = pathlib.Path("vault/wiki/index.md")
     new_link = f"- [[wiki/{category}/{slug}]]"
     try:
@@ -173,9 +175,13 @@ for file_path in files_to_process:
                 idx_content = idx_content.replace("## Recent Notes", f"## Recent Notes\n{new_link}")
                 index_path.write_text(idx_content, encoding="utf-8")
             else:
-                index_path.write_text(idx_content + f"\n\n## Recent Notes\n{new_link}\n", encoding="utf-8")
+                index_path.write_text(
+                    idx_content + f"\n\n## Recent Notes\n{new_link}\n", encoding="utf-8"
+                )
         else:
-            index_path.write_text(f"# Wiki Index\n\n## Recent Notes\n{new_link}\n", encoding="utf-8")
+            index_path.write_text(
+                f"# Wiki Index\n\n## Recent Notes\n{new_link}\n", encoding="utf-8"
+            )
         print("  log entry : vault/wiki/log.md + index.md updated")
     except Exception as e:
         print(f"  Index update failed: {e}")
@@ -193,7 +199,7 @@ for file_path in files_to_process:
         tags=["kb", "wiki", category],
         raw_refs=[mcp_id],
     )
-    
+
     try:
         mem_result = store.save(mem_payload)
         mem_id = mem_result["id"]

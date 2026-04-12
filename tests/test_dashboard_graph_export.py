@@ -4,8 +4,8 @@ from pathlib import Path
 from openpyxl import Workbook
 from rdflib import Graph, Literal, Namespace, URIRef
 
-from app.services.graph_projection_builder import build_dashboard_projection
 import scripts.build_dashboard_graph_data as dashboard_export
+from app.services.graph_projection_builder import build_dashboard_projection
 from scripts.build_dashboard_graph_data import export_dashboard_graph_data
 
 
@@ -212,7 +212,9 @@ def test_export_dashboard_graph_data_emits_consumer_contract(tmp_path: Path):
     audit_dir = tmp_path / "audits"
 
     _write_status_excel(excel_path)
-    _write_analysis_note(wiki_dir / "logistics_issue_delay_at_agi.md", "Delay at AGI", "delay-at-agi")
+    _write_analysis_note(
+        wiki_dir / "logistics_issue_delay_at_agi.md", "Delay at AGI", "delay-at-agi"
+    )
 
     export_dashboard_graph_data(
         excel_path=excel_path,
@@ -272,7 +274,9 @@ def test_export_dashboard_graph_data_emits_consumer_contract(tmp_path: Path):
     assert issue_nodes[0]["data"]["analysisPath"] == "wiki/analyses/logistics_issue_delay_at_agi.md"
     assert issue_nodes[0]["data"]["analysisVault"] == "contract-vault"
     assert len(lesson_nodes) == 1
-    assert lesson_nodes[0]["data"]["analysisPath"] == "wiki/analyses/logistics_issue_delay_at_agi.md"
+    assert (
+        lesson_nodes[0]["data"]["analysisPath"] == "wiki/analyses/logistics_issue_delay_at_agi.md"
+    )
     assert lesson_nodes[0]["data"]["analysisVault"] == "contract-vault"
     assert all(node["data"]["type"] != "rdf-schema#Class" for node in nodes)
     assert all(node["data"]["type"] != "Unknown" for node in nodes)
@@ -288,16 +292,21 @@ def test_export_dashboard_graph_data_emits_consumer_contract(tmp_path: Path):
     assert shipment_canonical_id not in node_ids
     assert location_legacy_id in node_ids
     assert location_canonical_id not in node_ids
-    assert sum(
-        1
-        for node in nodes
-        if node["data"]["type"] == "Shipment" and node["data"]["label"] == "SHIP-001"
-    ) == 1
+    assert (
+        sum(
+            1
+            for node in nodes
+            if node["data"]["type"] == "Shipment" and node["data"]["label"] == "SHIP-001"
+        )
+        == 1
+    )
     assert (location_legacy_id, lesson_id, "relatedToLesson") in {
         (edge["data"]["source"], edge["data"]["target"], edge["data"]["label"]) for edge in edges
     }
 
-    source_audit = json.loads((audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8"))
+    source_audit = json.loads(
+        (audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8")
+    )
     assert source_audit["selected_analyses_dir"] == str(wiki_dir)
     assert source_audit["analyses_dir_fallback_used"] is False
 
@@ -343,7 +352,9 @@ def test_export_dashboard_graph_data_prefers_external_analyses_dir_when_availabl
     nodes = json.loads((output_dir / "nodes.json").read_text(encoding="utf-8"))
     issue_node = next(node["data"] for node in nodes if node["data"]["type"] == "LogisticsIssue")
     lesson_node = next(node["data"] for node in nodes if node["data"]["type"] == "IncidentLesson")
-    source_audit = json.loads((audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8"))
+    source_audit = json.loads(
+        (audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8")
+    )
 
     assert source_audit["selected_analyses_dir"] == str(external_analyses.resolve())
     assert source_audit["analyses_dir_fallback_used"] is False
@@ -385,7 +396,9 @@ def test_export_dashboard_graph_data_falls_back_to_repo_local_analyses_dir_when_
     nodes = json.loads((output_dir / "nodes.json").read_text(encoding="utf-8"))
     issue_node = next(node["data"] for node in nodes if node["data"]["type"] == "LogisticsIssue")
     lesson_node = next(node["data"] for node in nodes if node["data"]["type"] == "IncidentLesson")
-    source_audit = json.loads((audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8"))
+    source_audit = json.loads(
+        (audit_dir / "hvdc_ttl_source_audit.json").read_text(encoding="utf-8")
+    )
 
     assert source_audit["selected_analyses_dir"] == str(fallback_analyses.resolve())
     assert source_audit["analyses_dir_fallback_used"] is True
@@ -406,9 +419,7 @@ def test_export_dashboard_graph_data_keeps_legacy_id_style_for_values_with_space
 
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.append(
-        ["SCT SHIP NO.", "PO No.", "VENDOR", "VESSEL NAME/ FLIGHT No."]
-    )
+    worksheet.append(["SCT SHIP NO.", "PO No.", "VENDOR", "VESSEL NAME/ FLIGHT No."])
     worksheet.append(["SHIP 002", "PO 002", "BMT Co., Ltd", "EK0118 / EK09113"])
     workbook.save(excel_path)
 

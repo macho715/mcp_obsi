@@ -162,9 +162,7 @@ def create_chatgpt_mcp_server(store: MemoryStore, include_write_tools: bool = Fa
     @mcp.tool(
         name="fetch_wiki",
         title="Fetch wiki note",
-        description=(
-            "Use this when ChatGPT needs the full body of a wiki note by path or slug."
-        ),
+        description=("Use this when ChatGPT needs the full body of a wiki note by path or slug."),
         annotations=_readonly_annotations(),
         structured_output=False,
     )

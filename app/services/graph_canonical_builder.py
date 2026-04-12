@@ -160,9 +160,7 @@ def build_canonical_graph(*args: object, **kwargs: Any) -> Graph:
                 shipment_id = _as_uri(_item_value(item, "shipment_id", "shipmentId"))
                 if shipment_id is not None:
                     graph.add((shipment_id, HVDC.hasJourneyLeg, subject))
-                origin_port_id = _as_uri(
-                    _item_value(item, "origin_port_id", "originPortId")
-                )
+                origin_port_id = _as_uri(_item_value(item, "origin_port_id", "originPortId"))
                 destination_port_id = _as_uri(
                     _item_value(item, "destination_port_id", "destinationPortId")
                 )
@@ -182,9 +180,7 @@ def build_canonical_graph(*args: object, **kwargs: Any) -> Graph:
                         graph,
                         destination_port_id,
                         RDFS.label,
-                        _item_value(
-                            item, "destination_port_label", "destinationPortLabel"
-                        ),
+                        _item_value(item, "destination_port_label", "destinationPortLabel"),
                     )
                 _add_literal_if_present(
                     graph,

@@ -29,6 +29,19 @@ export interface GraphSidebarProps {
   canClearSelection: boolean;
   onClearSelection: () => void;
   clearSelectionLabel: string;
+  canPinSelection: boolean;
+  canHideSelection: boolean;
+  canExpandSelection: boolean;
+  onPinSelection: () => void;
+  onHideSelection: () => void;
+  onExpandSelection: () => void;
+  onResetManualState: () => void;
+  pinnedNodes: Array<{ id: string; label: string }>;
+  hiddenNodes: Array<{ id: string; label: string }>;
+  expandedNodes: Array<{ id: string; label: string }>;
+  onRemovePinnedNode: (nodeId: string) => void;
+  onRemoveHiddenNode: (nodeId: string) => void;
+  onRemoveExpandedNode: (nodeId: string) => void;
 }
 
 const VIEW_MODE_LABELS: Record<GraphViewMode, string> = {
@@ -73,6 +86,19 @@ export function GraphSidebar({
   canClearSelection,
   onClearSelection,
   clearSelectionLabel,
+  canPinSelection,
+  canHideSelection,
+  canExpandSelection,
+  onPinSelection,
+  onHideSelection,
+  onExpandSelection,
+  onResetManualState,
+  pinnedNodes,
+  hiddenNodes,
+  expandedNodes,
+  onRemovePinnedNode,
+  onRemoveHiddenNode,
+  onRemoveExpandedNode,
 }: GraphSidebarProps) {
   const [showAllInfraSummaries, setShowAllInfraSummaries] = useState(false);
   const [infraFilter, setInfraFilter] = useState<InfraFilter>('All');
@@ -242,6 +268,87 @@ export function GraphSidebar({
             No node selected. Click a node to inspect it or clear the focus to return to browsing.
           </p>
         )}
+
+        <div className="manual-node-actions">
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={onPinSelection}
+            disabled={!canPinSelection}
+          >
+            Pin
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={onHideSelection}
+            disabled={!canHideSelection}
+          >
+            Hide
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={onExpandSelection}
+            disabled={!canExpandSelection}
+          >
+            Expand 1-hop
+          </button>
+          <button type="button" className="ghost-button" onClick={onResetManualState}>
+            Reset
+          </button>
+        </div>
+
+        {pinnedNodes.length > 0 ? (
+          <div className="manual-node-list" role="list" aria-label="Pinned nodes">
+            <strong>Pinned</strong>
+            {pinnedNodes.map((node) => (
+              <button
+                key={`pinned-${node.id}`}
+                type="button"
+                className="search-result-item"
+                onClick={() => onRemovePinnedNode(node.id)}
+              >
+                <strong>{node.label}</strong>
+                <span>Remove</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {hiddenNodes.length > 0 ? (
+          <div className="manual-node-list" role="list" aria-label="Hidden nodes">
+            <strong>Hidden</strong>
+            {hiddenNodes.map((node) => (
+              <button
+                key={`hidden-${node.id}`}
+                type="button"
+                className="search-result-item"
+                onClick={() => onRemoveHiddenNode(node.id)}
+              >
+                <strong>{node.label}</strong>
+                <span>Restore</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {expandedNodes.length > 0 ? (
+          <div className="manual-node-list" role="list" aria-label="Expanded nodes">
+            <strong>Expanded</strong>
+            {expandedNodes.map((node) => (
+              <button
+                key={`expanded-${node.id}`}
+                type="button"
+                className="search-result-item"
+                onClick={() => onRemoveExpandedNode(node.id)}
+              >
+                <strong>{node.label}</strong>
+                <span>Collapse</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       {viewMode === 'summary' && hubSummaries.length > 0 ? (

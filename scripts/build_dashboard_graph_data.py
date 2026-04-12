@@ -12,9 +12,9 @@ from openpyxl import load_workbook
 from rdflib import Graph, Namespace, URIRef
 
 from app.services.graph_canonical_builder import build_canonical_graph
-from app.services.graph_normalizer import normalize_sources as normalize_graph_sources
 from app.services.graph_knowledge_builder import build_knowledge_objects
 from app.services.graph_mapping_builder import build_compatibility_mappings
+from app.services.graph_normalizer import normalize_sources as normalize_graph_sources
 from app.services.graph_projection_builder import build_dashboard_projection
 from app.services.graph_resolver import resolve_analysis_note, resolve_location
 from app.services.graph_source_loader import REQUIRED_JPT_SHEETS
@@ -411,9 +411,7 @@ def _load_sources_bundle(
     warehouse_rows = (
         _read_excel_rows(warehouse_status_path) if warehouse_status_path.exists() else []
     )
-    inland_cost_rows = (
-        _read_excel_rows(inland_cost_path) if inland_cost_path.exists() else []
-    )
+    inland_cost_rows = _read_excel_rows(inland_cost_path) if inland_cost_path.exists() else []
     return LoadedGraphSources(
         shipment_rows=shipment_rows,
         warehouse_rows=warehouse_rows,

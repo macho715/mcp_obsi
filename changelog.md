@@ -6,6 +6,64 @@
 
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
 
+## 2026-04-12 — Root docs sync for current KG dashboard usability flow
+
+### Changed
+
+- `README.md`
+  - `kg-dashboard` 섹션을 현재 코드 기준으로 갱신했다.
+  - field-aware search, companion views, manual node controls, tabbed inspector, URL state 복원을 사용자 기능 기준으로 추가 설명했다.
+  - current 검증 결과에 맞게 verification 관련 문장을 최신 상태로 정리했다.
+- `SYSTEM_ARCHITECTURE.md`
+  - dashboard addendum에 현재 UI alignment 이후 추가된 companion view, structured search, manual node controls, tabbed inspector 구조를 반영했다.
+  - `App.tsx`, `dashboard-state.ts`, `graph-companion-data.ts`, `graph-manual-controls.ts`가 어떤 역할을 가지는지 architecture 관점으로 보강했다.
+- `LAYOUT.md`
+  - `GraphCompanionTabs.tsx`, `GraphDataTable.tsx`, `GraphTimeline.tsx`, `GraphSchemaSummary.tsx`, `dashboard-state.ts`, `graph-companion-data.ts`, `graph-manual-controls.ts`를 active layout에 추가했다.
+  - `GraphSidebar.tsx`, `GraphView.tsx`, `NodeInspector.tsx`, `graph-model.ts` 설명을 최신 책임 기준으로 갱신했다.
+- `changelog.md`
+  - 이번 root docs sync 기록을 추가했다.
+
+### Verification
+
+- 아래 항목은 이번 docs sync를 위해 참조한 read-only code review와 existing verification evidence다.
+- direct code review basis
+  - `kg-dashboard/src/App.tsx`
+  - `kg-dashboard/src/components/GraphSidebar.tsx`
+  - `kg-dashboard/src/components/GraphView.tsx`
+  - `kg-dashboard/src/components/NodeInspector.tsx`
+  - `kg-dashboard/src/components/GraphCompanionTabs.tsx`
+  - `kg-dashboard/src/components/GraphDataTable.tsx`
+  - `kg-dashboard/src/components/GraphTimeline.tsx`
+  - `kg-dashboard/src/components/GraphSchemaSummary.tsx`
+  - `kg-dashboard/src/utils/dashboard-state.ts`
+  - `kg-dashboard/src/utils/graph-companion-data.ts`
+  - `kg-dashboard/src/utils/graph-manual-controls.ts`
+- current-session verification used
+  - `cd kg-dashboard; npm test` -> 37 passed
+  - `cd kg-dashboard; npm run lint` -> pass
+  - `cd kg-dashboard; npm run build` -> pass
+  - local preview `http://127.0.0.1:4177/` -> HTTP 200
+  - browser verify: `Pin`, `Hide`, `Expand 1-hop`, `Reset`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. runtime behavior 자체를 바꾸지 않았다.
+- 기존 history는 지우지 않고, latest KG dashboard usability state를 루트 문서 4개에 덧붙였다.
+
+## 2026-04-12 — KG Dashboard UI Rule Alignment & Outlook Email Ontology Workbook Pipeline
+
+### Changed
+
+- [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) — Added detailed implementation plan for the Outlook Email Ontology Workbook Pipeline, including new classification logic, review gates, and ontology mapping.
+- `kg-dashboard/src/App.tsx`, `App.css` — Removed hero-style intro panel, simplified topbar, unified card radius to <=8px, removed negative letter spacing.
+- `kg-dashboard/src/components/GraphSidebar.tsx` — Cleaned up nested card-in-card patterns into flatter list/row structures.
+- `kg-dashboard/src/components/NodeInspector.tsx` — Simplified details grid into row/list-centric density structures.
+- `kg-dashboard/src/components/GraphView.tsx` — Simplified main graph frame to a functional viewport level.
+- `README.md`, `SYSTEM_ARCHITECTURE.md`, `LAYOUT.md` — Updated to reflect the dashboard UI alignment and the Outlook Email Ontology Workbook Pipeline plan.
+
+### Verification
+- Verified dashboard tests, linting, and build pass cleanly without the hero panel.
+
 ## 2026-04-12 — KG dashboard graph visibility docs sync
 
 ### Changed

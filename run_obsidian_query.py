@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 import json
 import pathlib
 import re
@@ -72,7 +73,9 @@ def run_query(query_text, max_results=5):
     ]
     raw_rank = generate(messages=rerank_prompt, model=MODELS["primary"])
     try:
-        clean = raw_rank.strip().strip("```json").strip("```").strip()
+        clean = (
+            raw_rank.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        )
         if not clean.startswith("["):
             clean = clean[clean.find("[") :]
         if not clean.endswith("]"):

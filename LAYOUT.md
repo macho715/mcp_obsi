@@ -63,6 +63,7 @@ This section classifies all paths in the repository by their character and role.
 | `tests/` | `verification` | Contract regression and storage behavior tests |
 | `.cursor/` | `workspace` | Cursor rules, skills, agents, hooks, and sample MCP config |
 | `docs/` | `documentation` | Installation, operations, and reference docs |
+| `docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md` | `documentation` | Outlook Email Ontology Workbook pipeline architecture and implementation plan |
 | `local-rag/` | `companion-runtime-reference` | Workspace-local companion retrieval/generation copy for verification only; not repo-owned runtime code |
 | `myagent-copilot-kit/standalone-package/` | `companion-runtime-reference` | Workspace-local companion app copy for verification only; not repo-owned runtime code |
 | `kg-dashboard/` | `subproject` | Vite + React app for Knowledge Graph visualization |
@@ -87,6 +88,7 @@ This section classifies all paths in the repository by their character and role.
 | `docs/LOCAL_RAG_STANDALONE_GUIDE.md` | `documentation` | Windows 로컬 스택 실행, health 확인, 브라우저 사용, 복구 순서 |
 | `docs/reference/` | `reference-archive` | 비기준 설계/제안 문서 보관 |
 | `docs/history/` | `history-archive` | 시점성 감사/노트 문서 보관 |
+| [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) | `documentation` | Outlook Email Ontology Workbook 파이프라인 설계 및 구현 계획안 |
 | `docs/superpowers/specs/2026-04-08-local-rag-retrieval-benchmark.md` | `documentation` | local-rag lexical retrieval benchmark와 rerank 보류 판단 근거 |
 | `docs/storage-routing.md` | `documentation` | KB 4계층 라우팅 규칙 + Mermaid 다이어그램 + 포인터 템플릿 |
 | `docs/web-clipping-setup.md` | `documentation` | Obsidian Web Clipper 설정, YouTube 대본, PDF 처리 가이드 |
@@ -515,11 +517,18 @@ A comprehensive pipeline has been added to extract logistics events from WhatsAp
 | `scripts/consolidate_vaults.py` | `runtime-support` | Merges multiple test/source vaults into the canonical target directory. |
 | `kg-dashboard/` | `subproject` | Vite + React app for Knowledge Graph visualization. |
 | `kg-dashboard/public/data/` | `generated/runtime-data` | Target destination for `nodes.json` and `edges.json` used by the dashboard. Current export also carries `analysisPath` and `analysisVault` metadata for issue/lesson drilldown. |
-| `kg-dashboard/src/components/GraphView.tsx` | `runtime` | React Cytoscape graph surface for search-first navigation, ego view focus, and summary-driven selection. |
-| `kg-dashboard/src/components/GraphSidebar.tsx` | `runtime` | React sidebar for summary cards, hidden-card counts, and hub/site/warehouse filtering. |
-| `kg-dashboard/src/components/NodeInspector.tsx` | `runtime` | React inspector for selected node details and metadata-driven issue/lesson Obsidian note links. |
+| `kg-dashboard/src/components/GraphView.tsx` | `runtime` | React Cytoscape graph surface for summary-first rendering, search-driven narrowing, ego focus, and edge selection. |
+| `kg-dashboard/src/components/GraphSidebar.tsx` | `runtime` | React sidebar for structured search chips, quick-result reasons, hidden-card counts, and manual node controls (`Pin`, `Hide`, `Expand 1-hop`, `Reset`). |
+| `kg-dashboard/src/components/NodeInspector.tsx` | `runtime` | React inspector for node/edge/evidence/related tabs and metadata-driven issue/lesson Obsidian note links. |
+| `kg-dashboard/src/components/GraphCompanionTabs.tsx` | `runtime` | Companion surface switcher for `Graph`, `Table`, `Timeline`, `Schema`. |
+| `kg-dashboard/src/components/GraphDataTable.tsx` | `runtime` | Visible-slice row view with route and timing columns. |
+| `kg-dashboard/src/components/GraphTimeline.tsx` | `runtime` | Shipment timing surface for `ATD` / `ATA` scan. |
+| `kg-dashboard/src/components/GraphSchemaSummary.tsx` | `runtime` | Visible-slice node/edge type count summary. |
 | `kg-dashboard/src/types/graph.ts` | `shared-contract` | TypeScript definitions for the graph data structures. |
-| `kg-dashboard/src/utils/graph-model.ts` | `runtime-support` | Graph data modeling, summary counts, and derived view state including issue-context lesson visibility in `summary`/`issues` and direct lesson retention in `ego`. |
+| `kg-dashboard/src/utils/graph-model.ts` | `runtime-support` | Graph data modeling, field-aware search, summary counts, and derived view state including issue-context lesson visibility in `summary`/`issues` and direct lesson retention in `ego`. |
+| `kg-dashboard/src/utils/dashboard-state.ts` | `runtime-support` | Dashboard URL state parse/serialize helper. |
+| `kg-dashboard/src/utils/graph-companion-data.ts` | `runtime-support` | Builds row-oriented table/timeline/schema data from the current visible slice. |
+| `kg-dashboard/src/utils/graph-manual-controls.ts` | `runtime-support` | Applies manual node overrides (`Pin`, `Hide`, `Expand 1-hop`) over the base graph slice. |
 
 ### Dashboard 디렉토리 구조 (Dashboard Directory Structure)
 
@@ -527,13 +536,20 @@ A comprehensive pipeline has been added to extract logistics events from WhatsAp
 kg-dashboard/src/
 ├── components/
 │   ├── GraphView.tsx      # Core rendering & layout (Cytoscape)
-│   ├── GraphSidebar.tsx   # UI controls & filtering panel
-│   └── NodeInspector.tsx  # Metadata inspector for selected nodes
+│   ├── GraphSidebar.tsx   # Search, view mode, manual node control sidebar
+│   ├── GraphCompanionTabs.tsx
+│   ├── GraphDataTable.tsx
+│   ├── GraphTimeline.tsx
+│   ├── GraphSchemaSummary.tsx
+│   └── NodeInspector.tsx  # Node / Edge / Evidence / Related inspector
 ├── types/
 │   └── graph.ts           # Shared TypeScript interfaces (nodes, edges, state)
 └── utils/
-    ├── graph-model.ts     # Data transformation & layout logic
-    └── graph-model.test.ts# Unit tests for graph logic
+    ├── graph-model.ts             # Graph slice, search, and rank logic
+    ├── dashboard-state.ts         # URL state helper
+    ├── graph-companion-data.ts    # Table / timeline / schema data builders
+    ├── graph-manual-controls.ts   # Manual pin/hide/expand overlay
+    └── graph-model.test.ts        # Unit tests for graph logic
 ```
 
 ### 스토리지 분리 (Storage Separation)
@@ -545,9 +561,13 @@ kg-dashboard/src/
 - **`kg-dashboard/public/data/`**: Static JSON representations (`nodes.json`, `edges.json`) for the React frontend, generated by `scripts/build_dashboard_graph_data.py`.
 - **`kg-dashboard/src/`**: Application logic for the visualization layer, running locally.
 
-### 2026-04-12 Dashboard Visibility Alignment Addendum
+### 2026-04-12 Dashboard Visibility & UI Alignment Addendum
 
-이 섹션은 기존 layout 설명을 지우지 않고, 현재 코드 기준의 dashboard export / visibility 변화만 덧붙인다.
+이 섹션은 기존 layout 설명을 지우지 않고, 현재 코드 기준의 dashboard export / visibility 변화 및 UI Alignment만 덧붙인다.
+
+- **Dashboard UI Rule Alignment**:
+  - `kg-dashboard`의 App.tsx, App.css, GraphSidebar.tsx, NodeInspector.tsx, GraphView.tsx를 수정하여 UI를 도구적 화면으로 정렬했다 (hero 패널 제거, card-in-card 중첩 해소, radius 8px 이하 및 letter-spacing 0 통일).
+  - GraphView의 decorative frame을 없애고 viewport 중심 뷰로 변경했다.
 
 - canonical dashboard export는 `scripts/build_dashboard_graph_data.py`가 맡는다.
 - 현재 CLI 기본 실행은 `ttl_path=None`으로 동작해 JSON + audit 재생성에 집중한다.
@@ -555,15 +575,23 @@ kg-dashboard/src/
   1. `C:\Users\jichu\Downloads\valut\wiki\analyses`
   2. `vault/wiki/analyses`
 - source audit은 `runtime/audits/hvdc_ttl_source_audit.json`에 실제 사용 경로를 남긴다.
-- 현재 session 검증 기준 source audit 값:
-  - `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`
-  - `analyses_dir_fallback_used = false`
-  - `loaded_notes = 115`
 - dashboard JSON의 `LogisticsIssue` 및 `IncidentLesson` 노드는 `analysisPath`, `analysisVault`를 포함한다.
 - `NodeInspector.tsx`는 이 metadata를 사용해 issue/lesson 노드에서 올바른 Obsidian vault/file 링크를 연다.
 - `graph-model.ts`는 모든 lesson을 기본 화면에 풀지 않는다.
   - `summary` / `issues`: issue-context infra anchor에 붙은 lesson만 유지
   - `ego`: 선택 노드에 직접 연결된 lesson만 유지
+- current dashboard verification:
+  - `cd kg-dashboard; npm test` -> 37 passed
+  - `cd kg-dashboard; npm run lint` -> pass
+  - `cd kg-dashboard; npm run build` -> pass
+  - local preview `http://127.0.0.1:4177/` -> HTTP 200
+- latest source audit snapshot 값은 `runtime/audits/hvdc_ttl_source_audit.json`을 기준으로 확인한다.
+- 현재 dashboard UI는 아래 추가 surface를 가진다.
+  - field-aware search chips `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA`
+  - `Graph`, `Table`, `Timeline`, `Schema` companion view
+  - manual node controls `Pin`, `Hide`, `Expand 1-hop`, `Reset`
+  - `Pinned`, `Hidden`, `Expanded` sidebar lists
+  - `Node`, `Edge`, `Evidence`, `Related` inspector tabs
 
 ### WhatsApp Pipeline & Knowledge Graph Diagram
 
