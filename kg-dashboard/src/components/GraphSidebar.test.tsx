@@ -37,10 +37,24 @@ describe('GraphSidebar search controls', () => {
         searchTerm="Le Havre"
         searchField="pol"
         searchMatches={matches}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
         hubSummaries={[]}
         viewMode="search"
         onSearchTermChange={() => {}}
         onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         hubThreshold={200}
@@ -76,10 +90,24 @@ describe('GraphSidebar search controls', () => {
         searchTerm=""
         searchField="all"
         searchMatches={[]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
         hubSummaries={[]}
         viewMode="summary"
         onSearchTermChange={() => {}}
         onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         hubThreshold={200}

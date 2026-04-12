@@ -9,12 +9,15 @@ import {
 describe('dashboard-state', () => {
   it('restores search, selection, and companion view from query string', () => {
     const restored = parseDashboardUrlState(
-      '?q=POL&field=pol&view=search&panel=timeline&node=shipment%2F1&edge=shipment%2F1%7Chub%2F1%7CloadedAt',
+      '?q=POL&field=pol&class=Shipment&property=deliveredTo&relationType=deliveredTo&view=search&panel=timeline&node=shipment%2F1&edge=shipment%2F1%7Chub%2F1%7CloadedAt',
     );
 
     expect(restored).toEqual({
       query: 'POL',
       searchField: 'pol',
+      classFilter: 'Shipment',
+      propertyFilter: 'deliveredTo',
+      relationTypeFilter: 'deliveredTo',
       viewMode: 'search',
       companionView: 'timeline',
       selectedNodeId: 'shipment/1',
@@ -32,12 +35,17 @@ describe('dashboard-state', () => {
     const serialized = buildDashboardUrlSearch({
       query: 'Mina Zayed',
       searchField: 'pod',
+      classFilter: 'Shipment',
+      propertyFilter: 'deliveredTo',
+      relationTypeFilter: '',
       viewMode: 'search',
       companionView: 'table',
       selectedNodeId: 'shipment/2',
       selectedEdgeId: null,
     });
 
-    expect(serialized).toBe('?q=Mina+Zayed&field=pod&view=search&panel=table&node=shipment%2F2');
+    expect(serialized).toBe(
+      '?q=Mina+Zayed&field=pod&class=Shipment&property=deliveredTo&view=search&panel=table&node=shipment%2F2',
+    );
   });
 });

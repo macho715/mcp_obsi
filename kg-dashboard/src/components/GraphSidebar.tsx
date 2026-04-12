@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react';
-import type { GraphMetrics, GraphSearchField, SearchMatch, GraphViewMode } from '../types/graph';
+import type {
+  GraphMetrics,
+  GraphSearchField,
+  GraphViewMode,
+  OntologyQueryPresetId,
+  SavedGraphQuery,
+  SearchMatch,
+} from '../types/graph';
 import { getNodeLabel } from '../utils/graph-model';
 
 const DEFAULT_INFRA_SUMMARY_LIMIT = 5;
@@ -10,6 +17,14 @@ export interface GraphSidebarProps {
   searchTerm: string;
   searchField: GraphSearchField;
   searchMatches: SearchMatch[];
+  classFilter: string;
+  propertyFilter: string;
+  relationTypeFilter: string;
+  classOptions: string[];
+  propertyOptions: string[];
+  relationTypeOptions: string[];
+  ontologyPresets: Array<{ id: OntologyQueryPresetId; label: string }>;
+  savedQueries: SavedGraphQuery[];
   hubSummaries: Array<{
     id: string;
     label: string;
@@ -21,6 +36,12 @@ export interface GraphSidebarProps {
   viewMode: GraphViewMode;
   onSearchTermChange: (value: string) => void;
   onSearchFieldChange: (value: GraphSearchField) => void;
+  onClassFilterChange: (value: string) => void;
+  onPropertyFilterChange: (value: string) => void;
+  onRelationTypeFilterChange: (value: string) => void;
+  onApplyOntologyPreset: (presetId: OntologyQueryPresetId) => void;
+  onSaveCurrentQuery: () => void;
+  onApplySavedQuery: (queryId: string) => void;
   onSelectSearchMatch: (nodeId: string) => void;
   onViewModeChange: (mode: GraphViewMode) => void;
   selectedNodeLabel?: string;
@@ -74,10 +95,24 @@ export function GraphSidebar({
   searchTerm,
   searchField,
   searchMatches,
+  classFilter,
+  propertyFilter,
+  relationTypeFilter,
+  classOptions,
+  propertyOptions,
+  relationTypeOptions,
+  ontologyPresets,
+  savedQueries,
   hubSummaries,
   viewMode,
   onSearchTermChange,
   onSearchFieldChange,
+  onClassFilterChange,
+  onPropertyFilterChange,
+  onRelationTypeFilterChange,
+  onApplyOntologyPreset,
+  onSaveCurrentQuery,
+  onApplySavedQuery,
   onSelectSearchMatch,
   onViewModeChange,
   selectedNodeLabel,
@@ -204,6 +239,90 @@ export function GraphSidebar({
             <p className="empty-copy">No quick matches. Try another label, hub, issue, or vessel name.</p>
           )
         ) : null}
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <div className="section-label">Ontology Query</div>
+            <h2 className="section-title">Class + relation filters</h2>
+          </div>
+        </div>
+
+        <label className="field">
+          <span className="field-label">Class browser</span>
+          <select value={classFilter} onChange={(event) => onClassFilterChange(event.target.value)}>
+            <option value="">All classes</option>
+            {classOptions.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-label">Property browser</span>
+          <select value={propertyFilter} onChange={(event) => onPropertyFilterChange(event.target.value)}>
+            <option value="">All properties</option>
+            {propertyOptions.map((property) => (
+              <option key={property} value={property}>
+                {property}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-label">Relation type browser</span>
+          <select value={relationTypeFilter} onChange={(event) => onRelationTypeFilterChange(event.target.value)}>
+            <option value="">All relation types</option>
+            {relationTypeOptions.map((relation) => (
+              <option key={relation} value={relation}>
+                {relation}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="search-chip-row" role="tablist" aria-label="Ontology query presets">
+          {ontologyPresets.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="infra-filter-chip"
+              onClick={() => onApplyOntologyPreset(preset.id)}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="manual-node-actions">
+          <button type="button" className="ghost-button" onClick={onSaveCurrentQuery}>
+            Save current query
+          </button>
+        </div>
+        {savedQueries.length > 0 ? (
+          <div className="manual-node-list" role="list" aria-label="Saved queries">
+            {savedQueries.map((query) => (
+              <button
+                key={query.id}
+                type="button"
+                className="search-result-item"
+                onClick={() => onApplySavedQuery(query.id)}
+              >
+                <strong>{query.name}</strong>
+                <span>
+                  {query.query.classFilter || 'all'} / {query.query.propertyFilter || 'all'} /{' '}
+                  {query.query.relationTypeFilter || 'all'}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-copy">No saved queries yet.</p>
+        )}
       </section>
 
       <section className="panel">
