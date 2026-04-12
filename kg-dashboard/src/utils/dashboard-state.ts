@@ -3,6 +3,9 @@ import type { GraphCompanionView, GraphSearchField, GraphViewMode } from '../typ
 export interface DashboardUrlState {
   query: string;
   searchField: GraphSearchField;
+  classFilter: string;
+  propertyFilter: string;
+  relationTypeFilter: string;
   viewMode: GraphViewMode;
   companionView: GraphCompanionView;
   selectedNodeId: string | null;
@@ -16,6 +19,9 @@ const SEARCH_FIELDS: GraphSearchField[] = ['all', 'coe', 'pol', 'pod', 'shipMode
 export const DEFAULT_DASHBOARD_URL_STATE: DashboardUrlState = {
   query: '',
   searchField: 'all',
+  classFilter: '',
+  propertyFilter: '',
+  relationTypeFilter: '',
   viewMode: 'summary',
   companionView: 'graph',
   selectedNodeId: null,
@@ -33,6 +39,9 @@ export function parseDashboardUrlState(search: string): DashboardUrlState {
     searchField: SEARCH_FIELDS.includes(searchField as GraphSearchField)
       ? (searchField as GraphSearchField)
       : DEFAULT_DASHBOARD_URL_STATE.searchField,
+    classFilter: params.get('class') ?? '',
+    propertyFilter: params.get('property') ?? '',
+    relationTypeFilter: params.get('relationType') ?? '',
     viewMode: VIEW_MODES.includes(viewMode as GraphViewMode)
       ? (viewMode as GraphViewMode)
       : DEFAULT_DASHBOARD_URL_STATE.viewMode,
@@ -52,6 +61,15 @@ export function buildDashboardUrlSearch(state: DashboardUrlState): string {
   }
   if (state.searchField !== 'all') {
     params.set('field', state.searchField);
+  }
+  if (state.classFilter) {
+    params.set('class', state.classFilter);
+  }
+  if (state.propertyFilter) {
+    params.set('property', state.propertyFilter);
+  }
+  if (state.relationTypeFilter) {
+    params.set('relationType', state.relationTypeFilter);
   }
   if (state.viewMode !== 'summary') {
     params.set('view', state.viewMode);
