@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -12,6 +13,11 @@ from openpyxl import load_workbook
 from rdflib import Graph, Namespace, URIRef
 
 from app.services.graph_canonical_builder import build_canonical_graph
+from app.services.external_schema_import import (
+    find_mapping_warnings,
+    load_external_schema,
+    shacl_subset_to_ui_filters,
+)
 from app.services.graph_knowledge_builder import build_knowledge_objects
 from app.services.graph_mapping_builder import build_compatibility_mappings
 from app.services.graph_normalizer import normalize_sources as normalize_graph_sources
@@ -32,6 +38,10 @@ PRIMARY_ANALYSES_DIR = Path(r"C:\Users\jichu\Downloads\valut\wiki\analyses")
 DEFAULT_OUTPUT_DIR = Path("kg-dashboard/public/data")
 DEFAULT_TTL_PATH = Path("vault/knowledge_graph.ttl")
 DEFAULT_AUDIT_DIR = Path("runtime/audits")
+DEFAULT_EXTERNAL_SCHEMA_FILTER_PATH = Path("kg-dashboard/public/data/external_schema_filters.json")
+EXTERNAL_ONTOLOGY_STAGE_ENV = "KG_EXTERNAL_ONTOLOGY_STAGE"
+EXTERNAL_SPARQL_ENDPOINT_ENV = "KG_EXTERNAL_SPARQL_ENDPOINT"
+EXTERNAL_SHACL_FILE_ENV = "KG_EXTERNAL_SHACL_FILE"
 
 REQUIRED_EXCEL_COLUMNS = [
     "SCT SHIP NO.",
@@ -747,6 +757,63 @@ def _emit_audit_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _external_ontology_stage() -> str:
+    stage = os.getenv(EXTERNAL_ONTOLOGY_STAGE_ENV, "off").strip().lower()
+    if stage in {"off", "poc", "beta"}:
+        return stage
+    return "off"
+
+
+def _collect_external_ontology_overlay() -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    stage = _external_ontology_stage()
+    base = {
+        "stage": stage,
+        "enabled": stage != "off",
+        "endpoint": None,
+        "loaded_classes": 0,
+        "loaded_properties": 0,
+        "sample_queries": [],
+        "mapping_warnings": [],
+        "error": None,
+    }
+    if stage == "off":
+        return base, []
+
+    endpoint = os.getenv(EXTERNAL_SPARQL_ENDPOINT_ENV, "").strip()
+    if not endpoint:
+        base["error"] = f"{EXTERNAL_SPARQL_ENDPOINT_ENV} is required when ontology import is enabled."
+        return base, []
+
+    try:
+        snapshot = load_external_schema(endpoint)
+    except Exception as exc:  # pragma: no cover - defensive path
+        base["endpoint"] = endpoint
+        base["error"] = str(exc)
+        return base, []
+
+    base["endpoint"] = snapshot.endpoint
+    base["loaded_classes"] = len(snapshot.classes)
+    base["loaded_properties"] = len(snapshot.properties)
+    base["sample_queries"] = snapshot.sample_queries
+    mapping_warnings = find_mapping_warnings(
+        external_properties=set(snapshot.properties),
+        stage=stage,
+    )
+    base["mapping_warnings"] = [warning.__dict__ for warning in mapping_warnings]
+
+    filters: list[dict[str, Any]] = []
+    if stage == "beta":
+        shacl_path = os.getenv(EXTERNAL_SHACL_FILE_ENV, "").strip()
+        if not shacl_path:
+            base["error"] = (
+                f"{EXTERNAL_SHACL_FILE_ENV} is required in beta stage for SHACL filter generation."
+            )
+            return base, filters
+        shacl_turtle = Path(shacl_path).read_text(encoding="utf-8")
+        filters = [item.__dict__ for item in shacl_subset_to_ui_filters(shacl_turtle)]
+    return base, filters
+
+
 def _normalize_for_projection(
     normalized: Any,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
@@ -842,6 +909,7 @@ def export_dashboard_graph_data(
     jpt_reconciled_path: Path | None = None,
     inland_cost_path: Path | None = None,
     audit_dir: Path = DEFAULT_AUDIT_DIR,
+    external_filter_path: Path = DEFAULT_EXTERNAL_SCHEMA_FILTER_PATH,
 ) -> None:
     base_dir = excel_path.parent
     warehouse_status_path = warehouse_status_path or base_dir / DEFAULT_WAREHOUSE_STATUS_PATH.name
@@ -1011,6 +1079,8 @@ def export_dashboard_graph_data(
             "patterns": len(knowledge.patterns),
         },
     }
+    external_ontology_audit, external_filters = _collect_external_ontology_overlay()
+    mapping_audit["external_ontology"] = external_ontology_audit
 
     _emit_audit_json(audit_dir / "hvdc_ttl_source_audit.json", source_audit)
     _emit_audit_json(audit_dir / "hvdc_ttl_resolution_audit.json", resolution_audit)
@@ -1019,6 +1089,12 @@ def export_dashboard_graph_data(
         projection_audit,
     )
     _emit_audit_json(audit_dir / "hvdc_ttl_mapping_audit.json", mapping_audit)
+    if external_filters:
+        external_filter_path.parent.mkdir(parents=True, exist_ok=True)
+        external_filter_path.write_text(
+            json.dumps(external_filters, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":
