@@ -97,7 +97,18 @@ def build_dashboard_projection(*, shipments, events, lessons):
         if not shipment_id or not shipment_label:
             unknown_nodes += 1
             continue
-        _upsert_node(nodes, shipment_id, shipment_label, shipment_type)
+        _upsert_node(
+            nodes,
+            shipment_id,
+            shipment_label,
+            shipment_type,
+            countryOfExport=_coerce_text(shipment, "country_of_export", "countryOfExport"),
+            portOfLoading=_coerce_text(shipment, "port_of_loading", "portOfLoading"),
+            portOfDischarge=_coerce_text(shipment, "port_of_discharge", "portOfDischarge"),
+            shipMode=_coerce_text(shipment, "ship_mode", "shipMode"),
+            actualDeparture=_coerce_text(shipment, "actual_departure", "actualDeparture"),
+            actualArrival=_coerce_text(shipment, "actual_arrival", "actualArrival"),
+        )
 
     for event in events or []:
         subject_id = _coerce_text(event, "subject_id", "subjectId", "shipment_id", "shipmentId")

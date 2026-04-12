@@ -8,6 +8,8 @@ from app.services.graph_types import (
     CanonicalCostAttribution,
     CanonicalDocumentRef,
     CanonicalEvent,
+    CanonicalJourneyLeg,
+    CanonicalMilestoneEvent,
     CanonicalInvoice,
     CanonicalReconciliationRecord,
     CanonicalSettlementRecord,
@@ -186,3 +188,86 @@ def test_normalize_sources_normalizes_timestamp_dates_and_skips_blank_values():
     assert normalized.route_events[1].id.endswith("/agi/2025-01-03T14:15:16")
     assert len(normalized.route_events) == 2
     assert normalized.document_refs == []
+
+
+def test_graph_types_expose_route_and_timing_fields():
+    shipment = CanonicalShipment(
+        id="https://hvdc.logistics/resource/shipment/HVDC-001",
+        shipment_no="HVDC-001",
+        vendor_name="Vendor A",
+        country_of_export="FRANCE",
+        port_of_loading="Le Havre",
+        port_of_discharge="Mina Zayed",
+        ship_mode="SEA",
+    )
+    leg = CanonicalJourneyLeg(
+        id="https://hvdc.logistics/resource/journey-leg/HVDC-001/main",
+        shipment_id=shipment.id,
+        origin_port_id="https://hvdc.logistics/resource/port/le_havre",
+        origin_port_label="Le Havre",
+        destination_port_id="https://hvdc.logistics/resource/port/mina_zayed",
+        destination_port_label="Mina Zayed",
+        transport_mode="SEA",
+        actual_departure="2023-11-12",
+        actual_arrival="2023-12-01",
+    )
+    atd = CanonicalMilestoneEvent(
+        id="https://hvdc.logistics/resource/milestone/HVDC-001/M61",
+        shipment_id=shipment.id,
+        milestone_code="M61",
+        actual_dt="2023-11-12",
+        location_id=leg.origin_port_id,
+    )
+    ata = CanonicalMilestoneEvent(
+        id="https://hvdc.logistics/resource/milestone/HVDC-001/M80",
+        shipment_id=shipment.id,
+        milestone_code="M80",
+        actual_dt="2023-12-01",
+        location_id=leg.destination_port_id,
+    )
+
+    assert shipment.country_of_export == "FRANCE"
+    assert shipment.port_of_loading == "Le Havre"
+    assert shipment.port_of_discharge == "Mina Zayed"
+    assert shipment.ship_mode == "SEA"
+    assert leg.transport_mode == "SEA"
+    assert atd.milestone_code == "M61"
+    assert ata.milestone_code == "M80"
+
+
+def test_normalize_sources_maps_route_ports_mode_and_port_timing():
+    sources = {
+        "shipment_rows": [
+            {
+                "SCT SHIP NO.": "HVDC-001",
+                "VENDOR": "Vendor A",
+                "COE": "FRANCE",
+                "POL": "Le Havre",
+                "POD": "Mina Zayed",
+                "SHIP MODE": "Sea Freight",
+                "ATD": pd.Timestamp("2023-11-12 00:00:00"),
+                "ATA": pd.Timestamp("2023-12-01 00:00:00"),
+            }
+        ],
+        "warehouse_rows": [],
+        "jpt_sheets": {},
+        "inland_cost_rows": [],
+        "analysis_notes": [],
+    }
+
+    normalized = normalize_sources(sources)
+
+    shipment = normalized.shipments[0]
+    leg = normalized.journey_legs[0]
+    milestone_codes = {item.milestone_code for item in normalized.milestone_events}
+
+    assert shipment.country_of_export == "FRANCE"
+    assert shipment.port_of_loading == "Le Havre"
+    assert shipment.port_of_discharge == "Mina Zayed"
+    assert shipment.ship_mode == "SEA"
+    assert leg.origin_port_label == "Le Havre"
+    assert leg.destination_port_label == "Mina Zayed"
+    assert leg.transport_mode == "SEA"
+    assert leg.actual_departure == "2023-11-12"
+    assert leg.actual_arrival == "2023-12-01"
+    assert milestone_codes == {"M61", "M80"}

@@ -1,4 +1,4 @@
-from rdflib import Namespace, URIRef
+from rdflib import Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 
 from app.services.graph_canonical_builder import build_canonical_graph
@@ -250,3 +250,77 @@ def test_build_canonical_graph_links_evidence_to_its_explicit_pattern_id_only():
     hvdc = Namespace("http://hvdc.logistics/ontology/")
     assert (evidence_id, hvdc.supportsPattern, pattern_a) in graph
     assert (evidence_id, hvdc.supportsPattern, pattern_b) not in graph
+
+
+def test_build_canonical_graph_emits_route_and_milestone_triples():
+    shipment_id = URIRef("https://hvdc.logistics/resource/shipment/HVDC-001")
+    leg_id = URIRef("https://hvdc.logistics/resource/journey-leg/HVDC-001/main")
+    pol_id = URIRef("https://hvdc.logistics/resource/port/le_havre")
+    pod_id = URIRef("https://hvdc.logistics/resource/port/mina_zayed")
+    atd_id = URIRef("https://hvdc.logistics/resource/milestone/HVDC-001/M61")
+    ata_id = URIRef("https://hvdc.logistics/resource/milestone/HVDC-001/M80")
+
+    graph = build_canonical_graph(
+        shipments=[
+            {
+                "id": shipment_id,
+                "country_of_export": "FRANCE",
+                "port_of_loading": "Le Havre",
+                "port_of_discharge": "Mina Zayed",
+                "ship_mode": "SEA",
+                "deterministic_id": "shipment:HVDC-001",
+            }
+        ],
+        journey_legs=[
+            {
+                "id": leg_id,
+                "shipment_id": shipment_id,
+                "origin_port_id": pol_id,
+                "origin_port_label": "Le Havre",
+                "destination_port_id": pod_id,
+                "destination_port_label": "Mina Zayed",
+                "transport_mode": "SEA",
+                "actual_departure": "2023-11-12",
+                "actual_arrival": "2023-12-01",
+                "deterministic_id": "leg:HVDC-001:main",
+            }
+        ],
+        milestone_events=[
+            {
+                "id": atd_id,
+                "shipment_id": shipment_id,
+                "milestone_code": "M61",
+                "actual_dt": "2023-11-12",
+                "location_id": pol_id,
+                "deterministic_id": "milestone:HVDC-001:M61",
+            },
+            {
+                "id": ata_id,
+                "shipment_id": shipment_id,
+                "milestone_code": "M80",
+                "actual_dt": "2023-12-01",
+                "location_id": pod_id,
+                "deterministic_id": "milestone:HVDC-001:M80",
+            },
+        ],
+    )
+
+    hvdc = Namespace("http://hvdc.logistics/ontology/")
+    assert (shipment_id, hvdc.countryOfExport, Literal("FRANCE")) in graph
+    assert (shipment_id, hvdc.portOfLoading, Literal("Le Havre")) in graph
+    assert (shipment_id, hvdc.portOfDischarge, Literal("Mina Zayed")) in graph
+    assert (shipment_id, hvdc.shipMode, Literal("SEA")) in graph
+    assert (shipment_id, hvdc.hasJourneyLeg, leg_id) in graph
+    assert (leg_id, hvdc.originPort, pol_id) in graph
+    assert (leg_id, hvdc.destinationPort, pod_id) in graph
+    assert (leg_id, hvdc.transportMode, Literal("SEA")) in graph
+    assert (leg_id, hvdc.actualDeparture, Literal("2023-11-12")) in graph
+    assert (leg_id, hvdc.actualArrival, Literal("2023-12-01")) in graph
+    assert (shipment_id, hvdc.hasMilestone, atd_id) in graph
+    assert (shipment_id, hvdc.hasMilestone, ata_id) in graph
+    assert (atd_id, hvdc.milestoneCode, Literal("M61")) in graph
+    assert (ata_id, hvdc.milestoneCode, Literal("M80")) in graph
+    assert (atd_id, hvdc.actualDt, Literal("2023-11-12")) in graph
+    assert (ata_id, hvdc.actualDt, Literal("2023-12-01")) in graph
+    assert (atd_id, hvdc.location, pol_id) in graph
+    assert (ata_id, hvdc.location, pod_id) in graph

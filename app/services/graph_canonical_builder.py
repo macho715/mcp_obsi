@@ -13,6 +13,8 @@ HVDCM = Namespace("http://hvdc.logistics/ontology/mapping/")
 
 _TYPE_BY_BUCKET = {
     "shipments": HVDC.Shipment,
+    "journey_legs": HVDC.JourneyLeg,
+    "milestone_events": HVDC.MilestoneEvent,
     "cases": HVDC.Case,
     "cargo_items": HVDC.CargoItem,
     "document_refs": HVDC.DocumentRef,
@@ -98,6 +100,20 @@ def _add_node(
         graph.add((subject, RDFS.label, Literal(str(label))))
 
 
+def _add_literal_if_present(
+    graph: Graph,
+    subject: URIRef,
+    predicate: URIRef,
+    value: Any,
+) -> None:
+    if value is None:
+        return
+    text = str(value).strip()
+    if not text:
+        return
+    graph.add((subject, predicate, Literal(text)))
+
+
 def build_canonical_graph(*args: object, **kwargs: Any) -> Graph:
     sources = _coerce_sources(args, kwargs)
 
@@ -115,7 +131,99 @@ def build_canonical_graph(*args: object, **kwargs: Any) -> Graph:
                 continue
             _add_node(graph, subject, rdf_type, item)
 
-            if bucket == "cases":
+            if bucket == "shipments":
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.countryOfExport,
+                    _item_value(item, "country_of_export", "countryOfExport"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.portOfLoading,
+                    _item_value(item, "port_of_loading", "portOfLoading"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.portOfDischarge,
+                    _item_value(item, "port_of_discharge", "portOfDischarge"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.shipMode,
+                    _item_value(item, "ship_mode", "shipMode"),
+                )
+            elif bucket == "journey_legs":
+                shipment_id = _as_uri(_item_value(item, "shipment_id", "shipmentId"))
+                if shipment_id is not None:
+                    graph.add((shipment_id, HVDC.hasJourneyLeg, subject))
+                origin_port_id = _as_uri(
+                    _item_value(item, "origin_port_id", "originPortId")
+                )
+                destination_port_id = _as_uri(
+                    _item_value(item, "destination_port_id", "destinationPortId")
+                )
+                if origin_port_id is not None:
+                    graph.add((origin_port_id, RDF.type, HVDC.Port))
+                    graph.add((subject, HVDC.originPort, origin_port_id))
+                    _add_literal_if_present(
+                        graph,
+                        origin_port_id,
+                        RDFS.label,
+                        _item_value(item, "origin_port_label", "originPortLabel"),
+                    )
+                if destination_port_id is not None:
+                    graph.add((destination_port_id, RDF.type, HVDC.Port))
+                    graph.add((subject, HVDC.destinationPort, destination_port_id))
+                    _add_literal_if_present(
+                        graph,
+                        destination_port_id,
+                        RDFS.label,
+                        _item_value(
+                            item, "destination_port_label", "destinationPortLabel"
+                        ),
+                    )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.transportMode,
+                    _item_value(item, "transport_mode", "transportMode"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.actualDeparture,
+                    _item_value(item, "actual_departure", "actualDeparture"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.actualArrival,
+                    _item_value(item, "actual_arrival", "actualArrival"),
+                )
+            elif bucket == "milestone_events":
+                shipment_id = _as_uri(_item_value(item, "shipment_id", "shipmentId"))
+                if shipment_id is not None:
+                    graph.add((shipment_id, HVDC.hasMilestone, subject))
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.milestoneCode,
+                    _item_value(item, "milestone_code", "milestoneCode"),
+                )
+                _add_literal_if_present(
+                    graph,
+                    subject,
+                    HVDC.actualDt,
+                    _item_value(item, "actual_dt", "actualDt"),
+                )
+                location_id = _as_uri(_item_value(item, "location_id", "locationId"))
+                if location_id is not None:
+                    graph.add((subject, HVDC.location, location_id))
+            elif bucket == "cases":
                 shipment_id = _as_uri(_item_value(item, "shipment_id", "shipmentId"))
                 if shipment_id is not None:
                     graph.add((shipment_id, HVDC.hasCase, subject))

@@ -6,6 +6,10 @@ class CanonicalShipment:
     id: str
     shipment_no: str
     vendor_name: str | None = None
+    country_of_export: str | None = None
+    port_of_loading: str | None = None
+    port_of_discharge: str | None = None
+    ship_mode: str | None = None
     attributes: dict[str, object] = field(default_factory=dict)
 
 
@@ -40,6 +44,30 @@ class CanonicalStatusSnapshot:
     id: str
     shipment_id: str
     status: str
+    attributes: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class CanonicalJourneyLeg:
+    id: str
+    shipment_id: str
+    origin_port_id: str | None = None
+    origin_port_label: str | None = None
+    destination_port_id: str | None = None
+    destination_port_label: str | None = None
+    transport_mode: str | None = None
+    actual_departure: str | None = None
+    actual_arrival: str | None = None
+    attributes: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class CanonicalMilestoneEvent:
+    id: str
+    shipment_id: str
+    milestone_code: str
+    actual_dt: str | None = None
+    location_id: str | None = None
     attributes: dict[str, object] = field(default_factory=dict)
 
 

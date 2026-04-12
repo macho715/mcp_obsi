@@ -12,6 +12,7 @@ from openpyxl import load_workbook
 from rdflib import Graph, Namespace, URIRef
 
 from app.services.graph_canonical_builder import build_canonical_graph
+from app.services.graph_normalizer import normalize_sources as normalize_graph_sources
 from app.services.graph_knowledge_builder import build_knowledge_objects
 from app.services.graph_mapping_builder import build_compatibility_mappings
 from app.services.graph_projection_builder import build_dashboard_projection
@@ -751,11 +752,28 @@ def _emit_audit_json(path: Path, payload: dict[str, Any]) -> None:
 def _normalize_for_projection(
     normalized: Any,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    milestone_actual_dt_by_code: dict[tuple[str, str], str] = {}
+    for event in getattr(normalized, "milestone_events", []):
+        actual_dt = getattr(event, "actual_dt", None)
+        if not actual_dt:
+            continue
+        shipment_id = getattr(event, "shipment_id", None)
+        milestone_code = getattr(event, "milestone_code", None)
+        if not shipment_id or not milestone_code:
+            continue
+        milestone_actual_dt_by_code[(shipment_id, milestone_code)] = actual_dt
+
     shipments = [
         {
             "id": _legacy_dashboard_id(shipment.id),
             "label": shipment.shipment_no,
             "type": "Shipment",
+            "country_of_export": getattr(shipment, "country_of_export", None),
+            "port_of_loading": getattr(shipment, "port_of_loading", None),
+            "port_of_discharge": getattr(shipment, "port_of_discharge", None),
+            "ship_mode": getattr(shipment, "ship_mode", None),
+            "actual_departure": milestone_actual_dt_by_code.get((shipment.id, "M61")),
+            "actual_arrival": milestone_actual_dt_by_code.get((shipment.id, "M80")),
         }
         for shipment in normalized.shipments
     ]
@@ -840,7 +858,7 @@ def export_dashboard_graph_data(
         inland_cost_path=inland_cost_path,
         analyses_dir=resolved_wiki_dir,
     )
-    normalized = _normalize_sources(
+    normalized = normalize_graph_sources(
         {
             "shipment_rows": sources.shipment_rows,
             "warehouse_rows": sources.warehouse_rows,
@@ -874,6 +892,10 @@ def export_dashboard_graph_data(
                 "id": _safe_uri(shipment.id),
                 "shipment_no": shipment.shipment_no,
                 "vendor_name": shipment.vendor_name,
+                "country_of_export": shipment.country_of_export,
+                "port_of_loading": shipment.port_of_loading,
+                "port_of_discharge": shipment.port_of_discharge,
+                "ship_mode": shipment.ship_mode,
             }
             for shipment in normalized.shipments
         ],
@@ -884,6 +906,30 @@ def export_dashboard_graph_data(
                 "case_no": case.case_no,
             }
             for case in normalized.cases
+        ],
+        journey_legs=[
+            {
+                "id": _safe_uri(leg.id),
+                "shipment_id": _safe_uri(leg.shipment_id),
+                "origin_port_id": _safe_uri(leg.origin_port_id),
+                "origin_port_label": leg.origin_port_label,
+                "destination_port_id": _safe_uri(leg.destination_port_id),
+                "destination_port_label": leg.destination_port_label,
+                "transport_mode": leg.transport_mode,
+                "actual_departure": leg.actual_departure,
+                "actual_arrival": leg.actual_arrival,
+            }
+            for leg in getattr(normalized, "journey_legs", [])
+        ],
+        milestone_events=[
+            {
+                "id": _safe_uri(event.id),
+                "shipment_id": _safe_uri(event.shipment_id),
+                "milestone_code": event.milestone_code,
+                "actual_dt": event.actual_dt,
+                "location_id": _safe_uri(event.location_id),
+            }
+            for event in getattr(normalized, "milestone_events", [])
         ],
         events=[
             {

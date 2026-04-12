@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from openpyxl import Workbook
+from rdflib import Graph, Literal, Namespace, URIRef
 
 from app.services.graph_projection_builder import build_dashboard_projection
 import scripts.build_dashboard_graph_data as dashboard_export
@@ -52,6 +53,41 @@ Issue body
     )
 
 
+def _write_route_status_excel(excel_path: Path) -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Sheet1"
+    worksheet.append(
+        [
+            "SCT SHIP NO.",
+            "PO No.",
+            "VENDOR",
+            "VESSEL NAME/ FLIGHT No.",
+            "COE",
+            "POL",
+            "POD",
+            "SHIP MODE",
+            "ATD",
+            "ATA",
+        ]
+    )
+    worksheet.append(
+        [
+            "SHIP-001",
+            "PO-001",
+            "Vendor A",
+            "Vessel A",
+            "FRANCE",
+            "Le Havre",
+            "Mina Zayed",
+            "Sea Freight",
+            "2023-11-12",
+            "2023-12-01",
+        ]
+    )
+    workbook.save(excel_path)
+
+
 def test_build_dashboard_projection_emits_flat_consumer_contract():
     shipment_id = "https://hvdc.logistics/resource/shipment/HVDC-001"
     event_id = "https://hvdc.logistics/resource/arrival/HVDC-001/agi/2026-04-01"
@@ -98,6 +134,72 @@ def test_build_dashboard_projection_emits_flat_consumer_contract():
     assert (shipment_id, location_id, "occurredAt") in edge_keys
     assert (shipment_id, lesson_id, "relatedToLesson") in edge_keys
     assert audits["projection"]["unknown_nodes"] == 0
+
+
+def test_export_dashboard_graph_data_wires_route_leg_and_milestone_data_into_ttl(
+    tmp_path: Path,
+):
+    excel_path = tmp_path / "hvdc_status.xlsx"
+    output_dir = tmp_path / "out"
+    ttl_path = tmp_path / "knowledge_graph.ttl"
+
+    _write_route_status_excel(excel_path)
+
+    export_dashboard_graph_data(
+        excel_path=excel_path,
+        wiki_dir=tmp_path / "missing-analyses",
+        output_dir=output_dir,
+        ttl_path=ttl_path,
+    )
+
+    graph = Graph()
+    graph.parse(ttl_path, format="turtle")
+    hvdc = Namespace("http://hvdc.logistics/ontology/")
+
+    shipment_id = URIRef("https://hvdc.logistics/resource/shipment/SHIP-001")
+    leg_id = URIRef("https://hvdc.logistics/resource/journey-leg/SHIP-001/main")
+    pol_id = URIRef("https://hvdc.logistics/resource/port/le_havre")
+    pod_id = URIRef("https://hvdc.logistics/resource/port/mina_zayed")
+    atd_id = URIRef("https://hvdc.logistics/resource/milestone/SHIP-001/M61")
+    ata_id = URIRef("https://hvdc.logistics/resource/milestone/SHIP-001/M80")
+
+    assert (shipment_id, hvdc.countryOfExport, Literal("FRANCE")) in graph
+    assert (shipment_id, hvdc.portOfLoading, Literal("Le Havre")) in graph
+    assert (shipment_id, hvdc.portOfDischarge, Literal("Mina Zayed")) in graph
+    assert (shipment_id, hvdc.shipMode, Literal("SEA")) in graph
+    assert (shipment_id, hvdc.hasJourneyLeg, leg_id) in graph
+    assert (leg_id, hvdc.originPort, pol_id) in graph
+    assert (leg_id, hvdc.destinationPort, pod_id) in graph
+    assert (shipment_id, hvdc.hasMilestone, atd_id) in graph
+    assert (shipment_id, hvdc.hasMilestone, ata_id) in graph
+    assert (atd_id, hvdc.milestoneCode, Literal("M61")) in graph
+    assert (ata_id, hvdc.milestoneCode, Literal("M80")) in graph
+
+
+def test_export_dashboard_graph_data_exposes_route_and_timing_mirrors_on_shipment_node(
+    tmp_path: Path,
+):
+    excel_path = tmp_path / "hvdc_status.xlsx"
+    output_dir = tmp_path / "out"
+
+    _write_route_status_excel(excel_path)
+
+    export_dashboard_graph_data(
+        excel_path=excel_path,
+        wiki_dir=tmp_path / "missing-analyses",
+        output_dir=output_dir,
+        ttl_path=None,
+    )
+
+    nodes = json.loads((output_dir / "nodes.json").read_text(encoding="utf-8"))
+    shipment = next(node["data"] for node in nodes if node["data"]["type"] == "Shipment")
+
+    assert shipment["countryOfExport"] == "FRANCE"
+    assert shipment["portOfLoading"] == "Le Havre"
+    assert shipment["portOfDischarge"] == "Mina Zayed"
+    assert shipment["shipMode"] == "SEA"
+    assert shipment["actualDeparture"] == "2023-11-12"
+    assert shipment["actualArrival"] == "2023-12-01"
 
 
 def test_export_dashboard_graph_data_emits_consumer_contract(tmp_path: Path):

@@ -6,7 +6,13 @@ from typing import Any
 
 import pandas as pd
 
-from app.services.graph_types import CanonicalCase, CanonicalEvent, CanonicalShipment
+from app.services.graph_types import (
+    CanonicalCase,
+    CanonicalEvent,
+    CanonicalJourneyLeg,
+    CanonicalMilestoneEvent,
+    CanonicalShipment,
+)
 
 _ROUTE_FIELDS = (
     ("MOSB", "mosb"),
@@ -22,6 +28,8 @@ class NormalizedSources:
     shipments: list[CanonicalShipment]
     cases: list[CanonicalCase]
     route_events: list[CanonicalEvent]
+    journey_legs: list[CanonicalJourneyLeg]
+    milestone_events: list[CanonicalMilestoneEvent]
     document_refs: list[dict[str, Any]]
     status_snapshots: list[dict[str, Any]]
     charge_candidates: list[dict[str, Any]]
@@ -49,10 +57,38 @@ def _shipment_id(shipment_no: str) -> str:
     return f"https://hvdc.logistics/resource/shipment/{shipment_no}"
 
 
+def _slug(value: str) -> str:
+    return value.strip().lower().replace(" ", "_")
+
+
+def _port_id(port_name: str) -> str:
+    return f"https://hvdc.logistics/resource/port/{_slug(port_name)}"
+
+
+def _normalize_transport_mode(value: Any) -> str | None:
+    text = _clean_text(value)
+    if text is None:
+        return None
+
+    normalized = text.strip().upper()
+    aliases = {
+        "SEA FREIGHT": "SEA",
+        "OCEAN": "SEA",
+        "OCEAN FREIGHT": "SEA",
+        "AIR FREIGHT": "AIR",
+        "FLIGHT": "AIR",
+        "ROAD": "LAND",
+        "TRUCK": "LAND",
+    }
+    return aliases.get(normalized, normalized)
+
+
 def normalize_sources(sources: dict[str, Any]) -> NormalizedSources:
     shipments: list[CanonicalShipment] = []
     cases: list[CanonicalCase] = []
     route_events: list[CanonicalEvent] = []
+    journey_legs: list[CanonicalJourneyLeg] = []
+    milestone_events: list[CanonicalMilestoneEvent] = []
     document_refs: list[dict[str, Any]] = []
     status_snapshots: list[dict[str, Any]] = []
     charge_candidates: list[dict[str, Any]] = []
@@ -62,14 +98,61 @@ def normalize_sources(sources: dict[str, Any]) -> NormalizedSources:
         if not shipment_no:
             continue
 
+        country_of_export = _clean_text(row.get("COE"))
+        port_of_loading = _clean_text(row.get("POL"))
+        port_of_discharge = _clean_text(row.get("POD"))
+        ship_mode = _normalize_transport_mode(row.get("SHIP MODE"))
+        atd = _clean_text(row.get("ATD"))
+        ata = _clean_text(row.get("ATA"))
+
         shipment_id = _shipment_id(shipment_no)
         shipments.append(
             CanonicalShipment(
                 id=shipment_id,
                 shipment_no=shipment_no,
                 vendor_name=_clean_text(row.get("VENDOR")),
+                country_of_export=country_of_export,
+                port_of_loading=port_of_loading,
+                port_of_discharge=port_of_discharge,
+                ship_mode=ship_mode,
             )
         )
+
+        if port_of_loading or port_of_discharge or ship_mode or atd or ata:
+            leg_id = f"https://hvdc.logistics/resource/journey-leg/{shipment_no}/main"
+            journey_legs.append(
+                CanonicalJourneyLeg(
+                    id=leg_id,
+                    shipment_id=shipment_id,
+                    origin_port_id=_port_id(port_of_loading) if port_of_loading else None,
+                    origin_port_label=port_of_loading,
+                    destination_port_id=_port_id(port_of_discharge) if port_of_discharge else None,
+                    destination_port_label=port_of_discharge,
+                    transport_mode=ship_mode,
+                    actual_departure=atd,
+                    actual_arrival=ata,
+                )
+            )
+            if atd:
+                milestone_events.append(
+                    CanonicalMilestoneEvent(
+                        id=f"https://hvdc.logistics/resource/milestone/{shipment_no}/M61",
+                        shipment_id=shipment_id,
+                        milestone_code="M61",
+                        actual_dt=atd,
+                        location_id=_port_id(port_of_loading) if port_of_loading else None,
+                    )
+                )
+            if ata:
+                milestone_events.append(
+                    CanonicalMilestoneEvent(
+                        id=f"https://hvdc.logistics/resource/milestone/{shipment_no}/M80",
+                        shipment_id=shipment_id,
+                        milestone_code="M80",
+                        actual_dt=ata,
+                        location_id=_port_id(port_of_discharge) if port_of_discharge else None,
+                    )
+                )
 
         for location_field, location_slug in _ROUTE_FIELDS:
             event_date = _clean_text(row.get(location_field))
@@ -139,6 +222,8 @@ def normalize_sources(sources: dict[str, Any]) -> NormalizedSources:
         shipments=shipments,
         cases=cases,
         route_events=route_events,
+        journey_legs=journey_legs,
+        milestone_events=milestone_events,
         document_refs=document_refs,
         status_snapshots=status_snapshots,
         charge_candidates=charge_candidates,
