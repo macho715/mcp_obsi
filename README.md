@@ -1,12 +1,25 @@
-# mcp_obsidian
+# mcp_obsi
 
 > ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
 > **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
 > `C:\Users\jichu\Downloads\valut`
 
-Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdown SSOT storage, SQLite JSON1+FTS5 search, and Railway-hosted profiles for Cursor, ChatGPT, and Claude.
+Published repository:
+- `https://github.com/macho715/mcp_obsi`
 
-현재 이 저장소의 핵심은 다음이다.
+Note:
+- local workspace folder name can still remain `mcp_obsidian`
+
+Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdown SSOT storage, SQLite JSON1+FTS5 search, a KG dashboard, and Railway-hosted profiles for Cursor, ChatGPT, and Claude.
+
+쉽게 말하면, 이 저장소는 아래 4가지를 같이 다룬다.
+
+- MCP memory server
+- Obsidian Markdown SSOT + SQLite derived index
+- `kg-dashboard` knowledge-graph UI
+- Outlook Email ontology workbook pipeline
+
+현재 기준 핵심은 다음이다.
 
 - Markdown SSOT
 - SQLite derived index
@@ -14,16 +27,26 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - SearchPlan query DSL
 - `memory/YYYY/MM` write path + legacy compatibility
 - read-first, write-with-intent specialist profiles
+- `kg-dashboard` now supports field-aware search, companion views, and manual node controls
 - Railway production recheck is current-session PASS: deployed read-only/write surfaces now match the local code surface after redeploy
 
-## GitHub Snapshot
+## Repository Snapshot
 
-쉽게 말하면, 지금 이 저장소는 "Obsidian Markdown을 진실 원본으로 쓰는 MCP memory server"이고, 현재 세션 기준 production Railway 경로도 latest surface로 다시 맞춰진 상태다.
+쉽게 말하면, 지금 이 repo는 "Obsidian Markdown을 진실 원본으로 쓰는 MCP memory server + graph/dashboard workspace"이고, GitHub 이름은 `mcp_obsi`, 로컬 폴더명은 여전히 `mcp_obsidian`일 수 있다.
+
+- GitHub repository:
+  - `mcp_obsi`
+- local workspace directory:
+  - `mcp_obsidian`일 수 있음
+- current hosted production base:
+  - `https://mcp-server-production-90cb.up.railway.app`
 
 - main runtime:
   - FastAPI + FastMCP
   - Markdown SSOT
   - SQLite JSON1 + FTS5 derived index
+  - KG dashboard companion app
+  - Outlook Email ontology workbook builder
 - current code main `/mcp` surface:
   - 15 tools
   - `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
@@ -35,8 +58,6 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
   - ChatGPT: `/chatgpt-mcp-write`
   - Claude: `/claude-mcp-write`
   - both passed with 13-tool authenticated write surface
-- current hosted production base:
-  - `https://mcp-server-production-90cb.up.railway.app`
 - current evidence source:
   - [docs/MCP_RUNTIME_EVIDENCE.md](docs/MCP_RUNTIME_EVIDENCE.md)
 
