@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { GraphMetrics, GraphNode, GraphViewMode } from '../types/graph';
+import type { GraphMetrics, GraphSearchField, SearchMatch, GraphViewMode } from '../types/graph';
 import { getNodeLabel } from '../utils/graph-model';
 
 const DEFAULT_INFRA_SUMMARY_LIMIT = 5;
@@ -8,7 +8,8 @@ type InfraFilter = 'All' | 'Hub' | 'Site' | 'Warehouse';
 export interface GraphSidebarProps {
   metrics: GraphMetrics;
   searchTerm: string;
-  searchMatches: GraphNode[];
+  searchField: GraphSearchField;
+  searchMatches: SearchMatch[];
   hubSummaries: Array<{
     id: string;
     label: string;
@@ -19,6 +20,7 @@ export interface GraphSidebarProps {
   }>;
   viewMode: GraphViewMode;
   onSearchTermChange: (value: string) => void;
+  onSearchFieldChange: (value: GraphSearchField) => void;
   onSelectSearchMatch: (nodeId: string) => void;
   onViewModeChange: (mode: GraphViewMode) => void;
   selectedNodeLabel?: string;
@@ -36,6 +38,15 @@ const VIEW_MODE_LABELS: Record<GraphViewMode, string> = {
   ego: 'Ego',
 };
 const INFRA_FILTERS: InfraFilter[] = ['All', 'Hub', 'Site', 'Warehouse'];
+const SEARCH_FIELDS: Array<{ value: GraphSearchField; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'coe', label: 'COE' },
+  { value: 'pol', label: 'POL' },
+  { value: 'pod', label: 'POD' },
+  { value: 'shipMode', label: 'Mode' },
+  { value: 'atd', label: 'ATD' },
+  { value: 'ata', label: 'ATA' },
+];
 
 function formatCount(value: number | undefined | null): string {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -48,10 +59,12 @@ function formatCount(value: number | undefined | null): string {
 export function GraphSidebar({
   metrics,
   searchTerm,
+  searchField,
   searchMatches,
   hubSummaries,
   viewMode,
   onSearchTermChange,
+  onSearchFieldChange,
   onSelectSearchMatch,
   onViewModeChange,
   selectedNodeLabel,
@@ -118,6 +131,20 @@ export function GraphSidebar({
           />
         </label>
 
+        <div className="search-chip-row" role="tablist" aria-label="Search fields">
+          {SEARCH_FIELDS.map((field) => (
+            <button
+              key={field.value}
+              type="button"
+              className={searchField === field.value ? 'infra-filter-chip is-active' : 'infra-filter-chip'}
+              onClick={() => onSearchFieldChange(field.value)}
+              aria-pressed={searchField === field.value}
+            >
+              {field.label}
+            </button>
+          ))}
+        </div>
+
         <p className="field-help">
           Use this to drive the first render. The full graph should stay collapsed by default.
         </p>
@@ -135,13 +162,14 @@ export function GraphSidebar({
               <div className="search-result-list">
                 {searchMatches.map((match) => (
                   <button
-                    key={match.data.id}
+                    key={match.node.data.id}
                     type="button"
                     className="search-result-item"
-                    onClick={() => onSelectSearchMatch(match.data.id)}
+                    onClick={() => onSelectSearchMatch(match.node.data.id)}
                   >
-                    <strong>{getNodeLabel(match)}</strong>
-                    <span>{match.data.type}</span>
+                    <strong>{getNodeLabel(match.node)}</strong>
+                    <span>{match.node.data.type}</span>
+                    <span>{match.reasonLabel}</span>
                   </button>
                 ))}
               </div>

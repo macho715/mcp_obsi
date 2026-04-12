@@ -1,18 +1,24 @@
-import type { GraphNode } from '../types/graph';
-import { getCollapsedCountSummary } from '../utils/graph-model';
+import { useState } from 'react';
+
+import type { GraphEdge, GraphNode } from '../types/graph';
+import { getCollapsedCountSummary, getEdgeId } from '../utils/graph-model';
 
 export interface NodeInspectorProps {
   node: GraphNode | null;
+  edge: GraphEdge | null;
   degree: number | null;
   onClose: () => void;
 }
 
-const STANDARD_FIELDS = new Set([
-  'id',
-  'label',
-  'type',
-  'rdf-schema#label',
-]);
+type InspectorTab = 'node' | 'edge' | 'evidence' | 'related';
+
+const STANDARD_FIELDS = new Set(['id', 'label', 'type', 'rdf-schema#label']);
+const TABS: Array<{ id: InspectorTab; label: string }> = [
+  { id: 'node', label: 'Node' },
+  { id: 'edge', label: 'Edge' },
+  { id: 'evidence', label: 'Evidence' },
+  { id: 'related', label: 'Related' },
+];
 
 function formatValue(value: string | number | boolean | undefined): string {
   if (typeof value === 'boolean') {
@@ -34,45 +40,58 @@ function buildObsidianOpenHref(vault: string, file: string): string {
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
 }
 
-export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
-  if (!node) {
+export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProps) {
+  const [activeTab, setActiveTab] = useState<InspectorTab>(edge ? 'edge' : 'node');
+
+  if (!node && !edge) {
     return (
       <aside className="panel inspector">
         <div className="panel-header">
           <div>
             <div className="section-label">Inspector</div>
-            <h2 className="section-title">No node selected</h2>
+            <h2 className="section-title">No selection</h2>
           </div>
           <button type="button" className="ghost-button" onClick={onClose}>
             Close
           </button>
         </div>
         <p className="empty-copy">
-          Select a node to see its label, type, identifiers, and source-link details.
+          Select a node or edge to see its metadata, evidence path, and related context.
         </p>
       </aside>
     );
   }
 
-  const analysisVault = typeof node.data.analysisVault === 'string' ? node.data.analysisVault : null;
-  const analysisPath = typeof node.data.analysisPath === 'string' ? node.data.analysisPath : null;
+  const analysisVault = typeof node?.data.analysisVault === 'string' ? node.data.analysisVault : null;
+  const analysisPath = typeof node?.data.analysisPath === 'string' ? node.data.analysisPath : null;
   const obsidianPath =
+    node &&
     (node.data.type === 'LogisticsIssue' || node.data.type === 'IncidentLesson') &&
     analysisVault &&
     analysisPath
       ? { vault: analysisVault, file: analysisPath }
       : null;
-  const collapsedCounts = getCollapsedCountSummary(node);
-  const extraFields = Object.entries(node.data)
-    .filter(([key, value]) => !STANDARD_FIELDS.has(key) && value !== undefined && value !== null)
-    .sort(([left], [right]) => left.localeCompare(right));
-  const resolvedLabel = node.data['rdf-schema#label'] ?? 'Not provided';
-  const degreeLabel = formatCount(degree);
-  const summaryRows = [
-    ['Label', node.data.label],
-    ['Resolved label', resolvedLabel],
-    ['Degree', degreeLabel],
-  ];
+  const collapsedCounts = node ? getCollapsedCountSummary(node) : null;
+  const extraFields = node
+    ? Object.entries(node.data)
+        .filter(([key, value]) => !STANDARD_FIELDS.has(key) && value !== undefined && value !== null)
+        .sort(([left], [right]) => left.localeCompare(right))
+    : [];
+  const evidenceItems: string[] = [];
+  if (analysisPath) {
+    evidenceItems.push(analysisPath);
+  }
+  if (typeof edge?.data.evidencePath === 'string' && edge.data.evidencePath.trim()) {
+    evidenceItems.push(edge.data.evidencePath);
+  }
+
+  const summaryRows = node
+    ? [
+        ['Label', node.data.label],
+        ['Resolved label', node.data['rdf-schema#label'] ?? 'Not provided'],
+        ['Degree', formatCount(degree)],
+      ]
+    : [];
 
   if (collapsedCounts) {
     summaryRows.push(
@@ -87,7 +106,9 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
       <div className="panel-header">
         <div>
           <div className="section-label">Inspector</div>
-          <h2 className="section-title">{node.data['rdf-schema#label'] ?? node.data.label}</h2>
+          <h2 className="section-title">
+            {node ? node.data['rdf-schema#label'] ?? node.data.label : edge?.data.label ?? getEdgeId(edge!)}
+          </h2>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>
           Close
@@ -95,23 +116,15 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
       </div>
 
       <p className="panel-copy">
-        {node.data.type} node · {degreeLabel} connections
-        {obsidianPath ? ` · linked note ${analysisPath}` : ''}
+        {node ? `${node.data.type} node` : 'Selected edge'}
+        {node ? ` · ${formatCount(degree)} connections` : ''}
       </p>
 
       <div className="inspector-badges">
-        <span className="pill pill--accent">{node.data.type}</span>
-        <span className="pill">{node.data.id}</span>
+        {node ? <span className="pill pill--accent">{node.data.type}</span> : null}
+        {node ? <span className="pill">{node.data.id}</span> : null}
+        {edge ? <span className="pill">{getEdgeId(edge)}</span> : null}
       </div>
-
-      <section className="field-list" aria-label="Node summary">
-        {summaryRows.map(([key, value]) => (
-          <div className="field-list__row" key={key}>
-            <span className="field-list__key">{key}</span>
-            <span className="field-list__value">{value}</span>
-          </div>
-        ))}
-      </section>
 
       {obsidianPath ? (
         <a
@@ -124,18 +137,137 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
         </a>
       ) : null}
 
-      {extraFields.length > 0 ? (
-        <section className="field-list" aria-label="Node metadata">
-          {extraFields.map(([key, value]) => (
-            <div className="field-list__row" key={key}>
-              <span className="field-list__key">{key}</span>
-              <span className="field-list__value">{formatValue(value)}</span>
-            </div>
-          ))}
-        </section>
+      <div className="segmented-control inspector-tabs" role="tablist" aria-label="Inspector tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={tab.id === activeTab ? 'segmented-control__button is-active' : 'segmented-control__button'}
+            onClick={() => setActiveTab(tab.id)}
+            aria-pressed={tab.id === activeTab}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {evidenceItems.length > 0 ? (
+        <p className="panel-copy">Evidence path · {evidenceItems[0]}</p>
       ) : (
-        <p className="empty-copy">This node has no extra metadata beyond the standard graph fields.</p>
+        <p className="empty-copy">No linked evidence is available for this selection.</p>
       )}
+
+      {activeTab === 'node' ? (
+        node ? (
+          <>
+            <section className="field-list" aria-label="Node summary">
+              {summaryRows.map(([key, value]) => (
+                <div className="field-list__row" key={key}>
+                  <span className="field-list__key">{key}</span>
+                  <span className="field-list__value">{value}</span>
+                </div>
+              ))}
+            </section>
+
+            {extraFields.length > 0 ? (
+              <section className="field-list" aria-label="Node metadata">
+                {extraFields.map(([key, value]) => (
+                  <div className="field-list__row" key={key}>
+                    <span className="field-list__key">{key}</span>
+                    <span className="field-list__value">{formatValue(value)}</span>
+                  </div>
+                ))}
+              </section>
+            ) : (
+              <p className="empty-copy">This node has no extra metadata beyond the standard graph fields.</p>
+            )}
+          </>
+        ) : (
+          <p className="empty-copy">No node is selected. Choose a node to inspect node-level details.</p>
+        )
+      ) : null}
+
+      {activeTab === 'edge' ? (
+        edge ? (
+          <section className="field-list" aria-label="Edge details">
+            <div className="field-list__row">
+              <span className="field-list__key">Source</span>
+              <span className="field-list__value">{edge.data.source}</span>
+            </div>
+            <div className="field-list__row">
+              <span className="field-list__key">Target</span>
+              <span className="field-list__value">{edge.data.target}</span>
+            </div>
+            <div className="field-list__row">
+              <span className="field-list__key">Label</span>
+              <span className="field-list__value">{edge.data.label ?? '—'}</span>
+            </div>
+            <div className="field-list__row">
+              <span className="field-list__key">Edge id</span>
+              <span className="field-list__value">{getEdgeId(edge)}</span>
+            </div>
+          </section>
+        ) : (
+          <p className="empty-copy">No edge is selected. Choose a relation to inspect edge details.</p>
+        )
+      ) : null}
+
+      {activeTab === 'evidence' ? (
+        evidenceItems.length > 0 ? (
+          <>
+            <section className="field-list" aria-label="Selection evidence">
+              {evidenceItems.map((item) => (
+                <div className="field-list__row" key={item}>
+                  <span className="field-list__key">Path</span>
+                  <span className="field-list__value">{item}</span>
+                </div>
+              ))}
+            </section>
+          </>
+        ) : (
+          <p className="empty-copy">No linked evidence is available for this selection.</p>
+        )
+      ) : null}
+
+      {activeTab === 'related' ? (
+        <section className="field-list" aria-label="Related context">
+          {node ? (
+            <>
+              <div className="field-list__row">
+                <span className="field-list__key">Selection kind</span>
+                <span className="field-list__value">Node</span>
+              </div>
+              <div className="field-list__row">
+                <span className="field-list__key">Node id</span>
+                <span className="field-list__value">{node.data.id}</span>
+              </div>
+              <div className="field-list__row">
+                <span className="field-list__key">Visible reason</span>
+                <span className="field-list__value">
+                  {analysisPath ? 'Linked analysis note available' : 'Visible in current slice'}
+                </span>
+              </div>
+            </>
+          ) : edge ? (
+            <>
+              <div className="field-list__row">
+                <span className="field-list__key">Selection kind</span>
+                <span className="field-list__value">Edge</span>
+              </div>
+              <div className="field-list__row">
+                <span className="field-list__key">Source to target</span>
+                <span className="field-list__value">{`${edge.data.source} -> ${edge.data.target}`}</span>
+              </div>
+              <div className="field-list__row">
+                <span className="field-list__key">Visible reason</span>
+                <span className="field-list__value">Visible relation in current slice</span>
+              </div>
+            </>
+          ) : null}
+        </section>
+      ) : null}
     </aside>
   );
 }
+
+export default NodeInspector;

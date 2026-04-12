@@ -28,6 +28,7 @@ export interface GraphEdgeData {
   source: string;
   target: string;
   label?: string;
+  evidencePath?: string;
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -52,6 +53,8 @@ export interface GraphMetrics {
 }
 
 export type GraphViewMode = 'summary' | 'issues' | 'search' | 'ego';
+export type GraphCompanionView = 'graph' | 'table' | 'timeline' | 'schema';
+export type GraphSearchField = 'all' | 'coe' | 'pol' | 'pod' | 'shipMode' | 'atd' | 'ata';
 
 export interface GraphSelection {
   nodeId: string | null;
@@ -68,4 +71,35 @@ export interface GraphIndex {
 export interface SearchViewOptions {
   hubThreshold?: number;
   maxNeighborsPerHub?: number;
+  searchField?: GraphSearchField;
+}
+
+export interface SearchMatch {
+  node: GraphNode;
+  matchedField: string;
+  reasonLabel: string;
+}
+
+export interface GraphTableRow {
+  id: string;
+  label: string;
+  type: GraphNodeType;
+  pol: string;
+  pod: string;
+  atd: string;
+  ata: string;
+  degree: number;
+}
+
+export interface GraphTimelineRow {
+  id: string;
+  label: string;
+  atd: string;
+  ata: string;
+  status: 'unknown' | 'departed' | 'arrived';
+}
+
+export interface GraphSchemaSummaryRow {
+  type: string;
+  count: number;
 }

@@ -4,8 +4,10 @@ import type {
   GraphMetrics,
   GraphNode,
   GraphNodeType,
+  GraphSearchField,
   GraphSlice,
   SearchViewOptions,
+  SearchMatch,
 } from '../types/graph';
 
 const INFRA_TYPES = new Set<GraphNodeType>(['Hub', 'Site', 'Warehouse']);
@@ -21,6 +23,36 @@ const SEARCHABLE_METADATA_ALIASES: Array<[string, string[]]> = [
   ['actualDeparture', ['atd', 'actual departure']],
   ['actualArrival', ['ata', 'actual arrival']],
 ];
+const SEARCH_FIELD_MAP: Record<GraphSearchField, string[]> = {
+  all: [
+    'id',
+    'label',
+    'rdf-schema#label',
+    'countryOfExport',
+    'portOfLoading',
+    'portOfDischarge',
+    'shipMode',
+    'actualDeparture',
+    'actualArrival',
+  ],
+  coe: ['countryOfExport'],
+  pol: ['portOfLoading'],
+  pod: ['portOfDischarge'],
+  shipMode: ['shipMode'],
+  atd: ['actualDeparture'],
+  ata: ['actualArrival'],
+};
+const SEARCH_REASON_LABELS: Record<string, string> = {
+  id: 'Matched in id',
+  label: 'Matched in label',
+  'rdf-schema#label': 'Matched in resolved label',
+  countryOfExport: 'Matched in COE',
+  portOfLoading: 'Matched in POL',
+  portOfDischarge: 'Matched in POD',
+  shipMode: 'Matched in Ship mode',
+  actualDeparture: 'Matched in ATD',
+  actualArrival: 'Matched in ATA',
+};
 
 function dedupeEdges(edges: GraphEdge[]): GraphEdge[] {
   const seen = new Set<string>();
@@ -208,7 +240,9 @@ export function buildSearchView(
   const index = buildGraphIndex(nodes, edges);
   const hubThreshold = options.hubThreshold ?? 200;
   const maxNeighborsPerHub = options.maxNeighborsPerHub ?? 18;
-  const matchingIds = findMatchingNodes(nodes, query, 24).map((node) => node.data.id);
+  const matchingIds = findSearchMatches(nodes, query, options.searchField ?? 'all', 24).map(
+    (match) => match.node.data.id,
+  );
 
   if (matchingIds.length === 0) {
     return { nodes: [], edges: [] };
@@ -424,23 +458,36 @@ export function findMatchingNodes(
   query: string,
   limit = 8,
 ): GraphNode[] {
+  return findSearchMatches(nodes, query, 'all', limit).map((match) => match.node);
+}
+
+export function findSearchMatches(
+  nodes: GraphNode[],
+  query: string,
+  searchField: GraphSearchField = 'all',
+  limit = 8,
+): SearchMatch[] {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) {
     return [];
   }
 
   return nodes
-    .filter((node) => matchesNodeQuery(node, normalizedQuery))
-    .sort((leftNode, rightNode) => {
-      const scoreDelta =
-        getSearchScore(rightNode, normalizedQuery) - getSearchScore(leftNode, normalizedQuery);
+    .map((node) => getBestSearchMatch(node, normalizedQuery, searchField))
+    .filter((match): match is SearchMatch & { score: number } => Boolean(match))
+    .sort((leftMatch, rightMatch) => {
+      const scoreDelta = rightMatch.score - leftMatch.score;
       if (scoreDelta !== 0) {
         return scoreDelta;
       }
 
-      return getNodeLabel(leftNode).localeCompare(getNodeLabel(rightNode));
+      return getNodeLabel(leftMatch.node).localeCompare(getNodeLabel(rightMatch.node));
     })
     .slice(0, limit);
+}
+
+export function getEdgeId(edge: GraphEdge): string {
+  return edge.data.id ?? `${edge.data.source}|${edge.data.target}|${edge.data.label ?? ''}`;
 }
 
 function limitHubExpansion(
@@ -509,40 +556,105 @@ function getPriority(node: GraphNode | undefined): number {
   return 5;
 }
 
-function matchesNodeQuery(node: GraphNode, normalizedQuery: string): boolean {
-  return getSearchableValues(node).some((value) => value.includes(normalizedQuery));
-}
+function getBestSearchMatch(
+  node: GraphNode,
+  normalizedQuery: string,
+  searchField: GraphSearchField,
+): (SearchMatch & { score: number }) | null {
+  const candidateFields = SEARCH_FIELD_MAP[searchField];
+  let bestMatch: (SearchMatch & { score: number }) | null = null;
 
-function getSearchScore(node: GraphNode, normalizedQuery: string): number {
-  const values = getSearchableValues(node);
-
-  const exactMatch = values.some((value) => value === normalizedQuery);
-  if (exactMatch) {
-    return 10_000 - getPriority(node);
-  }
-
-  const startsWithMatch = values.some((value) => value.startsWith(normalizedQuery));
-  if (startsWithMatch) {
-    return 5_000 - getPriority(node);
-  }
-
-  return 1_000 - getPriority(node);
-}
-
-function getSearchableValues(node: GraphNode): string[] {
-  const values = [node.data.id, node.data.label, node.data['rdf-schema#label']]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-
-  SEARCHABLE_METADATA_ALIASES.forEach(([field, aliases]) => {
+  candidateFields.forEach((field) => {
     const value = node.data[field];
-    if (typeof value === 'string' && value.trim()) {
-      values.push(value.toLowerCase());
-      values.push(...aliases);
+    if (typeof value !== 'string' || !value.trim()) {
+      return;
+    }
+
+    const normalizedValue = value.toLowerCase();
+    if (!normalizedValue.includes(normalizedQuery)) {
+      return;
+    }
+
+    const exactBonus = normalizedValue === normalizedQuery ? 10_000 : normalizedValue.startsWith(normalizedQuery) ? 5_000 : 1_000;
+    const nextMatch: SearchMatch & { score: number } = {
+      node,
+      matchedField: field,
+      reasonLabel: SEARCH_REASON_LABELS[field] ?? `Matched in ${field}`,
+      score: exactBonus - getPriority(node),
+    };
+
+    if (!bestMatch || nextMatch.score > bestMatch.score) {
+      bestMatch = nextMatch;
     }
   });
 
-  return values;
+  if (bestMatch) {
+    return bestMatch;
+  }
+
+  if (searchField === 'all') {
+    for (const [field, aliases] of SEARCHABLE_METADATA_ALIASES) {
+      const value = node.data[field];
+      if (typeof value !== 'string' || !value.trim()) {
+        continue;
+      }
+
+      if (aliases.some((alias) => alias.includes(normalizedQuery))) {
+        return {
+          node,
+          matchedField: field,
+          reasonLabel: SEARCH_REASON_LABELS[field] ?? `Matched in ${field}`,
+          score: 2_000 - getPriority(node),
+        };
+      }
+    }
+  }
+
+  if (searchField !== 'all') {
+    const aliasHit = getAliasReason(node, normalizedQuery, searchField);
+    if (aliasHit) {
+      return aliasHit;
+    }
+  }
+
+  return null;
+}
+
+function getAliasReason(
+  node: GraphNode,
+  normalizedQuery: string,
+  searchField: GraphSearchField,
+): (SearchMatch & { score: number }) | null {
+  const aliasSource = SEARCHABLE_METADATA_ALIASES.find(([field]) => {
+    if (searchField === 'coe') return field === 'countryOfExport';
+    if (searchField === 'pol') return field === 'portOfLoading';
+    if (searchField === 'pod') return field === 'portOfDischarge';
+    if (searchField === 'shipMode') return field === 'shipMode';
+    if (searchField === 'atd') return field === 'actualDeparture';
+    if (searchField === 'ata') return field === 'actualArrival';
+    return false;
+  });
+
+  if (!aliasSource) {
+    return null;
+  }
+
+  const [field, aliases] = aliasSource;
+  const value = node.data[field];
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  if (!aliases.some((alias) => alias.includes(normalizedQuery))) {
+    return null;
+  }
+
+  return {
+    node,
+    matchedField: field,
+    reasonLabel: SEARCH_REASON_LABELS[field] ?? `Matched in ${field}`,
+    score: 2_000 - getPriority(node),
+  };
 }
 
 function getNumericField(node: GraphNode, field: string): number {

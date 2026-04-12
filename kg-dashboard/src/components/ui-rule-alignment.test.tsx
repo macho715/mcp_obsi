@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
+import { GraphCompanionTabs } from './GraphCompanionTabs';
+import { GraphDataTable } from './GraphDataTable';
 import { GraphSidebar } from './GraphSidebar';
 import { NodeInspector } from './NodeInspector';
-import type { GraphMetrics, GraphNode } from '../types/graph';
+import type { GraphMetrics, SearchMatch } from '../types/graph';
 
 const metrics: GraphMetrics = {
   totalNodes: 100,
@@ -17,12 +19,16 @@ const metrics: GraphMetrics = {
   hubCount: 2,
 };
 
-const searchMatch: GraphNode = {
-  data: {
-    id: 'hub/mosb',
-    label: 'MOSB',
-    type: 'Hub',
+const searchMatch: SearchMatch = {
+  node: {
+    data: {
+      id: 'hub/mosb',
+      label: 'MOSB',
+      type: 'Hub',
+    },
   },
+  matchedField: 'label',
+  reasonLabel: 'Matched in label',
 };
 
 describe('kg-dashboard UI rule alignment', () => {
@@ -31,10 +37,12 @@ describe('kg-dashboard UI rule alignment', () => {
       <GraphSidebar
         metrics={metrics}
         searchTerm=""
+        searchField="all"
         searchMatches={[searchMatch]}
         hubSummaries={[]}
         viewMode="summary"
         onSearchTermChange={() => {}}
+        onSearchFieldChange={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         hubThreshold={200}
@@ -53,6 +61,7 @@ describe('kg-dashboard UI rule alignment', () => {
       <GraphSidebar
         metrics={metrics}
         searchTerm=""
+        searchField="all"
         searchMatches={[searchMatch]}
         hubSummaries={[
           {
@@ -66,6 +75,7 @@ describe('kg-dashboard UI rule alignment', () => {
         ]}
         viewMode="summary"
         onSearchTermChange={() => {}}
+        onSearchFieldChange={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         selectedNodeLabel="MOSB"
@@ -85,6 +95,7 @@ describe('kg-dashboard UI rule alignment', () => {
             type: 'Hub',
           },
         }}
+        edge={null}
         degree={10}
         onClose={() => {}}
       />,
@@ -113,5 +124,32 @@ describe('kg-dashboard UI rule alignment', () => {
 
     expect(graphShellBlock).not.toContain('radial-gradient');
     expect(graphShellBlock).not.toContain('box-shadow');
+  });
+
+  it('keeps companion tabs and table surface within the same card and radius rules', () => {
+    const tabsMarkup = renderToStaticMarkup(
+      <GraphCompanionTabs activeView="table" onChange={() => {}} />,
+    );
+    const tableMarkup = renderToStaticMarkup(
+      <GraphDataTable
+        rows={[
+          {
+            id: 'shipment/1',
+            label: 'HVDC-001',
+            type: 'Shipment',
+            pol: 'Le Havre',
+            pod: 'Mina Zayed',
+            atd: '2023-11-12',
+            ata: '2023-12-01',
+            degree: 3,
+          },
+        ]}
+        selectedNodeId={null}
+        onSelectNode={() => {}}
+      />,
+    );
+
+    expect(tabsMarkup).not.toContain('hero');
+    expect(tableMarkup).not.toContain('card card');
   });
 });

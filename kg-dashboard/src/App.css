@@ -272,6 +272,7 @@
 }
 
 .search-result-list,
+.search-chip-row,
 .infra-summary-actions,
 .infra-filter-chips,
 .inspector-badges,
@@ -319,7 +320,8 @@
 }
 
 .dashboard-stage {
-  position: relative;
+  display: grid;
+  gap: 0.75rem;
   min-width: 0;
   min-height: min(78svh, 920px);
 }
@@ -356,6 +358,88 @@
 .graph-canvas-shell > div:last-child {
   position: absolute !important;
   inset: 0;
+}
+
+.companion-tabs {
+  margin-top: 0;
+}
+
+.companion-surface {
+  min-height: min(78svh, 920px);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  overflow: auto;
+}
+
+.companion-table,
+.timeline-list,
+.schema-grid {
+  display: grid;
+}
+
+.companion-table__header,
+.companion-table__row,
+.timeline-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) repeat(4, minmax(0, 1fr)) 72px;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.companion-table__header {
+  border-top: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.companion-table__row,
+.timeline-row {
+  width: 100%;
+  border: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.companion-table__row.is-active,
+.timeline-row.is-active {
+  background: var(--accent-soft);
+}
+
+.timeline-row {
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+}
+
+.schema-grid {
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.schema-group {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.schema-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.inspector-tabs {
+  margin-bottom: 0.75rem;
 }
 
 @media (max-width: 1200px) {
@@ -405,7 +489,14 @@
   }
 
   .dashboard-stage,
-  .graph-canvas-shell {
+  .graph-canvas-shell,
+  .companion-surface {
     min-height: 68svh;
+  }
+
+  .companion-table__header,
+  .companion-table__row,
+  .timeline-row {
+    grid-template-columns: 1fr;
   }
 }

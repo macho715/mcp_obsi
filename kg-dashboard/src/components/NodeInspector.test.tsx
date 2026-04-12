@@ -2,55 +2,82 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import { NodeInspector } from './NodeInspector';
-import type { GraphNode } from '../types/graph';
+import type { GraphEdge, GraphNode } from '../types/graph';
 
-function renderInspector(node: GraphNode | null): string {
-  return renderToStaticMarkup(<NodeInspector node={node} degree={3} onClose={() => {}} />);
+function renderInspector(node: GraphNode | null, edge: GraphEdge | null): string {
+  return renderToStaticMarkup(<NodeInspector node={node} edge={edge} degree={3} onClose={() => {}} />);
 }
 
 describe('NodeInspector', () => {
-  it('opens an exported issue note using the provided external vault and an encoded path', () => {
-    const markup = renderInspector({
+  it('renders node, edge, evidence, and related tabs', () => {
+    const markup = renderInspector(
+      {
+        data: {
+          id: 'shipment/1',
+          label: 'HVDC-001',
+          type: 'Shipment',
+          analysisVault: 'ops vault',
+          analysisPath: 'wiki/analyses/shipment-1.md',
+          portOfLoading: 'Le Havre',
+        },
+      },
+      null,
+    );
+
+    expect(markup).toContain('Node');
+    expect(markup).toContain('Edge');
+    expect(markup).toContain('Evidence');
+    expect(markup).toContain('Related');
+  });
+
+  it('renders edge details when an edge is selected', () => {
+    const markup = renderInspector(null, {
       data: {
-        id: 'issue/exported-123',
-        label: 'Exported issue',
-        type: 'LogisticsIssue',
-        analysisVault: 'ops vault',
-        analysisPath: 'analysis/issues/exported issue #123.md',
+        id: 'shipment/1|hub/1|loadedAt',
+        source: 'shipment/1',
+        target: 'hub/1',
+        label: 'loadedAt',
+        evidencePath: 'wiki/analyses/edge-loaded-at.md',
       },
     });
 
-    expect(markup).toContain(
-      'href="obsidian://open?vault=ops%20vault&amp;file=analysis%2Fissues%2Fexported%20issue%20%23123.md"',
+    expect(markup).toContain('loadedAt');
+    expect(markup).toContain('shipment/1');
+    expect(markup).toContain('hub/1');
+    expect(markup).toContain('wiki/analyses/edge-loaded-at.md');
+  });
+
+  it('shows an explicit no-evidence message when no evidence metadata exists', () => {
+    const markup = renderInspector(
+      {
+        data: {
+          id: 'issue/no-link',
+          label: 'No link issue',
+          type: 'LogisticsIssue',
+        },
+      },
+      null,
     );
+
+    expect(markup).toContain('No linked evidence is available for this selection.');
   });
 
   it('opens an exported lesson note using the provided external vault and an encoded path', () => {
-    const markup = renderInspector({
-      data: {
-        id: 'lesson/exported-456',
-        label: 'Exported lesson',
-        type: 'IncidentLesson',
-        analysisVault: 'ops vault',
-        analysisPath: 'analysis/lessons/exported lesson #456.md',
+    const markup = renderInspector(
+      {
+        data: {
+          id: 'lesson/exported-456',
+          label: 'Exported lesson',
+          type: 'IncidentLesson',
+          analysisVault: 'ops vault',
+          analysisPath: 'analysis/lessons/exported lesson #456.md',
+        },
       },
-    });
+      null,
+    );
 
     expect(markup).toContain(
       'href="obsidian://open?vault=ops%20vault&amp;file=analysis%2Flessons%2Fexported%20lesson%20%23456.md"',
     );
-  });
-
-  it('keeps the inspector metadata-only when no export path exists', () => {
-    const markup = renderInspector({
-      data: {
-        id: 'issue/no-link',
-        label: 'No link issue',
-        type: 'LogisticsIssue',
-      },
-    });
-
-    expect(markup).not.toContain('obsidian://open?');
-    expect(markup).toContain('This node has no extra metadata beyond the standard graph fields.');
   });
 });

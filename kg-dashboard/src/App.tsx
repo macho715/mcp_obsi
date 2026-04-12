@@ -8,9 +8,29 @@ import {
   useState,
 } from 'react';
 import './App.css';
+import { GraphCompanionTabs } from './components/GraphCompanionTabs';
+import { GraphDataTable } from './components/GraphDataTable';
+import { GraphSchemaSummary } from './components/GraphSchemaSummary';
 import { GraphSidebar } from './components/GraphSidebar';
+import { GraphTimeline } from './components/GraphTimeline';
 import { NodeInspector } from './components/NodeInspector';
-import type { GraphEdge, GraphNode, GraphViewMode } from './types/graph';
+import type {
+  GraphCompanionView,
+  GraphEdge,
+  GraphNode,
+  GraphSearchField,
+  GraphViewMode,
+} from './types/graph';
+import {
+  DEFAULT_DASHBOARD_URL_STATE,
+  buildDashboardUrlSearch,
+  parseDashboardUrlState,
+} from './utils/dashboard-state';
+import {
+  buildSchemaSummaryRows,
+  buildTableRows,
+  buildTimelineRows,
+} from './utils/graph-companion-data';
 import {
   buildEgoView,
   buildGraphIndex,
@@ -18,8 +38,9 @@ import {
   buildSearchView,
   buildSummaryView,
   deriveMetrics,
-  findMatchingNodes,
+  findSearchMatches,
   getCollapsedCountSummary,
+  getEdgeId,
   getNodeLabel,
 } from './utils/graph-model';
 
@@ -46,13 +67,23 @@ const VIEW_COPY: Record<GraphViewMode, { title: string; description: string }> =
 };
 
 function App() {
+  const initialUrlState =
+    typeof window === 'undefined'
+      ? DEFAULT_DASHBOARD_URL_STATE
+      : parseDashboardUrlState(window.location.search);
+
   const [allNodes, setAllNodes] = useState<GraphNode[]>([]);
   const [allEdges, setAllEdges] = useState<GraphEdge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<GraphViewMode>('summary');
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<GraphViewMode>(initialUrlState.viewMode);
+  const [companionView, setCompanionView] = useState<GraphCompanionView>(
+    initialUrlState.companionView,
+  );
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialUrlState.selectedNodeId);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(initialUrlState.selectedEdgeId);
+  const [searchTerm, setSearchTerm] = useState(initialUrlState.query);
+  const [searchField, setSearchField] = useState<GraphSearchField>(initialUrlState.searchField);
 
   const deferredSearch = useDeferredValue(searchTerm);
 
@@ -108,8 +139,8 @@ function App() {
 
   const index = useMemo(() => buildGraphIndex(allNodes, allEdges), [allNodes, allEdges]);
   const searchMatches = useMemo(
-    () => findMatchingNodes(allNodes, deferredSearch, 6),
-    [allNodes, deferredSearch],
+    () => findSearchMatches(allNodes, deferredSearch, searchField, 6),
+    [allNodes, deferredSearch, searchField],
   );
 
   const visibleGraph = useMemo(() => {
@@ -124,6 +155,7 @@ function App() {
     if (deferredSearch.trim()) {
       return buildSearchView(allNodes, allEdges, deferredSearch, {
         hubThreshold: HUB_THRESHOLD,
+        searchField,
       });
     }
 
@@ -138,12 +170,15 @@ function App() {
       default:
         return buildSummaryView(allNodes, allEdges);
     }
-  }, [allEdges, allNodes, deferredSearch, selectedNodeId, viewMode]);
+  }, [allEdges, allNodes, deferredSearch, searchField, selectedNodeId, viewMode]);
 
   const selectedNode = selectedNodeId ? index.nodeById.get(selectedNodeId) ?? null : null;
   const selectedNodeLabel = selectedNode ? getNodeLabel(selectedNode) : undefined;
   const selectedNodeType = selectedNode?.data.type;
   const selectedNodeDegree = selectedNodeId ? (index.degreeById.get(selectedNodeId) ?? 0) : null;
+  const selectedEdge = selectedEdgeId
+    ? visibleGraph.edges.find((edge) => getEdgeId(edge) === selectedEdgeId) ?? null
+    : null;
   const effectiveViewMode: GraphViewMode =
     selectedNodeId && viewMode === 'ego' ? 'ego' : deferredSearch.trim() ? 'search' : viewMode;
   const metrics = useMemo(
@@ -153,11 +188,7 @@ function App() {
   const hubSummaries = useMemo(
     () =>
       visibleGraph.nodes
-        .filter((node) =>
-          node.data.type === 'Hub' ||
-          node.data.type === 'Site' ||
-          node.data.type === 'Warehouse',
-        )
+        .filter((node) => node.data.type === 'Hub' || node.data.type === 'Site' || node.data.type === 'Warehouse')
         .map((node) => {
           const counts = getCollapsedCountSummary(node);
           return {
@@ -175,8 +206,7 @@ function App() {
             return shipmentDelta;
           }
 
-          const typeRank =
-            getInfraPriority(left.type) - getInfraPriority(right.type);
+          const typeRank = getInfraPriority(left.type) - getInfraPriority(right.type);
           if (typeRank !== 0) {
             return typeRank;
           }
@@ -185,11 +215,50 @@ function App() {
         }),
     [visibleGraph.nodes],
   );
+  const tableRows = useMemo(
+    () => buildTableRows(visibleGraph.nodes, index.degreeById),
+    [index.degreeById, visibleGraph.nodes],
+  );
+  const timelineRows = useMemo(() => buildTimelineRows(visibleGraph.nodes), [visibleGraph.nodes]);
+  const schemaSummary = useMemo(
+    () => buildSchemaSummaryRows(visibleGraph.nodes, visibleGraph.edges),
+    [visibleGraph.edges, visibleGraph.nodes],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const search = buildDashboardUrlSearch({
+      query: searchTerm,
+      searchField,
+      viewMode: effectiveViewMode,
+      companionView,
+      selectedNodeId,
+      selectedEdgeId,
+    });
+
+    window.history.replaceState({}, '', `${window.location.pathname}${search}`);
+  }, [companionView, effectiveViewMode, searchField, searchTerm, selectedEdgeId, selectedNodeId]);
+
+  useEffect(() => {
+    if (selectedNodeId && !index.nodeById.has(selectedNodeId)) {
+      setSelectedNodeId(null);
+    }
+  }, [index.nodeById, selectedNodeId]);
+
+  useEffect(() => {
+    if (selectedEdgeId && !visibleGraph.edges.some((edge) => getEdgeId(edge) === selectedEdgeId)) {
+      setSelectedEdgeId(null);
+    }
+  }, [selectedEdgeId, visibleGraph.edges]);
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
 
     startTransition(() => {
+      setSelectedEdgeId(null);
       if (value.trim()) {
         setSelectedNodeId(null);
         setViewMode('search');
@@ -200,8 +269,19 @@ function App() {
     });
   };
 
+  const handleSearchFieldChange = (value: GraphSearchField) => {
+    setSearchField(value);
+    setSelectedEdgeId(null);
+
+    if (searchTerm.trim()) {
+      setViewMode('search');
+      setSelectedNodeId(null);
+    }
+  };
+
   const handleViewModeChange = (mode: GraphViewMode) => {
     setViewMode(mode);
+    setSelectedEdgeId(null);
 
     if (mode !== 'ego' && !deferredSearch.trim()) {
       setSelectedNodeId(null);
@@ -209,6 +289,7 @@ function App() {
   };
 
   const handleNodeSelect = (nodeId: string | null) => {
+    setSelectedEdgeId(null);
     setSelectedNodeId(nodeId);
 
     if (nodeId) {
@@ -219,12 +300,19 @@ function App() {
     setViewMode(deferredSearch.trim() ? 'search' : 'summary');
   };
 
+  const handleEdgeSelect = (edgeId: string | null) => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId(edgeId);
+  };
+
   const handleClearSelection = () => {
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
     setViewMode(deferredSearch.trim() ? 'search' : 'summary');
   };
 
   const handleSearchMatchSelect = (nodeId: string) => {
+    setSelectedEdgeId(null);
     setSelectedNodeId(nodeId);
     setViewMode('ego');
   };
@@ -235,15 +323,17 @@ function App() {
         metrics={metrics}
         viewMode={effectiveViewMode}
         searchTerm={searchTerm}
+        searchField={searchField}
         searchMatches={searchMatches}
         hubSummaries={hubSummaries}
         onSearchTermChange={handleSearchTermChange}
+        onSearchFieldChange={handleSearchFieldChange}
         onSelectSearchMatch={handleSearchMatchSelect}
         onViewModeChange={handleViewModeChange}
         selectedNodeLabel={selectedNodeLabel}
         selectedNodeType={selectedNodeType}
         hubThreshold={HUB_THRESHOLD}
-        canClearSelection={Boolean(selectedNode)}
+        canClearSelection={Boolean(selectedNode || selectedEdge)}
         onClearSelection={handleClearSelection}
         clearSelectionLabel={deferredSearch.trim() ? 'Back to search' : 'Clear'}
       />
@@ -278,27 +368,33 @@ function App() {
           </dl>
         </header>
 
-        <section className="dashboard-stage">
-          {loading ? (
+        {loading ? (
+          <section className="dashboard-stage">
             <div className="dashboard-status-card">
               <p className="dashboard-status-label">Loading</p>
               <h2>그래프 자산을 읽는 중입니다.</h2>
               <p>정적 JSON을 불러와 summary-first 뷰를 준비하고 있습니다.</p>
             </div>
-          ) : error ? (
+          </section>
+        ) : error ? (
+          <section className="dashboard-stage">
             <div className="dashboard-status-card dashboard-status-card-error">
               <p className="dashboard-status-label">Error</p>
               <h2>그래프를 불러오지 못했습니다.</h2>
               <p>{error}</p>
             </div>
-          ) : visibleGraph.nodes.length === 0 ? (
-            <div className="dashboard-status-card">
-              <p className="dashboard-status-label">No match</p>
-              <h2>검색 결과가 없습니다.</h2>
-              <p>다른 키워드를 입력하거나 요약 뷰로 돌아가 전체 구조를 좁혀 보세요.</p>
-            </div>
-          ) : (
-            <>
+          </section>
+        ) : (
+          <section className="dashboard-stage">
+            <GraphCompanionTabs activeView={companionView} onChange={setCompanionView} />
+
+            {visibleGraph.nodes.length === 0 ? (
+              <div className="dashboard-status-card">
+                <p className="dashboard-status-label">No match</p>
+                <h2>검색 결과가 없습니다.</h2>
+                <p>다른 키워드를 입력하거나 요약 뷰로 돌아가 전체 구조를 좁혀 보세요.</p>
+              </div>
+            ) : companionView === 'graph' ? (
               <Suspense
                 fallback={
                   <div className="dashboard-status-card">
@@ -312,21 +408,43 @@ function App() {
                   nodes={visibleGraph.nodes}
                   edges={visibleGraph.edges}
                   selectedNodeId={selectedNodeId}
+                  selectedEdgeId={selectedEdgeId}
                   viewMode={effectiveViewMode}
                   hubThreshold={HUB_THRESHOLD}
                   degreeById={index.degreeById}
                   onSelectNode={handleNodeSelect}
+                  onSelectEdge={handleEdgeSelect}
                 />
               </Suspense>
-              <NodeInspector
-                node={selectedNode}
-                degree={selectedNodeDegree}
-                onClose={handleClearSelection}
+            ) : companionView === 'table' ? (
+              <GraphDataTable
+                rows={tableRows}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={handleSearchMatchSelect}
               />
-            </>
-          )}
-        </section>
+            ) : companionView === 'timeline' ? (
+              <GraphTimeline
+                rows={timelineRows}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={handleSearchMatchSelect}
+              />
+            ) : (
+              <GraphSchemaSummary
+                nodeTypes={schemaSummary.nodeTypes}
+                edgeTypes={schemaSummary.edgeTypes}
+              />
+            )}
+          </section>
+        )}
       </main>
+
+      <NodeInspector
+        key={`${selectedNodeId ?? 'none'}:${selectedEdgeId ?? 'none'}`}
+        node={selectedNode}
+        edge={selectedEdge}
+        degree={selectedNodeDegree}
+        onClose={handleClearSelection}
+      />
     </div>
   );
 }

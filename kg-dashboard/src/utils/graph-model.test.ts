@@ -6,6 +6,7 @@ import {
   buildSearchView,
   buildSummaryView,
   computeDegrees,
+  findSearchMatches,
   findMatchingNodes,
   getCollapsedCountSummary,
 } from './graph-model';
@@ -380,5 +381,25 @@ describe('graph-model helpers', () => {
     expect(findMatchingNodes(nodes, 'ATA', 5).map((item) => item.data.id)).toEqual([
       'shipment/1',
     ]);
+  });
+
+  it('returns search matches with explicit matched field labels', () => {
+    const nodes: GraphNode[] = [
+      node('shipment/1', 'HVDC-001', 'Shipment', {
+        portOfLoading: 'Le Havre',
+        portOfDischarge: 'Mina Zayed',
+        countryOfExport: 'FRANCE',
+        actualDeparture: '2023-11-12',
+      }),
+    ];
+
+    const matches = findSearchMatches(nodes, 'Le Havre', 'pol', 5);
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      node: { data: { id: 'shipment/1' } },
+      matchedField: 'portOfLoading',
+      reasonLabel: 'Matched in POL',
+    });
   });
 });

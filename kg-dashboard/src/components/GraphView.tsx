@@ -2,26 +2,30 @@ import { useEffect, useMemo, useRef } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import type cytoscape from 'cytoscape';
 import type { GraphEdge, GraphNode, GraphViewMode } from '../types/graph';
-import { getCollapsedCountLabel, getNodeLabel } from '../utils/graph-model';
+import { getCollapsedCountLabel, getEdgeId, getNodeLabel } from '../utils/graph-model';
 
 interface GraphViewProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   viewMode: GraphViewMode;
   hubThreshold: number;
   degreeById: Map<string, number>;
   onSelectNode: (nodeId: string | null) => void;
+  onSelectEdge: (edgeId: string | null) => void;
 }
 
 export function GraphView({
   nodes,
   edges,
   selectedNodeId,
+  selectedEdgeId,
   viewMode,
   hubThreshold,
   degreeById,
   onSelectNode,
+  onSelectEdge,
 }: GraphViewProps) {
   const cyRef = useRef<cytoscape.Core | null>(null);
   const selectedNode = useMemo(
@@ -58,15 +62,25 @@ export function GraphView({
 
     const normalizedEdges = edges.map((edge) => ({
       ...edge,
+      selected: getEdgeId(edge) === selectedEdgeId,
       classes:
-        nodeTypeById.get(edge.data.source) === 'LogisticsIssue' ||
-        nodeTypeById.get(edge.data.target) === 'LogisticsIssue'
-          ? 'issue-edge'
-          : '',
+        [
+          nodeTypeById.get(edge.data.source) === 'LogisticsIssue' ||
+          nodeTypeById.get(edge.data.target) === 'LogisticsIssue'
+            ? 'issue-edge'
+            : '',
+          getEdgeId(edge) === selectedEdgeId ? 'selected-edge' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      data: {
+        ...edge.data,
+        id: getEdgeId(edge),
+      },
     }));
 
     return [...normalizedNodes, ...normalizedEdges];
-  }, [degreeById, edges, hubThreshold, nodeTypeById, nodes, selectedNodeId, viewMode]);
+  }, [degreeById, edges, hubThreshold, nodeTypeById, nodes, selectedEdgeId, selectedNodeId, viewMode]);
 
   const stylesheet = useMemo<cytoscape.StylesheetStyle[]>(
     () => [
@@ -191,6 +205,15 @@ export function GraphView({
           opacity: 0.9,
         },
       },
+      {
+        selector: 'edge.selected-edge',
+        style: {
+          width: 3,
+          'line-color': '#0f766e',
+          'target-arrow-color': '#0f766e',
+          opacity: 1,
+        },
+      },
     ],
     [nodes.length],
   );
@@ -237,20 +260,27 @@ export function GraphView({
     const handleNodeTap = (event: cytoscape.EventObject) => {
       onSelectNode(event.target.id());
     };
+    const handleEdgeTap = (event: cytoscape.EventObject) => {
+      const tappedEdgeId = event.target.data('id') as string | undefined;
+      onSelectEdge(tappedEdgeId ?? null);
+    };
     const handleCanvasTap = (event: cytoscape.EventObject) => {
       if (event.target === cy) {
+        onSelectEdge(null);
         onSelectNode(null);
       }
     };
 
     cy.on('tap', 'node', handleNodeTap);
+    cy.on('tap', 'edge', handleEdgeTap);
     cy.on('tap', handleCanvasTap);
 
     return () => {
       cy.off('tap', 'node', handleNodeTap);
+      cy.off('tap', 'edge', handleEdgeTap);
       cy.off('tap', handleCanvasTap);
     };
-  }, [onSelectNode]);
+  }, [onSelectEdge, onSelectNode]);
 
   useEffect(() => {
     const cy = cyRef.current;
