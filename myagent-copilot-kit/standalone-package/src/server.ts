@@ -156,7 +156,7 @@ export function resolveServerOptionsFromEnv(
   const localRagToken =
     env.MYAGENT_LOCAL_RAG_TOKEN?.trim() || env.LOCAL_RAG_SHARED_SECRET?.trim() || "";
   const memoryBaseUrl = env.MYAGENT_MEMORY_BASE_URL?.trim() || "http://127.0.0.1:8000";
-  const memoryMcpPath = env.MYAGENT_MEMORY_MCP_PATH?.trim() || "/chatgpt-mcp";
+  const memoryMcpPath = env.MYAGENT_MEMORY_MCP_PATH?.trim() || "/chatgpt-mcp-write";
   const memoryBearerToken =
     env.MYAGENT_MEMORY_TOKEN?.trim() || env.MYAGENT_MEMORY_BEARER_TOKEN?.trim() || env.MCP_API_TOKEN?.trim() || "";
   const memoryTimeoutMs = Number.parseInt(env.MYAGENT_MEMORY_TIMEOUT_MS ?? "5000", 10);
@@ -319,12 +319,10 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
     }
     const predict = await predictService.getHealth();
     const copilotChatOk = Boolean(copilot.configured as boolean | undefined);
-    const localRagOk = localRag.status === "ok" && localRag.chatRouteReady === true;
-    const localOnlyChatOk = localRagOk && memoryOk;
-    const partialChatOk = copilotChatOk || localRagOk;
-    const chatOk = copilotChatOk && localRagOk;
+    const localOnlyChatOk = localRag.status === "ok" && localRag.chatRouteReady === true;
+    const partialChatOk = copilotChatOk || localOnlyChatOk;
+    const chatOk = copilotChatOk && localOnlyChatOk;
     const predictOk = !predict.enabled || predict.configured;
-    const localIntelligenceOk = memoryOk && localRagOk;
     const basePayload = {
       ok: chatOk && predictOk,
       chatOk,
@@ -332,7 +330,6 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
       copilotChatOk,
       localOnlyChatOk,
       memoryOk,
-      localIntelligenceOk,
       predictOk,
       service: "myagent-copilot-standalone",
     };
@@ -350,11 +347,8 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
       authTokenRequired: requireAuthToken,
       origins: Array.from(allowedOrigins),
       copilot,
-      localIntelligence: {
-        ok: localIntelligenceOk,
-        memory: memory,
-        localRag: localRag,
-      },
+      localRag,
+      memory,
       predict,
     });
   });
@@ -530,7 +524,6 @@ export function createStandaloneServer(opts?: StandaloneServerOptions) {
           model,
         }),
       logger,
-      memoryClientOptions,
     }),
   );
 
