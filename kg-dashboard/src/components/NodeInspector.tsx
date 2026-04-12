@@ -1,12 +1,14 @@
 import { useState } from 'react';
 
-import type { GraphEdge, GraphNode } from '../types/graph';
+import type { GraphEdge, GraphNode, ProvenanceChain, VisibilityReason } from '../types/graph';
 import { getCollapsedCountSummary, getEdgeId } from '../utils/graph-model';
 
 export interface NodeInspectorProps {
   node: GraphNode | null;
   edge: GraphEdge | null;
   degree: number | null;
+  provenance?: ProvenanceChain;
+  visibilityReasons?: VisibilityReason[];
   onClose: () => void;
 }
 
@@ -45,8 +47,37 @@ function buildObsidianOpenHref(vault: string, file: string): string {
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
 }
 
-export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProps) {
+function buildNodeObsidianLink(target: GraphNode | null): { href: string; label: string } | null {
+  if (!target) {
+    return null;
+  }
+
+  const vault = typeof target.data.analysisVault === 'string' ? target.data.analysisVault : null;
+  const file = typeof target.data.analysisPath === 'string' ? target.data.analysisPath : null;
+  if (!vault || !file) {
+    return null;
+  }
+
+  return {
+    href: buildObsidianOpenHref(vault, file),
+    label: getNodeLabel(target),
+  };
+}
+
+function getNodeLabel(node: GraphNode): string {
+  return node.data['rdf-schema#label'] ?? node.data.label ?? node.data.id;
+}
+
+export function NodeInspector({
+  node,
+  edge,
+  degree,
+  provenance,
+  visibilityReasons = [],
+  onClose,
+}: NodeInspectorProps) {
   const [activeTab, setActiveTab] = useState<InspectorTab>(edge ? 'edge' : 'node');
+  const [showWhyVisible, setShowWhyVisible] = useState(false);
 
   if (!node && !edge) {
     return (
@@ -95,6 +126,11 @@ export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProp
   if (typeof edge?.data.evidencePath === 'string' && edge.data.evidencePath.trim()) {
     evidenceItems.push(edge.data.evidencePath);
   }
+  const provenanceLinks = [
+    { key: 'source', label: 'Source', node: provenance?.source ?? null },
+    { key: 'claim', label: 'Claim', node: provenance?.claim ?? null },
+    { key: 'issueOrLesson', label: 'Issue / Lesson', node: provenance?.issueOrLesson ?? null },
+  ].filter((item) => item.node);
 
   const summaryRows = node
     ? [
@@ -136,6 +172,23 @@ export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProp
         {node ? <span className="pill">{node.data.id}</span> : null}
         {edge ? <span className="pill">{getEdgeId(edge)}</span> : null}
       </div>
+      <button type="button" className="ghost-button" onClick={() => setShowWhyVisible((prev) => !prev)}>
+        Why visible?
+      </button>
+      {showWhyVisible ? (
+        visibilityReasons.length > 0 ? (
+          <section className="field-list" aria-label="Visibility reasons">
+            {visibilityReasons.map((reason) => (
+              <div className="field-list__row" key={`${reason.code}-${reason.label}`}>
+                <span className="field-list__key">{reason.label}</span>
+                <span className="field-list__value">{reason.detail}</span>
+              </div>
+            ))}
+          </section>
+        ) : (
+          <p className="empty-copy">No specific visibility reason was captured for this selection.</p>
+        )
+      ) : null}
 
       {obsidianPath ? (
         <a
@@ -167,6 +220,27 @@ export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProp
       ) : (
         <p className="empty-copy">No linked evidence is available for this selection.</p>
       )}
+      {provenanceLinks.length > 0 ? (
+        <section className="field-list" aria-label="Provenance chain preview">
+          {provenanceLinks.map((item) => {
+            const obsidianLink = buildNodeObsidianLink(item.node ?? null);
+            return (
+              <div className="field-list__row" key={`preview-${item.key}`}>
+                <span className="field-list__key">{item.label}</span>
+                <span className="field-list__value">
+                  {obsidianLink ? (
+                    <a href={obsidianLink.href} target="_blank" rel="noreferrer">
+                      {obsidianLink.label}
+                    </a>
+                  ) : (
+                    getNodeLabel(item.node!)
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
 
       {activeTab === 'node' ? (
         node ? (
@@ -234,6 +308,27 @@ export function NodeInspector({ node, edge, degree, onClose }: NodeInspectorProp
                 </div>
               ))}
             </section>
+            {provenanceLinks.length > 0 ? (
+              <section className="field-list" aria-label="Provenance chain">
+                {provenanceLinks.map((item) => {
+                  const obsidianLink = buildNodeObsidianLink(item.node ?? null);
+                  return (
+                    <div className="field-list__row" key={item.key}>
+                      <span className="field-list__key">{item.label}</span>
+                      <span className="field-list__value">
+                        {obsidianLink ? (
+                          <a href={obsidianLink.href} target="_blank" rel="noreferrer">
+                            {obsidianLink.label}
+                          </a>
+                        ) : (
+                          getNodeLabel(item.node!)
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </section>
+            ) : null}
           </>
         ) : (
           <p className="empty-copy">No linked evidence is available for this selection.</p>

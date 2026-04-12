@@ -2,10 +2,22 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import { NodeInspector } from './NodeInspector';
-import type { GraphEdge, GraphNode } from '../types/graph';
+import type { GraphEdge, GraphNode, VisibilityReason } from '../types/graph';
 
-function renderInspector(node: GraphNode | null, edge: GraphEdge | null): string {
-  return renderToStaticMarkup(<NodeInspector node={node} edge={edge} degree={3} onClose={() => {}} />);
+function renderInspector(
+  node: GraphNode | null,
+  edge: GraphEdge | null,
+  visibilityReasons: VisibilityReason[] = [],
+): string {
+  return renderToStaticMarkup(
+    <NodeInspector
+      node={node}
+      edge={edge}
+      degree={3}
+      visibilityReasons={visibilityReasons}
+      onClose={() => {}}
+    />,
+  );
 }
 
 describe('NodeInspector', () => {
@@ -101,5 +113,58 @@ describe('NodeInspector', () => {
     expect(markup).not.toContain('vesselName');
     expect(markup).not.toContain('flightNo');
     expect(markup).toContain('portOfLoading');
+  });
+
+  it('renders provenance chain links for evidence drill-down', () => {
+    const markup = renderToStaticMarkup(
+      <NodeInspector
+        node={{
+          data: {
+            id: 'issue/1',
+            label: 'Issue 1',
+            type: 'LogisticsIssue',
+            analysisVault: 'ops vault',
+            analysisPath: 'wiki/analyses/issue-1.md',
+          },
+        }}
+        edge={null}
+        degree={2}
+        provenance={{
+          source: {
+            data: {
+              id: 'shipment/1',
+              label: 'Shipment 1',
+              type: 'Shipment',
+              analysisVault: 'ops vault',
+              analysisPath: 'wiki/analyses/shipment-1.md',
+            },
+          },
+          claim: {
+            data: {
+              id: 'claim/1',
+              label: 'Claim 1',
+              type: 'Unknown',
+              analysisVault: 'ops vault',
+              analysisPath: 'wiki/analyses/claim-1.md',
+            },
+          },
+          issueOrLesson: {
+            data: {
+              id: 'issue/1',
+              label: 'Issue 1',
+              type: 'LogisticsIssue',
+              analysisVault: 'ops vault',
+              analysisPath: 'wiki/analyses/issue-1.md',
+            },
+          },
+        }}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(markup).toContain('Source');
+    expect(markup).toContain('Claim');
+    expect(markup).toContain('Issue / Lesson');
+    expect(markup).toContain('obsidian://open?vault=ops%20vault');
   });
 });

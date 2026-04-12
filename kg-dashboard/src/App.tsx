@@ -22,6 +22,8 @@ import type {
   OntologyQueryPresetId,
   SavedGraphQuery,
   GraphViewMode,
+  ProvenanceChain,
+  VisibilityReason,
 } from './types/graph';
 import {
   DEFAULT_DASHBOARD_URL_STATE,
@@ -41,6 +43,7 @@ import {
   buildSearchView,
   buildSummaryView,
   deriveMetrics,
+  deriveProvenanceChain,
   findSearchMatches,
   getCollapsedCountSummary,
   getEdgeId,
@@ -312,6 +315,74 @@ function App() {
     : null;
   const effectiveViewMode: GraphViewMode =
     selectedNodeId && viewMode === 'ego' ? 'ego' : deferredSearch.trim() ? 'search' : viewMode;
+  const selectedProvenance: ProvenanceChain = useMemo(
+    () => deriveProvenanceChain(selectedNode, selectedEdge, index),
+    [index, selectedEdge, selectedNode],
+  );
+  const selectedVisibilityReasons: VisibilityReason[] = useMemo(() => {
+    const reasons: VisibilityReason[] = [];
+    if (selectedNodeId && searchTerm.trim()) {
+      const matched = searchMatches.some((item) => item.node.data.id === selectedNodeId);
+      reasons.push({
+        code: matched ? 'filter-match' : 'view-slice',
+        label: matched ? 'Filter match' : 'Search slice context',
+        detail: matched
+          ? `Search term "${searchTerm.trim()}" matched this node${searchField === 'all' ? '' : ` in ${searchField.toUpperCase()}`}.`
+          : 'This node is visible as search-neighbor context around matched results.',
+      });
+    } else {
+      reasons.push({
+        code: 'view-slice',
+        label: 'Current view slice',
+        detail: `Visible in ${effectiveViewMode} view.`,
+      });
+    }
+
+    if (selectedNodeId && pinnedNodeIds.includes(selectedNodeId)) {
+      reasons.push({
+        code: 'manual-pin',
+        label: 'Pinned manually',
+        detail: 'You pinned this node in the sidebar.',
+      });
+    }
+
+    if (selectedNodeId && expandedNodeIds.includes(selectedNodeId)) {
+      reasons.push({
+        code: 'manual-expand',
+        label: '1-hop expansion',
+        detail: 'This node is expanded with one-hop neighbors.',
+      });
+    }
+
+    if (selectedNodeId && hiddenNodeIds.includes(selectedNodeId)) {
+      reasons.push({
+        code: 'manual-hidden-excluded',
+        label: 'Hidden manually',
+        detail: 'This node is hidden and should disappear after state refresh.',
+      });
+    }
+
+    if (selectedEdgeId && selectedEdge) {
+      reasons.push({
+        code: 'view-slice',
+        label: 'Visible relation',
+        detail: `Edge ${getEdgeId(selectedEdge)} is inside the current rendered slice.`,
+      });
+    }
+
+    return reasons;
+  }, [
+    effectiveViewMode,
+    expandedNodeIds,
+    hiddenNodeIds,
+    pinnedNodeIds,
+    searchField,
+    searchMatches,
+    searchTerm,
+    selectedEdge,
+    selectedEdgeId,
+    selectedNodeId,
+  ]);
   const metrics = useMemo(
     () => deriveMetrics(allNodes, allEdges, visibleGraph.nodes, visibleGraph.edges),
     [allEdges, allNodes, visibleGraph.edges, visibleGraph.nodes],
@@ -724,6 +795,8 @@ function App() {
         node={selectedNode}
         edge={selectedEdge}
         degree={selectedNodeDegree}
+        provenance={selectedProvenance}
+        visibilityReasons={selectedVisibilityReasons}
         onClose={handleClearSelection}
       />
     </div>
