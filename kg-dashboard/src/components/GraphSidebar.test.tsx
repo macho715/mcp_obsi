@@ -60,6 +60,16 @@ describe('GraphSidebar search controls', () => {
         onRemovePinnedNode={() => {}}
         onRemoveHiddenNode={() => {}}
         onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
       />,
     );
 
@@ -99,6 +109,16 @@ describe('GraphSidebar search controls', () => {
         onRemovePinnedNode={() => {}}
         onRemoveHiddenNode={() => {}}
         onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
       />,
     );
 

@@ -4,9 +4,21 @@ import type cytoscape from 'cytoscape';
 import type { GraphEdge, GraphNode, GraphViewMode } from '../types/graph';
 import { getCollapsedCountLabel, getEdgeId, getNodeLabel } from '../utils/graph-model';
 
+function getEdgeCompareKey(edge: GraphEdge): string {
+  return `${edge.data.source}|${edge.data.target}`;
+}
+
 interface GraphViewProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  compareDiff?: {
+    addedNodeIds: Set<string>;
+    removedNodeIds: Set<string>;
+    changedNodeIds: Set<string>;
+    addedEdgeIds: Set<string>;
+    removedEdgeIds: Set<string>;
+    changedEdgeIds: Set<string>;
+  } | null;
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   viewMode: GraphViewMode;
@@ -26,6 +38,7 @@ export function GraphView({
   degreeById,
   onSelectNode,
   onSelectEdge,
+  compareDiff = null,
 }: GraphViewProps) {
   const cyRef = useRef<cytoscape.Core | null>(null);
   const selectedNode = useMemo(
@@ -48,6 +61,9 @@ export function GraphView({
         `node-${String(node.data.type).toLowerCase()}`,
         (degreeById.get(node.data.id) ?? 0) >= hubThreshold ? 'hub-node' : '',
         viewMode === 'summary' && getCollapsedCountLabel(node) ? 'collapsed-summary-node' : '',
+        compareDiff?.addedNodeIds.has(node.data.id) ? 'compare-node-added' : '',
+        compareDiff?.removedNodeIds.has(node.data.id) ? 'compare-node-removed' : '',
+        compareDiff?.changedNodeIds.has(node.data.id) ? 'compare-node-changed' : '',
       ]
         .filter(Boolean)
         .join(' '),
@@ -70,6 +86,9 @@ export function GraphView({
             ? 'issue-edge'
             : '',
           getEdgeId(edge) === selectedEdgeId ? 'selected-edge' : '',
+          compareDiff?.addedEdgeIds.has(getEdgeCompareKey(edge)) ? 'compare-edge-added' : '',
+          compareDiff?.removedEdgeIds.has(getEdgeCompareKey(edge)) ? 'compare-edge-removed' : '',
+          compareDiff?.changedEdgeIds.has(getEdgeCompareKey(edge)) ? 'compare-edge-changed' : '',
         ]
           .filter(Boolean)
           .join(' '),
@@ -80,7 +99,17 @@ export function GraphView({
     }));
 
     return [...normalizedNodes, ...normalizedEdges];
-  }, [degreeById, edges, hubThreshold, nodeTypeById, nodes, selectedEdgeId, selectedNodeId, viewMode]);
+  }, [
+    compareDiff,
+    degreeById,
+    edges,
+    hubThreshold,
+    nodeTypeById,
+    nodes,
+    selectedEdgeId,
+    selectedNodeId,
+    viewMode,
+  ]);
 
   const stylesheet = useMemo<cytoscape.StylesheetStyle[]>(
     () => [
@@ -211,6 +240,58 @@ export function GraphView({
           width: 3,
           'line-color': '#0f766e',
           'target-arrow-color': '#0f766e',
+          opacity: 1,
+        },
+      },
+
+      {
+        selector: 'node.compare-node-added',
+        style: {
+          'border-width': 4,
+          'border-color': '#15803d',
+        },
+      },
+      {
+        selector: 'node.compare-node-removed',
+        style: {
+          'border-width': 4,
+          'border-color': '#b91c1c',
+          'border-style': 'dashed',
+          opacity: 0.75,
+        },
+      },
+      {
+        selector: 'node.compare-node-changed',
+        style: {
+          'border-width': 4,
+          'border-color': '#d97706',
+        },
+      },
+      {
+        selector: 'edge.compare-edge-added',
+        style: {
+          width: 3,
+          'line-color': '#15803d',
+          'target-arrow-color': '#15803d',
+          opacity: 1,
+        },
+      },
+      {
+        selector: 'edge.compare-edge-removed',
+        style: {
+          width: 3,
+          'line-color': '#b91c1c',
+          'target-arrow-color': '#b91c1c',
+          'line-style': 'dashed',
+          opacity: 0.85,
+        },
+      },
+      {
+        selector: 'edge.compare-edge-changed',
+        style: {
+          width: 3,
+          'line-color': '#d97706',
+          'target-arrow-color': '#d97706',
           opacity: 1,
         },
       },

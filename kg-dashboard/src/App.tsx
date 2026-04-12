@@ -14,23 +14,15 @@ import { GraphSchemaSummary } from './components/GraphSchemaSummary';
 import { GraphSidebar } from './components/GraphSidebar';
 import { GraphTimeline } from './components/GraphTimeline';
 import { NodeInspector } from './components/NodeInspector';
-import type {
-  GraphCompanionView,
-  GraphEdge,
-  GraphNode,
-  GraphSearchField,
-  GraphViewMode,
-} from './types/graph';
+import type { GraphCompanionView, GraphEdge, GraphNode, GraphSearchField, GraphSlice, GraphViewMode } from './types/graph';
 import {
   DEFAULT_DASHBOARD_URL_STATE,
   buildDashboardUrlSearch,
   parseDashboardUrlState,
+  type DashboardViewState,
 } from './utils/dashboard-state';
-import {
-  buildSchemaSummaryRows,
-  buildTableRows,
-  buildTimelineRows,
-} from './utils/graph-companion-data';
+import { buildCompareUnionSlice, buildGraphCompareDiff } from './utils/graph-compare';
+import { buildSchemaSummaryRows, buildTableRows, buildTimelineRows } from './utils/graph-companion-data';
 import { applyManualGraphState } from './utils/graph-manual-controls';
 import {
   buildEgoView,
@@ -46,7 +38,16 @@ import {
 } from './utils/graph-model';
 
 const HUB_THRESHOLD = 200;
+const SAVED_VIEWS_STORAGE_KEY = 'kg-dashboard/saved-investigation-views/v1';
 const GraphView = lazy(() => import('./components/GraphView'));
+
+interface SavedInvestigationView {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  viewState: DashboardViewState;
+}
 
 const VIEW_COPY: Record<GraphViewMode, { title: string; description: string }> = {
   summary: {
@@ -78,37 +79,67 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<GraphViewMode>(initialUrlState.viewMode);
-  const [companionView, setCompanionView] = useState<GraphCompanionView>(
-    initialUrlState.companionView,
-  );
+  const [companionView, setCompanionView] = useState<GraphCompanionView>(initialUrlState.companionView);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialUrlState.selectedNodeId);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(initialUrlState.selectedEdgeId);
   const [searchTerm, setSearchTerm] = useState(initialUrlState.query);
   const [searchField, setSearchField] = useState<GraphSearchField>(initialUrlState.searchField);
-  const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
-  const [hiddenNodeIds, setHiddenNodeIds] = useState<string[]>([]);
-  const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>([]);
+  const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>(initialUrlState.pinnedNodeIds);
+  const [hiddenNodeIds, setHiddenNodeIds] = useState<string[]>(initialUrlState.hiddenNodeIds);
+  const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>(initialUrlState.expandedNodeIds);
+  const [savedViews, setSavedViews] = useState<SavedInvestigationView[]>([]);
+  const [compareLeftId, setCompareLeftId] = useState<string | null>(initialUrlState.compareLeftId);
+  const [compareRightId, setCompareRightId] = useState<string | null>(initialUrlState.compareRightId);
 
   const deferredSearch = useDeferredValue(searchTerm);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as SavedInvestigationView[];
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      setSavedViews(
+        parsed.filter((item) => item && typeof item.id === 'string' && typeof item.name === 'string'),
+      );
+    } catch {
+      setSavedViews([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
+  }, [savedViews]);
 
   useEffect(() => {
     let active = true;
 
     async function loadGraph() {
       try {
-        const [nodesResponse, edgesResponse] = await Promise.all([
-          fetch('/data/nodes.json'),
-          fetch('/data/edges.json'),
-        ]);
+        const [nodesResponse, edgesResponse] = await Promise.all([fetch('/data/nodes.json'), fetch('/data/edges.json')]);
 
         if (!nodesResponse.ok || !edgesResponse.ok) {
           throw new Error('그래프 자산을 불러오지 못했습니다.');
         }
 
-        const [nodesData, edgesData] = (await Promise.all([
-          nodesResponse.json(),
-          edgesResponse.json(),
-        ])) as [GraphNode[], GraphEdge[]];
+        const [nodesData, edgesData] = (await Promise.all([nodesResponse.json(), edgesResponse.json()])) as [
+          GraphNode[],
+          GraphEdge[],
+        ];
 
         if (!active) {
           return;
@@ -127,9 +158,7 @@ function App() {
 
         setLoading(false);
         setError(
-          loadError instanceof Error
-            ? loadError.message
-            : '그래프 자산을 읽는 중 알 수 없는 오류가 발생했습니다.',
+          loadError instanceof Error ? loadError.message : '그래프 자산을 읽는 중 알 수 없는 오류가 발생했습니다.',
         );
       }
     }
@@ -141,49 +170,69 @@ function App() {
     };
   }, []);
 
+  const activeViewState = useMemo<DashboardViewState>(
+    () => ({
+      query: searchTerm,
+      searchField,
+      viewMode,
+      companionView,
+      selectedNodeId,
+      selectedEdgeId,
+      pinnedNodeIds,
+      hiddenNodeIds,
+      expandedNodeIds,
+    }),
+    [
+      companionView,
+      expandedNodeIds,
+      hiddenNodeIds,
+      pinnedNodeIds,
+      searchField,
+      searchTerm,
+      selectedEdgeId,
+      selectedNodeId,
+      viewMode,
+    ],
+  );
+
+  const activeSlice = useMemo(
+    () => buildSliceForState(allNodes, allEdges, activeViewState),
+    [activeViewState, allEdges, allNodes],
+  );
+
+  const leftCompareView = useMemo(
+    () => savedViews.find((item) => item.id === compareLeftId) ?? null,
+    [compareLeftId, savedViews],
+  );
+  const rightCompareView = useMemo(
+    () => savedViews.find((item) => item.id === compareRightId) ?? null,
+    [compareRightId, savedViews],
+  );
+  const compareEnabled = Boolean(leftCompareView && rightCompareView && leftCompareView.id !== rightCompareView.id);
+
+  const compareState = useMemo(() => {
+    if (!compareEnabled || !leftCompareView || !rightCompareView) {
+      return null;
+    }
+
+    const leftSlice = buildSliceForState(allNodes, allEdges, leftCompareView.viewState);
+    const rightSlice = buildSliceForState(allNodes, allEdges, rightCompareView.viewState);
+
+    return {
+      unionSlice: buildCompareUnionSlice(leftSlice, rightSlice),
+      diff: buildGraphCompareDiff(leftSlice, rightSlice),
+      leftName: leftCompareView.name,
+      rightName: rightCompareView.name,
+    };
+  }, [allEdges, allNodes, compareEnabled, leftCompareView, rightCompareView]);
+
+  const visibleGraph = compareState?.unionSlice ?? activeSlice;
+  const compareDiff = compareState?.diff ?? null;
+
   const index = useMemo(() => buildGraphIndex(allNodes, allEdges), [allNodes, allEdges]);
   const searchMatches = useMemo(
     () => findSearchMatches(allNodes, deferredSearch, searchField, 6),
     [allNodes, deferredSearch, searchField],
-  );
-
-  const baseVisibleGraph = useMemo(() => {
-    if (!allNodes.length) {
-      return { nodes: [], edges: [] };
-    }
-
-    if (selectedNodeId && viewMode === 'ego') {
-      return buildEgoView(allNodes, allEdges, selectedNodeId);
-    }
-
-    if (deferredSearch.trim()) {
-      return buildSearchView(allNodes, allEdges, deferredSearch, {
-        hubThreshold: HUB_THRESHOLD,
-        searchField,
-      });
-    }
-
-    switch (viewMode) {
-      case 'issues':
-        return buildIssueView(allNodes, allEdges);
-      case 'ego':
-        return buildSummaryView(allNodes, allEdges);
-      case 'search':
-        return { nodes: [], edges: [] };
-      case 'summary':
-      default:
-        return buildSummaryView(allNodes, allEdges);
-    }
-  }, [allEdges, allNodes, deferredSearch, searchField, selectedNodeId, viewMode]);
-
-  const visibleGraph = useMemo(
-    () =>
-      applyManualGraphState(allNodes, allEdges, baseVisibleGraph, {
-        pinnedNodeIds: new Set(pinnedNodeIds),
-        hiddenNodeIds: new Set(hiddenNodeIds),
-        expandedNodeIds: new Set(expandedNodeIds),
-      }),
-    [allEdges, allNodes, baseVisibleGraph, expandedNodeIds, hiddenNodeIds, pinnedNodeIds],
   );
 
   const selectedNode = selectedNodeId ? index.nodeById.get(selectedNodeId) ?? null : null;
@@ -199,6 +248,7 @@ function App() {
     () => deriveMetrics(allNodes, allEdges, visibleGraph.nodes, visibleGraph.edges),
     [allEdges, allNodes, visibleGraph.edges, visibleGraph.nodes],
   );
+
   const hubSummaries = useMemo(
     () =>
       visibleGraph.nodes
@@ -229,10 +279,8 @@ function App() {
         }),
     [visibleGraph.nodes],
   );
-  const tableRows = useMemo(
-    () => buildTableRows(visibleGraph.nodes, index.degreeById),
-    [index.degreeById, visibleGraph.nodes],
-  );
+
+  const tableRows = useMemo(() => buildTableRows(visibleGraph.nodes, index.degreeById), [index.degreeById, visibleGraph.nodes]);
   const timelineRows = useMemo(() => buildTimelineRows(visibleGraph.nodes), [visibleGraph.nodes]);
   const schemaSummary = useMemo(
     () => buildSchemaSummaryRows(visibleGraph.nodes, visibleGraph.edges),
@@ -244,7 +292,7 @@ function App() {
         id,
         label: index.nodeById.get(id) ? getNodeLabel(index.nodeById.get(id)!) : id,
       })),
-    [pinnedNodeIds, index.nodeById],
+    [index.nodeById, pinnedNodeIds],
   );
   const hiddenNodes = useMemo(
     () =>
@@ -269,16 +317,14 @@ function App() {
     }
 
     const search = buildDashboardUrlSearch({
-      query: searchTerm,
-      searchField,
+      ...activeViewState,
       viewMode: effectiveViewMode,
-      companionView,
-      selectedNodeId,
-      selectedEdgeId,
+      compareLeftId,
+      compareRightId,
     });
 
     window.history.replaceState({}, '', `${window.location.pathname}${search}`);
-  }, [companionView, effectiveViewMode, searchField, searchTerm, selectedEdgeId, selectedNodeId]);
+  }, [activeViewState, compareLeftId, compareRightId, effectiveViewMode]);
 
   useEffect(() => {
     if (selectedNodeId && !index.nodeById.has(selectedNodeId)) {
@@ -291,6 +337,16 @@ function App() {
       setSelectedEdgeId(null);
     }
   }, [selectedEdgeId, visibleGraph.edges]);
+
+  useEffect(() => {
+    if (compareLeftId && !savedViews.some((item) => item.id === compareLeftId)) {
+      setCompareLeftId(null);
+    }
+
+    if (compareRightId && !savedViews.some((item) => item.id === compareRightId)) {
+      setCompareRightId(null);
+    }
+  }, [compareLeftId, compareRightId, savedViews]);
 
   const handleSearchTermChange = (value: string) => {
     setSearchTerm(value);
@@ -398,6 +454,76 @@ function App() {
     setExpandedNodeIds([]);
   };
 
+  const handleCopyCurrentStateLink = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}${buildDashboardUrlSearch({
+      ...activeViewState,
+      compareLeftId,
+      compareRightId,
+    })}`;
+
+    if (window.navigator?.clipboard?.writeText) {
+      await window.navigator.clipboard.writeText(shareUrl);
+      return;
+    }
+
+    window.prompt('Copy this investigation URL', shareUrl);
+  };
+
+  const handleSaveCurrentView = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const name = window.prompt('Saved view name', `View ${savedViews.length + 1}`)?.trim();
+    if (!name) {
+      return;
+    }
+
+    const description = window.prompt('Saved view description', '')?.trim() ?? '';
+    const createdAt = new Date().toISOString();
+
+    const next: SavedInvestigationView = {
+      id: `view-${createdAt}-${Math.random().toString(16).slice(2, 8)}`,
+      name,
+      description,
+      createdAt,
+      viewState: activeViewState,
+    };
+
+    setSavedViews((current) => [next, ...current].slice(0, 30));
+    if (!compareLeftId) {
+      setCompareLeftId(next.id);
+    } else if (!compareRightId) {
+      setCompareRightId(next.id);
+    }
+  };
+
+  const handleLoadSavedView = (viewId: string) => {
+    const target = savedViews.find((item) => item.id === viewId);
+    if (!target) {
+      return;
+    }
+
+    const state = target.viewState;
+    setSearchTerm(state.query);
+    setSearchField(state.searchField);
+    setViewMode(state.viewMode);
+    setCompanionView(state.companionView);
+    setSelectedNodeId(state.selectedNodeId);
+    setSelectedEdgeId(state.selectedEdgeId);
+    setPinnedNodeIds(state.pinnedNodeIds);
+    setHiddenNodeIds(state.hiddenNodeIds);
+    setExpandedNodeIds(state.expandedNodeIds);
+  };
+
+  const handleDeleteSavedView = (viewId: string) => {
+    setSavedViews((current) => current.filter((item) => item.id !== viewId));
+  };
+
   return (
     <div className="dashboard-shell">
       <GraphSidebar
@@ -430,6 +556,16 @@ function App() {
         onRemovePinnedNode={(nodeId) => setPinnedNodeIds((current) => removeNodeId(current, nodeId))}
         onRemoveHiddenNode={(nodeId) => setHiddenNodeIds((current) => removeNodeId(current, nodeId))}
         onRemoveExpandedNode={(nodeId) => setExpandedNodeIds((current) => removeNodeId(current, nodeId))}
+        onCopyCurrentStateLink={() => void handleCopyCurrentStateLink()}
+        onSaveCurrentView={handleSaveCurrentView}
+        savedViews={savedViews}
+        onLoadSavedView={handleLoadSavedView}
+        onDeleteSavedView={handleDeleteSavedView}
+        compareLeftId={compareLeftId}
+        compareRightId={compareRightId}
+        onSetCompareLeft={setCompareLeftId}
+        onSetCompareRight={setCompareRightId}
+        compareEnabled={compareEnabled}
       />
 
       <main className="dashboard-main">
@@ -439,6 +575,12 @@ function App() {
             <h1>kg-dashboard</h1>
             <p className="dashboard-view-label">{VIEW_COPY[effectiveViewMode].title}</p>
             <p className="dashboard-description">{VIEW_COPY[effectiveViewMode].description}</p>
+            {compareState ? (
+              <p className="dashboard-description">
+                Compare mode · Added (green), Removed (red), Changed (amber) · {compareState.leftName} →{' '}
+                {compareState.rightName}
+              </p>
+            ) : null}
           </div>
           <dl className="dashboard-stat-grid">
             <div className="dashboard-stat">
@@ -508,25 +650,15 @@ function App() {
                   degreeById={index.degreeById}
                   onSelectNode={handleNodeSelect}
                   onSelectEdge={handleEdgeSelect}
+                  compareDiff={compareDiff}
                 />
               </Suspense>
             ) : companionView === 'table' ? (
-              <GraphDataTable
-                rows={tableRows}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={handleSearchMatchSelect}
-              />
+              <GraphDataTable rows={tableRows} selectedNodeId={selectedNodeId} onSelectNode={handleSearchMatchSelect} />
             ) : companionView === 'timeline' ? (
-              <GraphTimeline
-                rows={timelineRows}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={handleSearchMatchSelect}
-              />
+              <GraphTimeline rows={timelineRows} selectedNodeId={selectedNodeId} onSelectNode={handleSearchMatchSelect} />
             ) : (
-              <GraphSchemaSummary
-                nodeTypes={schemaSummary.nodeTypes}
-                edgeTypes={schemaSummary.edgeTypes}
-              />
+              <GraphSchemaSummary nodeTypes={schemaSummary.nodeTypes} edgeTypes={schemaSummary.edgeTypes} />
             )}
           </section>
         )}
@@ -544,6 +676,44 @@ function App() {
 }
 
 export default App;
+
+function buildSliceForState(allNodes: GraphNode[], allEdges: GraphEdge[], state: DashboardViewState): GraphSlice {
+  if (!allNodes.length) {
+    return { nodes: [], edges: [] };
+  }
+
+  const query = state.query.trim();
+  let baseSlice: GraphSlice;
+
+  if (state.selectedNodeId && state.viewMode === 'ego') {
+    baseSlice = buildEgoView(allNodes, allEdges, state.selectedNodeId);
+  } else if (query) {
+    baseSlice = buildSearchView(allNodes, allEdges, query, {
+      hubThreshold: HUB_THRESHOLD,
+      searchField: state.searchField,
+    });
+  } else {
+    switch (state.viewMode) {
+      case 'issues':
+        baseSlice = buildIssueView(allNodes, allEdges);
+        break;
+      case 'search':
+        baseSlice = { nodes: [], edges: [] };
+        break;
+      case 'ego':
+      case 'summary':
+      default:
+        baseSlice = buildSummaryView(allNodes, allEdges);
+        break;
+    }
+  }
+
+  return applyManualGraphState(allNodes, allEdges, baseSlice, {
+    pinnedNodeIds: new Set(state.pinnedNodeIds),
+    hiddenNodeIds: new Set(state.hiddenNodeIds),
+    expandedNodeIds: new Set(state.expandedNodeIds),
+  });
+}
 
 function getInfraPriority(type: string): number {
   if (type === 'Hub') {
