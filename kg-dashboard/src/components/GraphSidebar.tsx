@@ -63,6 +63,21 @@ export interface GraphSidebarProps {
   onRemovePinnedNode: (nodeId: string) => void;
   onRemoveHiddenNode: (nodeId: string) => void;
   onRemoveExpandedNode: (nodeId: string) => void;
+  onCopyCurrentStateLink: () => void;
+  onSaveCurrentView: () => void;
+  savedViews: Array<{
+    id: string;
+    name: string;
+    description: string;
+    createdAt: string;
+  }>;
+  onLoadSavedView: (viewId: string) => void;
+  onDeleteSavedView: (viewId: string) => void;
+  compareLeftId: string | null;
+  compareRightId: string | null;
+  onSetCompareLeft: (viewId: string | null) => void;
+  onSetCompareRight: (viewId: string | null) => void;
+  compareEnabled: boolean;
 }
 
 const VIEW_MODE_LABELS: Record<GraphViewMode, string> = {
@@ -134,6 +149,16 @@ export function GraphSidebar({
   onRemovePinnedNode,
   onRemoveHiddenNode,
   onRemoveExpandedNode,
+  onCopyCurrentStateLink = () => {},
+  onSaveCurrentView = () => {},
+  savedViews = [],
+  onLoadSavedView = () => {},
+  onDeleteSavedView = () => {},
+  compareLeftId = null,
+  compareRightId = null,
+  onSetCompareLeft = () => {},
+  onSetCompareRight = () => {},
+  compareEnabled = false,
 }: GraphSidebarProps) {
   const [showAllInfraSummaries, setShowAllInfraSummaries] = useState(false);
   const [infraFilter, setInfraFilter] = useState<InfraFilter>('All');
@@ -169,6 +194,11 @@ export function GraphSidebar({
     hubSummaries.length - DEFAULT_INFRA_SUMMARY_LIMIT,
     0,
   );
+
+
+  const savedViewOptions = useMemo(() => {
+    return savedViews.map((item) => ({ ...item, createdAtLabel: new Date(item.createdAt).toLocaleString() }));
+  }, [savedViews]);
 
   return (
     <aside className="dashboard-sidebar">
@@ -468,6 +498,88 @@ export function GraphSidebar({
             ))}
           </div>
         ) : null}
+      </section>
+
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <div className="section-label">Investigation view</div>
+            <h2 className="section-title">Share and compare</h2>
+          </div>
+        </div>
+
+        <div className="manual-node-actions">
+          <button type="button" className="ghost-button" onClick={onCopyCurrentStateLink}>
+            Copy current state link
+          </button>
+          <button type="button" className="ghost-button" onClick={onSaveCurrentView}>
+            Save current view
+          </button>
+        </div>
+
+        {savedViewOptions.length > 0 ? (
+          <>
+            <label className="field">
+              <span className="field-label">Compare left</span>
+              <select
+                className="search-input"
+                value={compareLeftId ?? ''}
+                onChange={(event) => onSetCompareLeft(event.target.value || null)}
+              >
+                <option value="">None</option>
+                {savedViewOptions.map((view) => (
+                  <option key={`left-${view.id}`} value={view.id}>
+                    {view.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field">
+              <span className="field-label">Compare right</span>
+              <select
+                className="search-input"
+                value={compareRightId ?? ''}
+                onChange={(event) => onSetCompareRight(event.target.value || null)}
+              >
+                <option value="">None</option>
+                {savedViewOptions.map((view) => (
+                  <option key={`right-${view.id}`} value={view.id}>
+                    {view.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <p className="field-help">
+              {compareEnabled
+                ? 'Compare mode active: added=green, removed=red, changed=amber.'
+                : 'Choose two different saved views to enable compare mode.'}
+            </p>
+
+            <div className="manual-node-list" role="list" aria-label="Saved investigation views">
+              <strong>Saved views</strong>
+              {savedViewOptions.map((view) => (
+                <div key={view.id} className="search-result-item" role="listitem">
+                  <strong>{view.name}</strong>
+                  <span>{view.description || 'No description'}</span>
+                  <span>{view.createdAtLabel}</span>
+                  <div className="manual-node-actions">
+                    <button type="button" className="ghost-button" onClick={() => onLoadSavedView(view.id)}>
+                      Load
+                    </button>
+                    <button type="button" className="ghost-button" onClick={() => onDeleteSavedView(view.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="empty-copy">No saved views yet. Save the current investigation state first.</p>
+        )}
       </section>
 
       {viewMode === 'summary' && hubSummaries.length > 0 ? (

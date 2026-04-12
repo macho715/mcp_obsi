@@ -7,9 +7,9 @@ import {
 } from './dashboard-state';
 
 describe('dashboard-state', () => {
-  it('restores search, selection, and companion view from query string', () => {
+  it('restores search, selection, manual controls, compare ids, and companion view from query string', () => {
     const restored = parseDashboardUrlState(
-      '?q=POL&field=pol&class=Shipment&property=deliveredTo&relationType=deliveredTo&view=search&panel=timeline&node=shipment%2F1&edge=shipment%2F1%7Chub%2F1%7CloadedAt',
+      '?q=POL&field=pol&class=Shipment&property=deliveredTo&relationType=deliveredTo&view=search&panel=timeline&node=shipment%2F1&edge=shipment%2F1%7Chub%2F1%7CloadedAt&pin=hub%2F1%2Cshipment%2F1&hide=shipment%2F9&expand=hub%2F1&compareLeft=alpha&compareRight=beta',
     );
 
     expect(restored).toEqual({
@@ -22,6 +22,11 @@ describe('dashboard-state', () => {
       companionView: 'timeline',
       selectedNodeId: 'shipment/1',
       selectedEdgeId: 'shipment/1|hub/1|loadedAt',
+      pinnedNodeIds: ['hub/1', 'shipment/1'],
+      hiddenNodeIds: ['shipment/9'],
+      expandedNodeIds: ['hub/1'],
+      compareLeftId: 'alpha',
+      compareRightId: 'beta',
     });
   });
 
@@ -42,10 +47,15 @@ describe('dashboard-state', () => {
       companionView: 'table',
       selectedNodeId: 'shipment/2',
       selectedEdgeId: null,
+      pinnedNodeIds: ['hub/1', 'shipment/2'],
+      hiddenNodeIds: ['shipment/8'],
+      expandedNodeIds: ['hub/1'],
+      compareLeftId: 'view-1',
+      compareRightId: 'view-2',
     });
 
     expect(serialized).toBe(
-      '?q=Mina+Zayed&field=pod&class=Shipment&property=deliveredTo&view=search&panel=table&node=shipment%2F2',
+      '?q=Mina+Zayed&field=pod&class=Shipment&property=deliveredTo&view=search&panel=table&node=shipment%2F2&pin=hub%2F1%2Cshipment%2F2&hide=shipment%2F8&expand=hub%2F1&compareLeft=view-1&compareRight=view-2',
     );
   });
 });
