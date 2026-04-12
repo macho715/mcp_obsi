@@ -1,4 +1,6 @@
 import {
+  Suspense,
+  lazy,
   startTransition,
   useDeferredValue,
   useEffect,
@@ -7,7 +9,6 @@ import {
 } from 'react';
 import './App.css';
 import { GraphSidebar } from './components/GraphSidebar';
-import { GraphView } from './components/GraphView';
 import { NodeInspector } from './components/NodeInspector';
 import type { GraphEdge, GraphNode, GraphViewMode } from './types/graph';
 import {
@@ -23,6 +24,7 @@ import {
 } from './utils/graph-model';
 
 const HUB_THRESHOLD = 200;
+const GraphView = lazy(() => import('./components/GraphView'));
 
 const VIEW_COPY: Record<GraphViewMode, { title: string; description: string }> = {
   summary: {
@@ -297,15 +299,25 @@ function App() {
             </div>
           ) : (
             <>
-              <GraphView
-                nodes={visibleGraph.nodes}
-                edges={visibleGraph.edges}
-                selectedNodeId={selectedNodeId}
-                viewMode={effectiveViewMode}
-                hubThreshold={HUB_THRESHOLD}
-                degreeById={index.degreeById}
-                onSelectNode={handleNodeSelect}
-              />
+              <Suspense
+                fallback={
+                  <div className="dashboard-status-card">
+                    <p className="dashboard-status-label">Loading</p>
+                    <h2>그래프 엔진을 준비하고 있습니다.</h2>
+                    <p>시각화 모듈을 나눠서 불러오는 중입니다.</p>
+                  </div>
+                }
+              >
+                <GraphView
+                  nodes={visibleGraph.nodes}
+                  edges={visibleGraph.edges}
+                  selectedNodeId={selectedNodeId}
+                  viewMode={effectiveViewMode}
+                  hubThreshold={HUB_THRESHOLD}
+                  degreeById={index.degreeById}
+                  onSelectNode={handleNodeSelect}
+                />
+              </Suspense>
               <NodeInspector
                 node={selectedNode}
                 degree={selectedNodeDegree}

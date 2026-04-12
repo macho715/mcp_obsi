@@ -1,11 +1,11 @@
 ﻿---
-title: "HVDC Operations Management - Consolidated"
+title: "HVDC Operations Management & RoutingPattern Analytics - Consolidated"
 type: "ontology-design"
 domain: "operations-management"
-sub-domains: ["warehouse", "bulk-cargo", "vessel-operations", "flow-code"]
+sub-domains: ["warehouse", "bulk-cargo", "vessel-operations", "routing-pattern"]
 version: "consolidated-1.1"
 date: "2025-11-01"
-tags: ["ontology", "hvdc", "operations", "warehouse", "bulk-cargo", "flow-code", "flow-code-v35", "consolidated"]
+tags: ["ontology", "hvdc", "operations", "warehouse", "bulk-cargo", "routing-pattern", "shipment-routing-pattern", "consolidated"]
 standards: ["RDF", "OWL", "SHACL", "SPARQL", "JSON-LD"]
 status: "active"
 spine_ref: "CONSOLIDATED-00-master-ontology.md"
@@ -30,9 +30,9 @@ oute_type, shipment_stage, leg_sequence, JourneyLeg)
 
 __ExecSummary__
 
-창고 pjt를 __온톨로지\(지식그래프\) 관점__으로 보면, 엑셀/ERP의 각 행은 TransportEvent\(이동\), StockSnapshot\(재고 스냅샷\), Invoice\(청구\), Case\(개별 케이스\) 같은 __클래스__로 귀속되고, 열들은 hasDate/hasLocation/hasQuantity/hasRouteType 같은 __속성__으로 정규화됩니다\. 이 구조가 “창고 트랙\(WH\)”·“현장 트랙\(Site\)”·“Flow Code\(0–4\)”를 한 장의 그래프로 __동일 실체__에 묶어 줍니다\. \(Any\-key in → Resolve→Cluster→Downstream\)
-매핑된 데이터는 __RDF/OWL__로 변환되어 SPARQL로 검증/집계가 가능하고, 비용 분류\(OFCO\)나 월별 입출고·재고·SQM 과금까지 __한 체계__에서 굴러갑니다\.
-핵심은 “2\-트랙 날짜 컬럼\(창고 vs 현장\)”과 __시간순 출고 판정__·__이중계산 방지__·__Flow Code 0–4 일관성__을 코드 레벨로 보증하는 것입니다\.
+운영 관리 도메인은 엑셀/ERP의 행을 `TransportEvent`, `StockSnapshot`, `Invoice`, `ShipmentUnit` 같은 클래스에 붙이고, 열은 `hasDate`, `hasLocation`, `hasQuantity`, `hasRoutingPattern` 같은 속성으로 정규화합니다. 이 구조는 “창고 트랙(WH)”과 “현장 트랙(Site)”를 하나의 그래프에서 연결하되, 전체 여정 분류는 `ShipmentRoutingPattern`으로 처리하고 창고 내부 처리 등급은 `WarehouseHandlingProfile.confirmedFlowCode`에 남겨 둡니다.  
+매핑된 데이터는 RDF/OWL로 변환되어 SPARQL로 검증/집계할 수 있고, 비용 분류(OFCO), 월별 입출고, 재고, SQM 과금도 같은 구조 위에서 연결됩니다.  
+핵심은 “2-트랙 날짜 컬럼(창고 vs 현장)”과 시간순 출고 판정, 이중계산 방지, `hasRoutingPattern` 일관성을 코드 레벨로 보증하는 것입니다.
 
 __Visual — Ontology Map \(요약표\)__
 
@@ -62,11 +62,11 @@ TransportEvent \+ hasDate/hasLocation/hasQuantity
 
 흐름
 
-hasRouteType\(0~5\)
+hasRoutingPattern
 
-wh handling 또는 창고 방문 횟수
+ShipmentRoutingPattern \(PRE_ARRIVAL / DIRECT / WH_ONLY / MOSB_DIRECT / WH_MOSB / MIXED\)
 
-Port→WH→\(MOSB\)→Site 경로를 정규화\(0=Pre\-Arrival…5\)
+Port→WH→\(MOSB\)→Site 경로를 문자열 패턴으로 정규화
 
 재고
 
@@ -85,16 +85,16 @@ Description/Rate/Amount
 AT\-COST/CONTRACT 등 비용센터 자동 분류
 
 __파이프라인 to KG \(요약\)__
-Ingest\(Excel\) → 정규화\(헤더/날짜/공백\) → 매핑\(JSON rules\) → RDF 변환 → SPARQL 검증\(12 rules\) → Flow/WH·Site 집계 → 리포트/과금\(SQM\)
+Ingest\(Excel\) → 정규화\(헤더/날짜/공백\) → 매핑\(JSON rules\) → RDF 변환 → SPARQL 검증\(12 rules\) → RoutingPattern/WH·Site 집계 → 리포트/과금\(SQM\)
 
 __How it works \(핵심 동작 원리, EN\-KR one\-liners\)__
 
 1. __2\-트랙 날짜 모델__: 창고 컬럼\(DSV Indoor/Al Markaz/AAA/MOSB…\)과 현장 컬럼\(AGI/DAS/MIR/SHU\)을 분리 인식 → 최신 위치/이동 추론 강화\.
-2. __Flow Code 계산\(0–5\)__: Pre\-Arrival\(0\)~WH/MOSB 경유~Site 도착까지 hop 수\+오프쇼어 경유로 표준화 \+ 혼합/미완료\(5\)\.
+2. __ShipmentRoutingPattern 계산__: Pre\-Arrival / Direct / WH Only / MOSB Direct / WH+MOSB / Mixed 패턴으로 전체 여정을 분류합니다\.
 3. __출고 판정\(시간순\)__: "창고에 찍힌 날짜 < 다음 위치\(다른 창고/현장\) 날짜"일 때만 출고로 인정\(동일일자 중복 방지\)\.
 4. __이중계산 방지 \+ 검증__: 창고간 이동 목적지는 입고에서 제외, 재고는 Status\_Location vs 물리위치 __교차검증__\(불일치 0건 목표\)\.
 5. __RDF/OWL & SPARQL__: DataFrame→RDF 자동 변환, 금액/패키지/위치/시간 일관성 규칙 12종으로 품질게이트\.
-6. __리포팅 아키텍처__: 5\-시트 요약\(Flow/WH·Site 월별/Pre\-Arrival/전체 트랜잭션\) \+ 27시트 스냅샷\(B5 날짜 기반 시계열\) \+ SQM 과금\.
+6. __리포팅 아키텍처__: 5\-시트 요약\(RoutingPattern/WH·Site 월별/Pre\-Arrival/전체 트랜잭션\) \+ 27시트 스냅샷\(B5 날짜 기반 시계열\) \+ SQM 과금\.
 
 __Options \(구현 옵션 ≥3 · pros/cons/$/risk/time\)__
 
@@ -112,7 +112,7 @@ __Options \(구현 옵션 ≥3 · pros/cons/$/risk/time\)__
 - Cost/Time: $$ · 3–5주\.
 - Risk: 초기 스키마 설계 미스매치\(중\)\.
 
-1. __Option C — Ops Twin\(\+Flow Code 추적·SQM 과금\)__
+1. __Option C — Ops Twin\(\+RoutingPattern 추적·SQM 과금\)__
 
 - Pros: 시간순 출고·이중계산 방지, SQM 누적/요율 기반 월별 과금 자동화\.
 - Cons: 데이터 품질\(SQM 실측률\)에 민감\.
@@ -127,7 +127,7 @@ __Prepare \(1주\)__
 
 __Pilot \(1–2주\)__
 
-- 2\-트랙 매핑 \+ Flow Code 0–4 적용, 5\-시트 리포트 생성\. *KPI: Flow 계산 일치율 100\.00%\.*
+- 2\-트랙 매핑 \+ ShipmentRoutingPattern 적용, 5\-시트 리포트 생성\. *KPI: routingPattern 계산 일치율 100\.00%\.*
 
 __Build \(2–3주\)__
 
@@ -160,7 +160,7 @@ ShipmentRoutingPattern은 HVDC 프로젝트의 물류 흐름을 **routingPattern
 | **WH_MOSB** | Port → WH → MOSB → Site | 창고+MOSB 경유 | 복합 경로 - 최대 hop 수 |
 | **MIXED** | Mixed/Waiting/Incomplete | 혼합/미완료 | 비정상 상태 - 검토 필요 |
 
-### Operations-Specific Flow Code Patterns
+### Operations-Specific RoutingPattern Analytics
 
 #### 1. 운영 효율성 KPI
 
@@ -181,29 +181,30 @@ ShipmentRoutingPattern은 HVDC 프로젝트의 물류 흐름을 **routingPattern
 - routingPattern MIXED: 검토 및 재분류 필요
 ```
 
-#### 2. AGI/DAS 도메인 규칙 (v3.5 신규)
+#### 2. AGI/DAS 도메인 규칙
 
-**비즈니스 규칙**: AGI(Al Ghallan Island) 또는 DAS(Das Island) 오프쇼어 사이트로 가는 모든 화물은 **MOSB 레그 필수**
+**비즈니스 규칙**: AGI(Al Ghallan Island) 또는 DAS(Das Island) 오프쇼어 사이트로 가는 모든 화물은 **MOSB 레그 필수**입니다.  
+Operations 레이어는 Flow Code를 승급하지 않습니다. 대신 `hasRoutingPattern`과 MOSB milestone evidence가 규칙을 만족하는지 검사합니다.
 
 ```
 규칙 적용:
 - Final_Location = "AGI" OR "DAS"
-  → Flow Code 0, 1, 2 → 자동 승급 → Flow Code 3
-  → 원본 Flow Code는 FLOW_CODE_ORIG에 보존
-  → FLOW_OVERRIDE_REASON = "AGI/DAS 강제 MOSB 레그"
+  → hasRoutingPattern IN (MOSB_DIRECT, WH_MOSB, MIXED) 이어야 함
+  → MOSB staging milestone M115 evidence 필요
+  → 미충족 시 VIOLATION-2 또는 운영 검토 플래그 발생
 
 실제 사례 (v3.5):
 - 756개 레코드 중 31개 AGI/DAS 케이스
-- 모두 Flow Code 3 이상으로 자동 승급
-- 도메인 룰 위반 0건 (SPARQL 검증)
+- 모두 MOSB leg evidence 확인 대상
+- 도메인 룰 위반 0건 목표
 ```
 
-#### 3. Flow Code 5 (혼합/미완료) 처리
+#### 3. MIXED (혼합/미완료) 처리
 
-**v3.5 신규 카테고리**: 비정상적인 물류 패턴을 명시적으로 분류
+**비정상 또는 미완료 패턴**은 `hasRoutingPattern = MIXED`로 관리합니다.
 
 ```
-Flow Code 5 분류 조건:
+MIXED 분류 조건:
 1. MOSB 있으나 Site 없음
    → MOSB 도착 후 현장 미배송 상태
 
@@ -211,46 +212,40 @@ Flow Code 5 분류 조건:
    → 창고 간 복수 이동, 현장 미도착
 
 처리 방안:
-- Flow Code 5 케이스 자동 플래그
+- MIXED 케이스 자동 플래그
 - 주간 리뷰 리스트 생성
 - 원인 분석 및 재분류
 ```
 
-### Flow Code Calculation Logic
+### RoutingPattern Calculation Logic
 
 #### 기본 계산 흐름
 
 ```python
 # 1단계: Pre Arrival 체크
 if "Pre Arrival" in Status_Location:
-    flow_code = 0
+    routing_pattern = "PRE_ARRIVAL"
 
 # 2단계: 관측값 계산
 wh_count = sum(WH_COLS의 notna 개수)
 has_mosb = MOSB 컬럼 notna 여부
 has_site = Site_COLS의 notna 개수 > 0
 
-# 3단계: 기본 Flow Code (1-4)
+# 3단계: 기본 RoutingPattern 분류
 if wh_count == 0 and not has_mosb:
-    flow_code = 1  # Port → Site
+    routing_pattern = "DIRECT"
 elif wh_count >= 1 and not has_mosb:
-    flow_code = 2  # Port → WH → Site
+    routing_pattern = "WH_ONLY"
 elif wh_count == 0 and has_mosb:
-    flow_code = 3  # Port → MOSB → Site
+    routing_pattern = "MOSB_DIRECT"
 elif wh_count >= 1 and has_mosb:
-    flow_code = 4  # Port → WH → MOSB → Site
+    routing_pattern = "WH_MOSB"
+else:
+    routing_pattern = "MIXED"
 
-# 4단계: AGI/DAS 강제 승급
-if Final_Location in ["AGI", "DAS"] and flow_code in [0, 1, 2]:
-    FLOW_CODE_ORIG = flow_code
-    flow_code = 3
-    FLOW_OVERRIDE_REASON = "AGI/DAS 강제 MOSB 레그"
-
-# 5단계: Flow Code 5 (혼합) 체크
-if has_mosb and not has_site:
-    flow_code = 5
-elif wh_count >= 2 and not has_mosb:
-    flow_code = 5
+# 4단계: AGI/DAS 규칙 검증
+if Final_Location in ["AGI", "DAS"] and routing_pattern not in ["MOSB_DIRECT", "WH_MOSB", "MIXED"]:
+    raise_violation("VIOLATION-2", "AGI/DAS shipment missing MOSB routing pattern")
 ```
 
 ### RDF/OWL Implementation
@@ -262,133 +257,132 @@ elif wh_count >= 2 and not has_mosb:
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# Flow Code 속성
-hvdc:hasRouteType a owl:DatatypeProperty ;
-    rdfs:label "Logistics Flow Code" ;
-    rdfs:comment "물류 흐름 분류 코드 (0-5)" ;
-    rdfs:domain hvdc:Case ;
-    rdfs:range xsd:integer ;
+# ShipmentRoutingPattern 속성
+hvdc:hasRoutingPattern a owl:ObjectProperty ;
+    rdfs:label "Shipment Routing Pattern" ;
+    rdfs:comment "End-to-end shipment routing pattern used by operations analytics" ;
+    rdfs:domain hvdc:ShipmentUnit ;
+    rdfs:range hvdc:ShipmentRoutingPattern ;
     rdfs:subPropertyOf hvdc:hasOperationalMetric .
 
-hvdc:hasOriginalRouteType a owl:DatatypeProperty ;
-    rdfs:label "Original Flow Code" ;
-    rdfs:comment "AGI/DAS 승급 전 원본 Flow Code" ;
-    rdfs:domain hvdc:Case ;
-    rdfs:range xsd:integer .
-
-hvdc:hasRouteOverrideReason a owl:DatatypeProperty ;
-    rdfs:label "Route Override Reason" ;
-    rdfs:comment "Flow Code 오버라이드 사유" ;
-    rdfs:domain hvdc:Case ;
+hvdc:hasRoutingEvidenceSource a owl:DatatypeProperty ;
+    rdfs:label "Routing Evidence Source" ;
+    rdfs:comment "Primary evidence used to classify the shipment routing pattern" ;
+    rdfs:domain hvdc:ShipmentUnit ;
     rdfs:range xsd:string .
 
-hvdc:hasRouteDescription a owl:DatatypeProperty ;
-    rdfs:label "Route Description" ;
-    rdfs:comment "Flow Code 설명" ;
-    rdfs:domain hvdc:Case ;
+hvdc:hasRoutingDescription a owl:DatatypeProperty ;
+    rdfs:label "Routing Description" ;
+    rdfs:comment "Human-readable description of the shipment routing pattern" ;
+    rdfs:domain hvdc:ShipmentUnit ;
     rdfs:range xsd:string .
 
-# Flow Code 값 제약 (SHACL)
+hvdc:requiresOperationalReview a owl:DatatypeProperty ;
+    rdfs:label "Requires Operational Review" ;
+    rdfs:comment "True when the shipment remains in MIXED or otherwise unresolved routing state" ;
+    rdfs:domain hvdc:ShipmentUnit ;
+    rdfs:range xsd:string .
+
+# RoutingPattern 값 제약 (SHACL)
 hvdc:ShipmentRouteShape a sh:NodeShape ;
-    sh:targetClass hvdc:Case ;
+    sh:targetClass hvdc:ShipmentUnit ;
     sh:property [
-        sh:path hvdc:hasRouteType ;
-        sh:minInclusive 0 ;
-        sh:maxInclusive 5 ;
-        sh:message "Flow Code는 0-5 범위여야 함" ;
+        sh:path hvdc:hasRoutingPattern ;
+        sh:in (hvdc:PRE_ARRIVAL hvdc:DIRECT hvdc:WH_ONLY hvdc:MOSB_DIRECT hvdc:WH_MOSB hvdc:MIXED) ;
+        sh:minCount 1 ;
+        sh:message "Shipment routing pattern must be one of the approved enum values" ;
     ] .
 ```
 
 #### 인스턴스 예시
 
 ```turtle
-# Flow Code 3 (MOSB 경유) 예시
-hvdc:case/HVDC-AGI-123 a hvdc:Case ;
-    hvdc:caseCode "HVDC-AGI-123" ;
+# MOSB_DIRECT 예시
+hvdc:shipment/HVDC-AGI-123 a hvdc:ShipmentUnit ;
+    hvdc:shipmentCode "HVDC-AGI-123" ;
     hvdc:hasFinalLocation hvdc:site/AGI ;
-    hvdc:hasRouteType "MOSB_DIRECT" ;
-    hvdc:hasOriginalRouteType "DIRECT" ;
-    hvdc:hasRouteOverrideReason "AGI/DAS 강제 MOSB 레그" ;
-    hvdc:hasRouteDescription "Port → MOSB → Site (AGI offshore)" ;
+    hvdc:hasRoutingPattern hvdc:MOSB_DIRECT ;
+    hvdc:hasRoutingEvidenceSource "PORT_PLAN + M115" ;
+    hvdc:hasRoutingDescription "Port → MOSB → Site (AGI offshore)" ;
     hvdc:hasWarehouseCount 0 ;
     hvdc:hasMOSBLeg true ;
     hvdc:hasSiteArrival true .
 
-# Flow Code 5 (혼합) 예시
-hvdc:case/HVDC-MIR-456 a hvdc:Case ;
-    hvdc:caseCode "HVDC-MIR-456" ;
-    hvdc:hasRouteType "MIXED" ;
-    hvdc:hasRouteDescription "Mixed/Waiting/Incomplete" ;
+# MIXED 예시
+hvdc:shipment/HVDC-MIR-456 a hvdc:ShipmentUnit ;
+    hvdc:shipmentCode "HVDC-MIR-456" ;
+    hvdc:hasRoutingPattern hvdc:MIXED ;
+    hvdc:hasRoutingDescription "Mixed/Waiting/Incomplete" ;
     hvdc:hasWarehouseCount 2 ;
     hvdc:hasMOSBLeg false ;
     hvdc:hasSiteArrival false ;
-    hvdc:requiresReview true .
+    hvdc:requiresOperationalReview "true" .
 ```
 
 ### SPARQL Query Examples
 
-#### 1. Flow Code 분포 분석
+#### 1. RoutingPattern 분포 분석
 
 ```sparql
 PREFIX hvdc: <https://hvdc-project.com/ontology/operations/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT ?routeType (COUNT(?case) AS ?count)
+SELECT ?routingPattern (COUNT(?shipment) AS ?count)
 WHERE {
-    ?case a hvdc:Case ;
-          hvdc:hasRouteType ?routeType .
+    ?shipment a hvdc:ShipmentUnit ;
+              hvdc:hasRoutingPattern ?routingPattern .
 }
-GROUP BY ?routeType
-ORDER BY ?routeType
+GROUP BY ?routingPattern
+ORDER BY ?routingPattern
 ```
 
-#### 2. AGI/DAS 강제 승급 케이스 조회
+#### 2. AGI/DAS 규칙 위반 후보 조회
 
 ```sparql
 PREFIX hvdc: <https://hvdc-project.com/ontology/operations/>
 
-SELECT ?case ?original ?final ?reason
+SELECT ?shipment ?routingPattern ?dest
 WHERE {
-    ?case a hvdc:Case ;
-          hvdc:hasRouteType ?final ;
-          hvdc:hasOriginalRouteType ?original ;
-          hvdc:hasRouteOverrideReason ?reason .
-    FILTER(?original != ?final)
+    ?shipment a hvdc:ShipmentUnit ;
+              hvdc:hasFinalLocation ?dest ;
+              hvdc:hasRoutingPattern ?routingPattern .
+    FILTER(?dest IN (hvdc:site/AGI, hvdc:site/DAS))
+    FILTER(?routingPattern NOT IN (hvdc:MOSB_DIRECT, hvdc:WH_MOSB, hvdc:MIXED))
 }
 ```
 
-#### 3. Flow Code 5 (비정상) 케이스 검토 리스트
+#### 3. MIXED (비정상) 케이스 검토 리스트
 
 ```sparql
 PREFIX hvdc: <https://hvdc-project.com/ontology/operations/>
 
-SELECT ?case ?caseCode ?whCount ?hasMOSB ?hasSite
+SELECT ?shipment ?shipmentCode ?whCount ?hasMOSB ?hasSite
 WHERE {
-    ?case a hvdc:Case ;
-          hvdc:caseCode ?caseCode ;
-          hvdc:hasRouteType "MIXED" ;
-          hvdc:hasWarehouseCount ?whCount ;
-          hvdc:hasMOSBLeg ?hasMOSB ;
-          hvdc:hasSiteArrival ?hasSite .
+    ?shipment a hvdc:ShipmentUnit ;
+              hvdc:shipmentCode ?shipmentCode ;
+              hvdc:hasRoutingPattern hvdc:MIXED ;
+              hvdc:hasWarehouseCount ?whCount ;
+              hvdc:hasMOSBLeg ?hasMOSB ;
+              hvdc:hasSiteArrival ?hasSite .
 }
-ORDER BY ?caseCode
+ORDER BY ?shipmentCode
 ```
 
-#### 4. 월별 Flow Code 효율성 추이
+#### 4. 월별 RoutingPattern 효율성 추이
 
 ```sparql
 PREFIX hvdc: <https://hvdc-project.com/ontology/operations/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT ?month ?routeType (COUNT(?case) AS ?count)
+SELECT ?month ?routingPattern (COUNT(?shipment) AS ?count)
 WHERE {
-    ?case a hvdc:Case ;
-          hvdc:hasRouteType ?routeType ;
-          hvdc:hasEventDate ?date .
+    ?shipment a hvdc:ShipmentUnit ;
+              hvdc:hasRoutingPattern ?routingPattern ;
+              hvdc:hasEventDate ?date .
     BIND(SUBSTR(STR(?date), 1, 7) AS ?month)
 }
-GROUP BY ?month ?routeType
-ORDER BY ?month ?routeType
+GROUP BY ?month ?routingPattern
+ORDER BY ?month ?routingPattern
 ```
 
 ### Operations Management KPIs
@@ -397,12 +391,12 @@ ORDER BY ?month ?routeType
 
 | KPI | 목표 | 계산 방식 |
 |-----|------|----------|
-| **직송 비율** | ≥30% | routingPattern DIRECT / 전체 * 100 |
-| **표준 경로 비율** | 40-50% | routingPattern WH_ONLY / 전체 * 100 |
-| **해상 운송 비율** | 20-30% | (routingPattern MOSB_DIRECT + WH_MOSB) / 전체 * 100 |
-| **비정상 비율** | <5% | routingPattern MIXED / 전체 * 100 |
-| **RouteType 분포** | WH_ONLY~WH_MOSB 지배적 | Σ(hasRoutingPattern counts) / Total |
-| **AGI/DAS 규칙 준수** | 100% | AGI/DAS 케이스 중 routingPattern MOSB_DIRECT/WH_MOSB 비율 |
+| **직송 비율** | ≥30% | hasRoutingPattern DIRECT / 전체 * 100 |
+| **표준 경로 비율** | 40-50% | hasRoutingPattern WH_ONLY / 전체 * 100 |
+| **해상 운송 비율** | 20-30% | (hasRoutingPattern MOSB_DIRECT + WH_MOSB) / 전체 * 100 |
+| **비정상 비율** | <5% | hasRoutingPattern MIXED / 전체 * 100 |
+| **RoutingPattern 분포** | WH_ONLY~WH_MOSB 지배적 | Σ(hasRoutingPattern counts) / Total |
+| **AGI/DAS 규칙 준수** | 100% | AGI/DAS 케이스 중 hasRoutingPattern MOSB_DIRECT/WH_MOSB/MIXED 비율 |
 
 #### Real-time Monitoring
 
@@ -423,70 +417,69 @@ ORDER BY ?month ?routeType
 #### 1. KPI Dashboard 연동
 
 ```python
-# /logi-master kpi-dash --flow-analysis
-flow_distribution = {
-    'route_type PRE_ARRIVAL (Planning)': count_by_flow[0],
-    'route_type DIRECT': count_by_flow[1],
-    'route_type WH_ONLY': count_by_flow[2],
-    'route_type MOSB_DIRECT': count_by_flow[3],
-    'route_type WH_MOSB': count_by_flow[4],
-    'route_type MIXED': count_by_flow[5],
+# /logi-master kpi-dash --routing-pattern-analysis
+routing_pattern_distribution = {
+    'routingPattern PRE_ARRIVAL': count_by_pattern["PRE_ARRIVAL"],
+    'routingPattern DIRECT': count_by_pattern["DIRECT"],
+    'routingPattern WH_ONLY': count_by_pattern["WH_ONLY"],
+    'routingPattern MOSB_DIRECT': count_by_pattern["MOSB_DIRECT"],
+    'routingPattern WH_MOSB': count_by_pattern["WH_MOSB"],
+    'routingPattern MIXED': count_by_pattern["MIXED"],
 }
 
 efficiency_metrics = {
-    'Direct Shipping Rate': flow_1_ratio,
-    'Average Flow Code': avg_flow_code,
-    'Abnormal Rate': flow_5_ratio,
+    'Direct Shipping Rate': direct_ratio,
+    'MIXED Review Rate': mixed_ratio,
     'AGI/DAS Compliance': agi_das_compliance,
 }
 ```
 
 #### 2. 5-Sheet Report 통합
 
-기존 5-Sheet Report에 Flow Code 분석 추가:
+기존 5-Sheet Report에 RoutingPattern 분석 추가:
 
 ```
-Sheet 1: Flow Code 월별 분포
-Sheet 2: WH·Site 집계 (Flow Code 세분화)
-Sheet 3: Pre-Arrival 상태 (Flow Code 0)
-Sheet 4: 전체 트랜잭션 (Flow Code 컬럼 추가)
-Sheet 5: Flow Code 효율성 KPI
+Sheet 1: RoutingPattern 월별 분포
+Sheet 2: WH·Site 집계 (RoutingPattern 세분화)
+Sheet 3: Pre-Arrival 상태 (PRE_ARRIVAL)
+Sheet 4: 전체 트랜잭션 (hasRoutingPattern 컬럼 추가)
+Sheet 5: RoutingPattern 효율성 KPI
 ```
 
 #### 3. SPARQL 검증 규칙 추가
 
-기존 12개 규칙에 Flow Code 관련 규칙 추가:
+기존 12개 규칙에 routingPattern 관련 규칙 추가:
 
 ```
-Rule 13: Flow Code는 0-5 범위
-Rule 14: AGI/DAS 케이스는 Flow Code ≥ 3
-Rule 15: Flow Code 5 케이스는 검토 플래그 필수
-Rule 16: FLOW_CODE_ORIG ≠ null이면 FLOW_OVERRIDE_REASON 필수
+Rule 13: ShipmentUnit.hasRoutingPattern 필수
+Rule 14: AGI/DAS 케이스는 hasRoutingPattern ∈ {MOSB_DIRECT, WH_MOSB, MIXED}
+Rule 15: AGI/DAS 케이스는 MOSB staging milestone M115 필수
+Rule 16: hasRoutingPattern = MIXED 이면 requiresOperationalReview 필수
 ```
 
 ---
 
 __Automation Hooks \(RPA\+LLM\)__
 
-- __/logi\-master kpi\-dash__: Flow/WH·Site 월별 피벗 \+ KPI 리포트 생성\.
+- __/logi\-master kpi\-dash__: RoutingPattern/WH·Site 월별 피벗 \+ KPI 리포트 생성\.
 - __/logi\-master report \-\-deep__: RDF 변환→SPARQL 검증→요약 리포트\.
 - __/logi\-master cert\-chk | invoice\-audit__: OFCO/비용센터 라벨링과 교차 검증\.
-- __/visualize\_data \-\-type=pkg\-flow__: Port→WH→\(MOSB\)→Site 흐름 시각화\(Flow Code 0–5\)\.
+- __/visualize\_data \-\-type=shipment-routing__: Port→WH→\(MOSB\)→Site 흐름 시각화\(RoutingPattern\)\.
 
 __QA / Gap 체크리스트__
 
 - 창고 vs 현장 컬럼 __완전 분리__ 적용 여부\(이중계산 방지\)\.
 - 출고 판정이 “다음 위치가 더 늦은 날짜” 규칙을 지키는가\.
-- Flow Code 0–5 경로 정의와 hop 계산 일치 여부\.
+- hasRoutingPattern 경로 정의와 milestone sequence 일치 여부\.
 - 전처리\(전각공백/날짜 정규화/중복제거\) 성공 여부\.
 - SPARQL 12 규칙 통과\(금액 음수/패키지 양수/시간 일관성 등\)\.
 - SQM 실측 vs 추정 비율 보고\(정책: 실측 비중을 단계적으로 상향\)\.
 
 __CmdRec \(바로 실행\)__
 
-1. __/logi\-master kpi\-dash \-\-KRsummary__ → 월별 WH/Site·Flow Code 요약 5\-시트 생성\.
+1. __/logi\-master kpi\-dash \-\-KRsummary__ → 월별 WH/Site·RoutingPattern 요약 5\-시트 생성\.
 2. __/logi\-master report \-\-deep__ → RDF 변환\+SPARQL 검증\+OFCO 라벨링\.
-3. __/visualize\_data \-\-type=pkg\-flow__ → Flow Code 0–5 동선 확인\(이상 경로 탐지\)\.
+3. __/visualize\_data \-\-type=shipment-routing__ → RoutingPattern 동선 확인\(이상 경로 탐지\)\.
 
 __한 줄 정리__
 
@@ -874,5 +867,4 @@ hvdci:LoadEvent/J71-067 a hvdc:LoadEvent ;
 - **SWL**: Safe Working Load
 - **VCG**: Vertical Center of Gravity
 - **CEP/Vetting**: 통제 구역 운영허가/검사
-
 

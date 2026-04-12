@@ -161,28 +161,24 @@ __4) 최소 예시(표현) — JSON-LD (요지)__
 {
   "@context": {
     "hvdc": "http://samsung.com/project-logistics#",
-    "hasCase": "hvdc:hasCase",
-    "hasDate": {"@id": "hvdc:hasDate", "@type": "xsd:dateTime"},
-    "hasLocation": {"@id": "hvdc:hasLocation", "@type": "@id"},
-    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"}
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"},
+    "wh_handling_cnt": {"@id": "hvdc:wh_handling_cnt", "@type": "xsd:integer"},
+    "warehouseDwellDays": {"@id": "hvdc:warehouseDwellDays", "@type": "xsd:integer"},
+    "flowConfirmationStatus": "hvdc:flowConfirmationStatus",
+    "flowEvidenceSource": "hvdc:flowEvidenceSource"
   },
-  "@type": "hvdc:TransportEvent",
-  "id": "EVT_208221_1",
-  "hasCase": "HE-208221",
-  "hasDate": "2025-05-13T08:00:00",
-  "hasLocation": {
-    "@type": "hvdc:IndoorWarehouse",
-    "name": "DSV Indoor",
-    "storageType": "Indoor"
-  },
-  "hasQuantity": 2,
-  "hasWeight": 694.00,
-  "hasCBM": 12.50,
+  "@id": "hvdc:WarehouseHandlingProfile-example-inline",
+  "@type": "hvdc:WarehouseHandlingProfile",
   "confirmedFlowCode": 2,
-  "hasWHHandling": 1,
-  "hasHVDCCode": "HE-208221"
+  "wh_handling_cnt": 1,
+  "flowConfirmationStatus": "confirmed",
+  "flowEvidenceSource": "EVT_208221_WH_IN_1",
+  "warehouseDwellDays": 5
 }
 ```
+
+> `ShipmentRoutingPattern` (`DIRECT/WH_ONLY/MOSB_DIRECT/WH_MOSB/MIXED/PRE_ARRIVAL`) is stored on the shipment or route layer, not inside `WarehouseHandlingProfile`.
 
 __5) 선택지(3) — 구축 옵션 (pro/con/$·risk·time)__
 
@@ -207,7 +203,7 @@ __5) 선택지(3) — 구축 옵션 (pro/con/$·risk·time)__
 __6) Roadmap (P→Pi→B→O→S + KPI)__
 
 - __P(Plan)__: 스코프 확정(창고: 7개, 이벤트: TransportEvent/StockSnapshot, 속성: 20개). __KPI__: 클래스 정의 완전성 ≥ 100%.
-- __Pi(Pilot)__: __DSV Indoor + MOSB__ 2창고 대상 __Flow Code 검증__ 적용. __KPI__: PKG Accuracy ↑ 99%, Flow Code 오류 ↓ 90%.
+- __Pi(Pilot)__: __DSV Indoor + MOSB__ 2창고 대상 __WarehouseHandlingProfile 검증__ 적용. __KPI__: PKG Accuracy ↑ 99%, WH 처리 등급 오류 ↓ 90%.
 - __B(Build)__: __SHACL 검증__ + __SPARQL 질의__ + __Excel→RDF 매핑__ 추가. __KPI__: 데이터 품질 오류 ↓ 95%, 질의 응답시간 ≤ 2초.
 - __O(Operate)__: 실시간 재고 추적, 자동 알림, KPI 대시보드. __KPI__: 실시간 동기화 지연 ≤ 5분.
 - __S(Scale)__: 7창고→글로벌 재사용, __RDF Web Vocabulary__로 공개 스키마 매핑. __KPI__: 타 프로젝트 적용 공수 ↓ 50%.
@@ -215,7 +211,7 @@ __6) Roadmap (P→Pi→B→O→S + KPI)__
 __7) Data·Sim·BI (운영 숫자 관점)__
 
 - __Stock Clock__: StockSnapshot = (Node, DateTime, Quantity, Weight, CBM) → 노드별 __재고 시계__ 운영.
-- __Flow Code Distribution__: FlowCode_t = Count(TransportEvent) by FlowCode(0~5) → 경로 효율성 분석.
+- __WH Handling Class Distribution__: Count(WarehouseHandlingProfile) by confirmedFlowCode(0~5) → 창고 처리 믹스 분석.
 - __WH Handling Efficiency__: 평균 경유 창고 횟수 추적, 최적화 기회 식별.
 - __PKG Accuracy Rate__: 시스템 PKG / 실제 PKG × 100% → 99% 이상 유지.
 - __Dangerous Cargo Compliance__: IMDG Code 준수율, HSE 절차 이행률 모니터링.
@@ -223,16 +219,16 @@ __7) Data·Sim·BI (운영 숫자 관점)__
 __8) Automation (RPA·LLM·Sheets·TG) — Slash Cmd 예시__
 
 - __/warehouse-master --fast stock-audit__ → 7개 창고별 __재고 정확성__ 검증→PKG Accuracy 리포트.
-- __/warehouse-master predict --AEDonly flow-efficiency__ → Flow Code 분포 분석 + 최적화 제안.
-- __/switch_mode LATTICE RHYTHM__ → 창고 용량 알림 + Flow Code 검증 교차검증.
+- __/warehouse-master predict --AEDonly wh-handling-mix__ → 창고 처리 등급 분포 분석 + 최적화 제안.
+- __/switch_mode LATTICE RHYTHM__ → 창고 용량 알림 + WarehouseHandlingProfile 검증 교차검증.
 - __/visualize_data --type=warehouse <stock.csv>__ → 창고별 재고 현황 시각화.
-- __/flow-code validate --strict__ → Flow Code(0~5) + WH Handling 일치성 검증.
+- __/wh-handling validate --strict__ → confirmedFlowCode(0~5) + wh_handling_cnt 일치성 검증.
 - __/dangerous-cargo check --compliance__ → IMDG Code 준수 상태 일괄 체크.
 
 __9) QA — Gap/Recheck 리스트__
 
 - __RDF 스키마 정합성__: Turtle 문법, OWL 클래스 정의, SHACL 규칙 검증.
-- __Flow Code 매핑__: 0~5 코드 정의, WH Handling 계산 로직, 비표준 값 처리.
+- __WarehouseHandlingProfile 매핑__: confirmedFlowCode 0~5 정의, wh_handling_cnt 계산 로직, 비표준 값 처리.
 - __Excel 매핑 규칙__: field_mappings 정확성, 데이터 타입 변환, NULL 값 처리.
 - __SPARQL 질의__: 문법 검증, 성능 최적화, 결과 정확성.
 - __JSON-LD 컨텍스트__: 네임스페이스 정의, 타입 매핑, 호환성 확인.
@@ -241,10 +237,10 @@ __10) Fail-safe "중단" 테이블 (ZERO 전략)__
 
 | __트리거(중단)__                           | __ZERO 액션__                              | __재개 조건__                         |
 | ------------------------------------------ | ------------------------------------------ | ------------------------------------- |
-| Flow Code 비표준 값(>5) 감지               | 이벤트 생성 중단, 데이터 정규화 요청       | Flow Code 0~5 범위 내 정규화 완료     |
+| confirmedFlowCode 비표준 값(>5) 감지      | 이벤트 생성 중단, 데이터 정규화 요청       | confirmedFlowCode 0~5 범위 내 정규화 완료 |
 | PKG Accuracy < 99%                        | 재고 실사 강제 실행, 시스템 PKG 재계산     | PKG Accuracy ≥ 99% 달성               |
 | 위험물 일반 창고 보관 감지                 | 즉시 격리, DangerousCargoWarehouse 이송   | IMDG Code 준수 창고로 이송 완료       |
-| WH Handling ≠ Flow Code 일치              | 이벤트 검증 실패, 경로 재검토              | WH Handling과 Flow Code 일치 확인     |
+| wh_handling_cnt ↔ confirmedFlowCode 불일치 | 이벤트 검증 실패, 근거 이벤트 재검토       | wh_handling_cnt와 confirmedFlowCode 일치 확인 |
 | StockSnapshot 음수 값                     | 재고 조정 중단, 원인 분석 요청             | 양수 값으로 수정 완료                 |
 | SHACL 검증 실패                           | 데이터 입력 중단, 스키마 위반 수정 요청    | SHACL 규칙 통과                       |
 | Excel→RDF 매핑 오류                       | 변환 중단, 매핑 규칙 재검토                | 매핑 규칙 수정 완료                   |
@@ -257,7 +253,7 @@ __11) 운영에 바로 쓰는 SHACL(요지)__
 @prefix hvdc: <http://samsung.com/project-logistics#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# TransportEvent 검증 (핵심 4요소)
+# TransportEvent 검증 (핵심 3요소)
 hvdc:TransportEventShape a sh:NodeShape ;
   sh:targetClass hvdc:TransportEvent ;
   sh:property [
@@ -277,26 +273,44 @@ hvdc:TransportEventShape a sh:NodeShape ;
     sh:class hvdc:Node ;
     sh:minCount 1 ;
     sh:message "Location must be a valid Node"
-  ] ;
+  ] .
+
+# WarehouseHandlingProfile 검증
+hvdc:WarehouseHandlingProfileShape a sh:NodeShape ;
+  sh:targetClass hvdc:WarehouseHandlingProfile ;
   sh:property [
     sh:path hvdc:confirmedFlowCode ;
     sh:datatype xsd:integer ;
     sh:minInclusive 0 ;
     sh:maxInclusive 5 ;
     sh:minCount 1 ;
-    sh:message "Flow Code must be 0~5 (v3.5)"
+    sh:message "confirmedFlowCode must be 0~5 on WarehouseHandlingProfile"
+  ] ;
+  sh:property [
+    sh:path hvdc:wh_handling_cnt ;
+    sh:datatype xsd:integer ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 3 ;
+    sh:minCount 1 ;
+    sh:message "wh_handling_cnt must be in range 0~3 on WarehouseHandlingProfile"
+  ] ;
+  sh:property [
+    sh:path hvdc:flowConfirmationStatus ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:message "flowConfirmationStatus is required on WarehouseHandlingProfile"
   ] .
 
-# Flow Code와 WH Handling 일치성 검증
-hvdc:FlowCodeConsistencyShape a sh:NodeShape ;
-  sh:targetClass hvdc:TransportEvent ;
+# confirmedFlowCode와 wh_handling_cnt 일치성 검증
+hvdc:WHHandlingConsistencyShape a sh:NodeShape ;
+  sh:targetClass hvdc:WarehouseHandlingProfile ;
   sh:sparql [
-    sh:message "WH Handling count must match Flow Code" ;
+    sh:message "wh_handling_cnt must match confirmedFlowCode warehouse class rules" ;
     sh:select """
       SELECT $this
       WHERE {
         $this hvdc:confirmedFlowCode ?fc .
-        $this hvdc:hasWHHandling ?wh .
+        $this hvdc:wh_handling_cnt ?wh .
         FILTER (
           (?fc = 0 && ?wh != 0) ||
           (?fc = 1 && ?wh != 0) ||
@@ -351,21 +365,21 @@ hvdc:StockAccuracyShape a sh:NodeShape ;
 __12) GitHub·재사용__
 
 - 리포지토리 __macho715/hvdc-warehouse-ontology__에 __/models (TTL/JSON-LD)__, __/rules (SHACL)__, __/queries (SPARQL)__, __/mappings (Excel→RDF)__ 디렉토리 구조 권장.
-- Flow Code 시스템은 __/mappings/flow-code-rules.json__으로 관리.
+- WarehouseHandlingProfile 규칙은 __/mappings/wh-handling-rules.json__ 또는 동등한 룰팩으로 관리.
 - 창고 인스턴스는 __/data/warehouse-instances.ttl__로 버전 관리.
 
 __13) Assumptions & Sources__
 
-- __가정:__ Flow Code 0~5(v3.5)는 HVDC 프로젝트 내부 표준. PKG Accuracy 99%는 운영 품질 기준. 위험물은 IMDG Code 분류 기준 따름. AGI/DAS는 MOSB 레그 필수. Excel 원본은 ETL 전용 폴더에서만 사용.
+- __가정:__ WarehouseHandlingProfile `confirmedFlowCode` 0~5(v3.5)는 HVDC 프로젝트 내부 창고 처리 표준. PKG Accuracy 99%는 운영 품질 기준. 위험물은 IMDG Code 분류 기준 따름. AGI/DAS는 MOSB 레그 증빙이 필요. Excel 원본은 ETL 전용 폴더에서만 사용.
 - __표준/근거:__ RDF/OWL 2.0, SHACL 1.1, SPARQL 1.1, JSON-LD 1.1, XSD 1.1, IMDG Code, IATA DGR, ISO 9001/14001, HVDC Warehouse Logistics Node Ontology v2.0.
 
 __14) 다음 액션(짧게)__
 
 - __/warehouse-master --fast stock-audit__ 로 7개 창고 대상 __재고 정확성__ 일괄 점검,
-- __/flow-code validate --strict__ 로 __Flow Code + WH Handling__ 일치성 검증,
+- __/wh-handling validate --strict__ 로 __confirmedFlowCode + wh_handling_cnt__ 일치성 검증,
 - __/visualize_data --type=warehouse <stock.csv>__ 로 __창고별 재고 현황__ 시각화.
 
-원하시면, 위 스택으로 __Flow Code 검증__과 __위험물 관리__부터 SHACL/룰팩을 묶어 드리겠습니다.
+원하시면, 위 스택으로 __WarehouseHandlingProfile 검증__과 __위험물 관리__부터 SHACL/룰팩을 묶어 드리겠습니다.
 
 ---
 
@@ -545,91 +559,71 @@ wh_handling_classes = {
 
 ---
 
-### Flow Code 계산 알고리즘 (`_override_flow_code()` - Lines 563-622)
+### confirmedFlowCode 결정 알고리즘 (`WarehouseHandlingProfile`)
 
-#### 입력 데이터 전처리 (Lines 568-584)
+#### 입력 데이터 전처리
 
 ```python
-# 창고 컬럼 분류 (MOSB 제외)
-WH_COLS = [w for w in self.warehouse_columns if w != "MOSB"]
-MOSB_COLS = [w for w in self.warehouse_columns if w == "MOSB"]
-
-# 0값과 빈 문자열을 NaN으로 치환 (notna() 오류 방지)
-for col in WH_COLS + MOSB_COLS:
-    if col in self.combined_data.columns:
-        self.combined_data[col] = self.combined_data[col].replace({0: np.nan, "": np.nan})
+warehouse_events = normalize_wh_events(event_df)
+wh_in_events = warehouse_events[warehouse_events["milestone"] == "M110"]
+mosb_events = warehouse_events[warehouse_events["location"] == "MOSB"]
+site_events = extract_site_receipts(event_df)
+route_pattern = shipment_row.get("routingPattern")
+destination = normalize_destination(shipment_row.get("declaredDestination"))
 ```
 
-**목적**: 데이터 품질 보장 및 일관성 있는 null 값 처리
+**목적**: `WarehouseHandlingProfile` 계산에 필요한 창고 증빙과 라우팅 증빙을 분리해서 읽습니다. 이 단계는 Port→Site 경로를 다시 분류하지 않고, 창고 처리 등급을 결정하기 위한 입력만 정리합니다.
 
-#### Pre Arrival 판별 (Lines 586-594)
+#### 핵심 분류 로직
 
 ```python
-# 명시적 Pre Arrival 판별
-status_col = "Status_Location"
-if status_col in self.combined_data.columns:
-    is_pre_arrival = self.combined_data[status_col].str.contains(
-        "Pre Arrival", case=False, na=False
-    )
+wh_in_cnt = len(wh_in_events)
+has_mosb = not mosb_events.empty
+has_site = not site_events.empty
+is_pre_arrival = wh_in_cnt == 0 and route_pattern == "PRE_ARRIVAL"
+
+if is_pre_arrival:
+    confirmed_flow_code = 0
+elif wh_in_cnt == 0 and route_pattern == "DIRECT":
+    confirmed_flow_code = 1
+elif has_mosb and wh_in_cnt >= 2:
+    confirmed_flow_code = 4
+elif has_mosb:
+    confirmed_flow_code = 3
+elif wh_in_cnt == 1:
+    confirmed_flow_code = 2
 else:
-    is_pre_arrival = pd.Series(False, index=self.combined_data.index)
+    confirmed_flow_code = 5
 ```
 
-**로직**: `Status_Location` 컬럼에서 "Pre Arrival" 문자열 포함 여부로 선적 전 단계 감지
+**분류 규칙:**
+- **Class 0**: WH In 증빙 없음 + Pre-Arrival 상태
+- **Class 1**: WH In 증빙 없음 + direct delivery confirmed
+- **Class 2**: WH In 1회 + MOSB 증빙 없음
+- **Class 3**: WH/MOSB 복합 패턴
+- **Class 4**: Multi-WH + MOSB
+- **Class 5**: 증빙 불완전 또는 상충
 
-#### 핵심 계산 로직 (Lines 596-609)
+#### AGI/DAS 도메인 룰
 
 ```python
-# 창고 Hop 수 계산
-wh_cnt = self.combined_data[WH_COLS].notna().sum(axis=1)
-
-# Offshore 계산 (MOSB 통과 여부)
-offshore = self.combined_data[MOSB_COLS].notna().any(axis=1).astype(int)
-
-# Flow Code 계산 (Off-by-One 버그 수정)
-base_step = 1  # Port → Site 기본 1스텝
-flow_raw = wh_cnt + offshore + base_step  # 1~5 범위
-
-# Pre Arrival은 무조건 0, 나머지는 1~4로 클립
-self.combined_data["FLOW_CODE"] = np.where(
-    is_pre_arrival,
-    0,  # Pre Arrival은 Code 0
-    np.clip(flow_raw, 1, 4),  # 나머지는 1~4
-)
+if destination in {"AGI", "DAS"} and confirmed_flow_code in {0, 1, 2}:
+    confirmed_flow_code = 3
+    flow_confirmation_status = "overridden"
 ```
 
-**계산 공식:**
-```
-FLOW_CODE = {
-    0                           if "Pre Arrival" in Status_Location
-    clip(wh_count + offshore + 1, 1, 4)  otherwise
-}
+**설명**: AGI/DAS는 MOSB 레그 증빙이 필요하므로, warehouse evidence가 약하게 잡혀도 최소 Class 3 이상으로 맞춥니다. 이 규칙은 `ShipmentRoutingPattern`을 대체하지 않고, `WarehouseHandlingProfile`의 최소 처리 등급만 보정합니다.
 
-where:
-- wh_count = 창고 컬럼(MOSB 제외)에서 날짜가 있는 개수
-- offshore = MOSB 컬럼에 날짜가 있으면 1, 없으면 0
-- base_step = 1 (Port → Site 기본값)
-```
-
-**예시:**
-- 창고 0개 + offshore 0 + 1 = **1** (Port → Site 직송)
-- 창고 1개 + offshore 0 + 1 = **2** (Port → WH → Site)
-- 창고 1개 + offshore 1 + 1 = **3** (Port → WH → MOSB → Site)
-- 창고 2개 + offshore 1 + 1 = **4** (Port → WH → WH → MOSB → Site)
-- 창고 3개 이상이어도 **4**로 클립 (최대값 제한)
-
-#### 설명 매핑 및 검증 (Lines 611-620)
+#### 설명 매핑 및 검증
 
 ```python
-# 설명 매핑
-self.combined_data["FLOW_DESCRIPTION"] = self.combined_data["FLOW_CODE"].map(
-    self.flow_codes
+profile_df["confirmedFlowCodeLabel"] = profile_df["confirmedFlowCode"].map(
+    wh_handling_classes
 )
 
-# 디버깅 정보 출력
-flow_distribution = self.combined_data["FLOW_CODE"].value_counts().sort_index()
-logger.info(f" Flow Code 분포: {dict(flow_distribution)}")
-logger.info(f" Pre Arrival 정확 판별: {is_pre_arrival.sum()}건")
+class_distribution = profile_df["confirmedFlowCode"].value_counts().sort_index()
+logger.info(f"WHP class distribution: {dict(class_distribution)}")
+logger.info(f"M110-backed profiles: {len(wh_in_events)}")
 ```
 
 ---
@@ -640,48 +634,47 @@ logger.info(f" Pre Arrival 정확 판별: {is_pre_arrival.sum()}건")
 
 | 항목 | v3.4 | v3.5 |
 |------|------|------|
-| **Flow Code 범위** | 0~4 | **0~5** |
-| **계산 방식** | 산술 계산 + clip | **관측 기반 규칙 적용** |
-| **AGI/DAS 처리** | 없음 | **도메인 룰 강제 적용** |
-| **혼합 케이스** | 없음 | **Flow Code 5로 명시적 분류** |
-| **원본 값 보존** | 없음 | **FLOW_CODE_ORIG 컬럼** |
-| **오버라이드 추적** | 없음 | **FLOW_OVERRIDE_REASON 컬럼** |
+| **등급 범위** | 0~4 | **0~5** |
+| **계산 방식** | route-step 산술 계산 | **warehouse evidence 기반 규칙 적용** |
+| **AGI/DAS 처리** | 없음 | **MOSB 증빙 기반 최소 등급 보정** |
+| **혼합 케이스** | 없음 | **Class 5로 명시적 분류** |
+| **증빙 보존** | 제한적 | **flowEvidenceSource + flowConfirmationStatus** |
+| **구조 분리** | route와 warehouse 혼재 | **ShipmentRoutingPattern과 WHP 분리** |
 
 #### v3.5 핵심 알고리즘
 
 **단계별 처리 순서 (WHP confirmedFlowCode 결정)**:
 
-1. **필드 검증 및 전처리** (컬럼명 정규화, 0→NaN)
-2. **관측값 계산** (is_pre_arrival, wh_cnt, has_mosb, has_site)
-3. **기본 WH 처리 분류 계산** (wh_handling_cnt 기반, 0~4)
-4. **AGI/DAS 도메인 오버라이드** (wh_cnt=0/1이라도 MOSB 레그 필수 → Class 3 이상)
-5. **혼합/미확정 케이스 처리** (→ Class 5)
-6. **최종 검증 및 WarehouseHandlingProfile 반영**
+1. **필드 정규화**: 이벤트 컬럼, destination, milestone 값을 정리합니다.
+2. **창고 증빙 추출**: M110 기반 WH In 횟수와 dwell evidence를 계산합니다.
+3. **MOSB 증빙 추출**: M115 또는 동등 MOSB staging evidence를 별도 플래그로 분리합니다.
+4. **기본 WH 처리 분류**: `wh_handling_cnt`와 MOSB 존재 여부로 Class 0~4를 산정합니다.
+5. **예외/혼합 처리**: 증빙이 비거나 상충하면 Class 5로 분류합니다.
+6. **도메인 보정**: AGI/DAS는 최소 Class 3 rule을 적용합니다.
+7. **최종 반영**: `WarehouseHandlingProfile`에 `confirmedFlowCode`, `flowConfirmationStatus`, `flowEvidenceSource`를 기록합니다.
 
 > ⚠️ 이 알고리즘은 `WarehouseHandlingProfile.confirmedFlowCode` 결정 전용입니다.
-> Port→Site 경로 분류(`ShipmentRoutingPattern`)는 별도로 관리됩니다.
+> Port→Site 경로 분류(`ShipmentRoutingPattern`)는 별도 레이어에서 관리됩니다.
 
-**AGI/DAS 도메인 룰 (WHP)**:
-> `declaredDestination ∈ {AGI, DAS}` 인 경우, WH 처리 분류 0/1/2는 3으로 승급 (MOSB 레그 포함 패턴 필수)
+**Class 5 케이스**:
+- MOSB 증빙은 있으나 최종 Site 증빙이 없음
+- 창고 증빙이 여러 개지만 상태가 모순됨
+- destination 또는 milestone 근거가 누락됨
 
-**Flow Code 5 케이스**:
-- MOSB 있으나 Site 없음
-- WH 2개 이상 + MOSB 없음
-
-**변환 결과** (실제 데이터 755건):
-- Flow Code 0: 71건 (Pre Arrival)
-- Flow Code 1: 255건 (직송)
-- Flow Code 2: 152건 (창고경유)
-- Flow Code 3: 131건 (MOSB경유)
-- Flow Code 4: 65건 (창고+MOSB)
-- Flow Code 5: 81건 (혼합/미완료)
-- AGI/DAS 강제 승급: 31건
+**예시 분포** (설명용):
+- Class 0: 71건 (WH In 미발생)
+- Class 1: 255건 (WH bypass confirmed)
+- Class 2: 152건 (single WH)
+- Class 3: 131건 (WH + MOSB)
+- Class 4: 65건 (multi-WH + MOSB)
+- Class 5: 81건 (mixed/pending)
+- AGI/DAS 보정: 31건
 
 ## Part 3: Operational Integration
 
 ### 창고 vs MOSB 구분 로직
 
-**창고 컬럼 (Lines 216-227):**
+**창고 컬럼 예시:**
 ```python
 self.warehouse_columns = [
     "DHL WH", "DSV Indoor", "DSV Al Markaz", "Hauler Indoor",
@@ -691,59 +684,55 @@ self.warehouse_columns = [
 ```
 
 **MOSB 특별 처리:**
-- MOSB는 창고이지만 **offshore 해상운송** 특성으로 별도 카운트
-- `wh_cnt`에서는 제외, `offshore` 변수로 독립 계산
-- MOSB 통과 시 Flow Code +1 증가 효과
+- MOSB는 top-level logistics ontology에서 Warehouse가 아니라 **Offshore Staging / Marine Interface Node**입니다.
+- `WarehouseHandlingProfile` 계산에서는 warehouse hop로 더하지 않고, `has_mosb` 증빙으로 분리합니다.
+- 이 증빙이 Class 3/4와 Class 2를 구분하는 핵심 입력이 됩니다.
 
-### Flow Code 활용 사례
+### WarehouseHandlingProfile 활용 사례
 
-#### 직접 배송 계산 (Lines 1099-1137)
-
-```python
-def calculate_direct_delivery(self, df: pd.DataFrame) -> Dict:
-    """직접 배송 계산 (Port → Site)"""
-    for idx, row in df.iterrows():
-        # Flow Code가 1인 경우 (Port → Site)
-        if row.get("FLOW_CODE") == 1:
-            # 현장으로 직접 이동한 항목들
-```
-
-#### Routing Analysis 시트 (Lines 1937-1957)
+#### WH bypass 확인
 
 ```python
-def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
-    """Flow Code 분석 시트 생성"""
-    flow_summary = df.groupby("FLOW_CODE").size().reset_index(name="Count")
-    flow_summary["FLOW_DESCRIPTION"] = flow_summary["FLOW_CODE"].map(
-        self.calculator.flow_codes
-    )
+def summarize_wh_bypass(whp_df: pd.DataFrame) -> pd.DataFrame:
+    confirmed = whp_df[whp_df["flowConfirmationStatus"] == "confirmed"]
+    return confirmed[confirmed["confirmedFlowCode"] == 1]
 ```
 
-#### Routing Traceability Dashboard (Lines 1739-1885)
+#### Warehouse handling 분석 시트
+
+```python
+def create_wh_handling_sheet(whp_df: pd.DataFrame) -> pd.DataFrame:
+    summary = whp_df.groupby("confirmedFlowCode").size().reset_index(name="Count")
+    return summary
+```
+
+#### Dashboard 분리 원칙
 
 **WH Handling KPI 계산에 활용:**
-- MOSB 통과율 (MOSB Pass Rate) — `ShipmentRoutingPattern ∈ {MOSB_DIRECT, WH_MOSB}` 비율
-- WH 미경유 비율 (WH Bypass Rate) — WH Handling Class 1 비율
-- 창고 평균 체류 일수 (Avg WH Dwell Days)
+- WH bypass rate — `confirmedFlowCode == 1`
+- MOSB-linked WH rate — `confirmedFlowCode IN (3, 4)`
+- 평균 창고 체류 — `warehouseDwellDays`
+
+**Route KPI 계산에 활용하지 않음:**
+- direct ratio, MOSB pass rate, site delivery rate는 `ShipmentRoutingPattern`과 milestone layer에서 계산합니다.
 
 ### 알고리즘 강점 (v3.5)
 
-1. **명확한 물류 패턴 분류**: 6단계(0~5)로 모든 물류 흐름 커버
-2. **견고한 예외 처리**: null 값, 빈 문자열 사전 정규화
-3. **정확한 Pre Arrival 판별**: ATA 또는 날짜 컬럼 기반 검증
-4. **AGI/DAS 도메인 룰**: 해상 현장 강제 MOSB 승급 자동화
-5. **혼합 케이스 분류**: Flow Code 5로 비정상 패턴 명시적 분류
-6. **원본 값 보존**: FLOW_CODE_ORIG 및 FLOW_OVERRIDE_REASON 추적
-7. **컬럼명 유연성**: 자동 정규화 및 다중 후보 지원
-8. **추적 가능성**: 분포 로그, 검증 메커니즘, TTL 속성 내장
+1. **창고 처리 중심 분류**: 6단계(0~5)로 warehouse handling scenario를 구분합니다.
+2. **증빙 기반 처리**: M110, M115, destination evidence를 따로 읽습니다.
+3. **레이어 분리**: route_type과 warehouse class를 같은 값으로 쓰지 않습니다.
+4. **AGI/DAS 규칙 반영**: offshore destination의 최소 warehouse class를 명시합니다.
+5. **혼합 케이스 명시화**: Class 5로 재검토 대상을 분리합니다.
+6. **추적 가능성**: `flowEvidenceSource`, `flowConfirmationStatus`, 분포 로그를 남깁니다.
+7. **SHACL 친화성**: WHP boundary와 class-range rule을 바로 검증할 수 있습니다.
 
 ### 제한사항 및 가정 (v3.5)
 
-1. **최대 Flow Code 5**: 혼합 케이스 추가로 범위 확장
-2. **MOSB 특수성**: 창고이지만 offshore로 별도 처리
-3. **ATA 또는 날짜 기반**: Pre Arrival 판별이 데이터 소스에 의존
-4. **날짜 기반 판단**: 창고 컬럼에 날짜가 있으면 경유로 간주
-5. **AGI/DAS 규칙**: Final_Location 자동 추출 시 신뢰도 의존
+1. **Class 0/1 의존성**: WH In이 없는 상태는 route-layer 증빙 품질에 영향을 받습니다.
+2. **MOSB 데이터 품질**: MOSB staging evidence가 누락되면 Class 3/4 판정이 흔들릴 수 있습니다.
+3. **Destination 품질**: AGI/DAS 보정은 declaredDestination 정규화 정확도에 의존합니다.
+4. **혼합 소스 입력**: 엑셀 컬럼명과 이벤트 로그가 다르면 전처리 정규화가 선행돼야 합니다.
+5. **Manual review 필요**: Class 5는 자동 종결 대상이 아니라 운영 검토 대상입니다.
 
 ## JSON-LD Examples
 
@@ -753,16 +742,20 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 {
   "@context": {
     "hvdc": "http://samsung.com/project-logistics#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"},
+    "wh_handling_cnt": {"@id": "hvdc:wh_handling_cnt", "@type": "xsd:integer"},
+    "flowConfirmationStatus": "hvdc:flowConfirmationStatus",
+    "flowEvidenceSource": "hvdc:flowEvidenceSource",
+    "warehouseDwellDays": {"@id": "hvdc:warehouseDwellDays", "@type": "xsd:integer"}
   },
   "@id": "hvdc:WarehouseHandlingProfile-example-001",
   "@type": "hvdc:WarehouseHandlingProfile",
-  "hvdc:confirmedFlowCode": 2,
-  "hvdc:wh_handling_cnt": 1,
-  "hvdc:offshoreTransitRequired": false,
-  "hvdc:flowConfirmationStatus": "confirmed",
-  "hvdc:flowEvidenceSource": "EVT_208221_WHIn_1"
+  "confirmedFlowCode": 2,
+  "wh_handling_cnt": 1,
+  "flowConfirmationStatus": "confirmed",
+  "flowEvidenceSource": "EVT_208221_WHIn_1",
+  "warehouseDwellDays": 5
 }
 ```
 
@@ -771,16 +764,19 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 ```json
 {
   "@context": {
-    "hvdc": "http://samsung.com/project-logistics#"
+    "hvdc": "http://samsung.com/project-logistics#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"},
+    "wh_handling_cnt": {"@id": "hvdc:wh_handling_cnt", "@type": "xsd:integer"},
+    "flowConfirmationStatus": "hvdc:flowConfirmationStatus",
+    "flowEvidenceSource": "hvdc:flowEvidenceSource"
   },
   "@id": "hvdc:WarehouseHandlingProfile-example-002",
   "@type": "hvdc:WarehouseHandlingProfile",
-  "hvdc:confirmedFlowCode": 3,
-  "hvdc:wh_handling_cnt": 1,
-  "hvdc:offshoreTransitRequired": true,
-  "hvdc:declaredDestination": "AGI",
-  "hvdc:flowConfirmationStatus": "overridden",
-  "hvdc:flowEvidenceSource": "AGI/DAS requires MOSB leg — Class upgraded from 1"
+  "confirmedFlowCode": 3,
+  "wh_handling_cnt": 1,
+  "flowConfirmationStatus": "overridden",
+  "flowEvidenceSource": "AGI/DAS requires MOSB leg — Class upgraded from 1"
 }
 ```
 
@@ -789,13 +785,19 @@ def create_flow_analysis_sheet(self, stats: Dict) -> pd.DataFrame:
 ```json
 {
   "@context": {
-    "hvdc": "http://samsung.com/project-logistics#"
+    "hvdc": "http://samsung.com/project-logistics#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "confirmedFlowCode": {"@id": "hvdc:confirmedFlowCode", "@type": "xsd:integer"},
+    "wh_handling_cnt": {"@id": "hvdc:wh_handling_cnt", "@type": "xsd:integer"},
+    "flowConfirmationStatus": "hvdc:flowConfirmationStatus",
+    "flowEvidenceSource": "hvdc:flowEvidenceSource"
   },
   "@id": "hvdc:WarehouseHandlingProfile-example-003",
   "@type": "hvdc:WarehouseHandlingProfile",
-  "hvdc:confirmedFlowCode": 5,
-  "hvdc:flowConfirmationStatus": "tentative",
-  "hvdc:flowEvidenceSource": "MOSB_WITHOUT_SITE: MOSB event exists but no confirmed Site destination"
+  "confirmedFlowCode": 5,
+  "wh_handling_cnt": 2,
+  "flowConfirmationStatus": "tentative",
+  "flowEvidenceSource": "MOSB_WITHOUT_SITE: MOSB event exists but no confirmed Site destination"
 }
 ```
 
@@ -875,10 +877,10 @@ WHERE {
 
 ## 추천 명령어
 
-- `/flow-code analyze --distribution` [Flow Code 분포 분석 (0~5)]
-- `/flow-code validate --strict` [Flow Code 일관성 검증]
-- `/flow-code agi-das-compliance` [AGI/DAS 도메인 룰 검증]
-- `/flow-code mixed-case-analysis` [Flow Code 5 혼합 케이스 분석]
+- `/wh-handling analyze --distribution` [WarehouseHandlingProfile 분포 분석 (0~5)]
+- `/wh-handling validate --strict` [confirmedFlowCode 일관성 검증]
+- `/wh-handling agi-das-compliance` [AGI/DAS 도메인 룰 검증]
+- `/wh-handling mixed-case-analysis` [Class 5 혼합 케이스 분석]
 - `/mosb-pass-rate calculate` [MOSB 통과율 계산]
 - `/warehouse-efficiency analyze` [창고 효율성 분석]
 
@@ -898,5 +900,3 @@ WHERE {
 ---
 
 이 WarehouseHandlingProfile 알고리즘(v3.5)은 HVDC 프로젝트의 창고 처리 분류를 정량화합니다. **confirmedFlowCode(0~5)**는 창고 경유 횟수, MOSB 레그 포함 여부, 특수 취급 패턴을 나타내며, 전체 물류 경로 분류(`ShipmentRoutingPattern`)와 명확히 분리됩니다.
-
-

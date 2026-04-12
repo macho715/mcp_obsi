@@ -38,7 +38,7 @@ oute_type, shipment_stage, leg_sequence, JourneyLeg)
 
 ### Route Type in Barge & Bulk Cargo Operations
 
-Barge and bulk cargo operations in the HVDC project use `MarineRoutingPattern` and `offshoreDeliveryPattern` as primary routing classifiers. Most bulk materials require **MOSB transit** for offshore delivery to AGI/DAS sites. The barge/LCT transport model inherently follows the **Port → MOSB → Site** pattern, with MOSB serving as an **Offshore Staging / Marine Interface Node** — it does not own `confirmedFlowCode` and is not a warehouse node. MOSB staging is recorded via Milestone **M115 (MOSB Staged)**.
+Barge and bulk cargo operations in the HVDC project use `MarineRoutingPattern` and `offshoreDeliveryPattern` as primary routing classifiers. Most bulk materials require **MOSB transit** for offshore delivery to AGI/DAS sites. The barge/LCT transport model follows the **Port → MOSB → Site** pattern, with MOSB serving as an **Offshore Staging / Marine Interface Node**. Marine routing is tracked through `MarineRoutingPattern`, `offshoreDeliveryPattern`, and Milestone **M115 (MOSB Staged)**.
 
 **Key Routing Patterns:**
 - **route_type: MOSB_DIRECT**: Port → MOSB → AGI/DAS (Direct bulk cargo to offshore)
@@ -100,19 +100,17 @@ Maritime Logistics
 
 ---
 
-> **[Marine/Bulk Domain Rule]** Barge/LCT operations use offshoreDeliveryPattern and MOSBStagingPattern as primary descriptors.
-> Marine domain does NOT assign confirmedFlowCode. MOSB is an **Offshore Staging / Marine Interface Node**, not a Warehouse.
+> **[Marine/Bulk Domain Rule]** Marine and bulk cargo use `MarineRoutingPattern` for route classification and `offshoreDeliveryPattern` for the offshore leg.
+> MOSB is an **Offshore Staging / Marine Interface Node** and is tracked via Milestone **M115 (MOSB Staged)**.
 
 ## Route Type Integration in Barge & Bulk Cargo Operations
 
 ### Bulk Cargo Route Type Patterns
 
-> **[Marine/Bulk Domain Rule]**: Marine and bulk cargo use `MarineRoutingPattern` and `offshoreDeliveryPattern`.
-> MOSB is NOT a warehouse and does NOT trigger `confirmedFlowCode`.
-> MOSB staging is recorded via Milestone M115 (MOSB Staged).
-> Marine domain does NOT assign `confirmedFlowCode`.
+> **[Marine/Bulk Domain Rule]**: Marine and bulk cargo use `MarineRoutingPattern` for route classification and `offshoreDeliveryPattern` for the offshore leg.
+> MOSB is an **Offshore Staging / Marine Interface Node** and MOSB staging is recorded via Milestone M115 (MOSB Staged).
 
-Bulk and project cargo in the HVDC logistics network use `MarineRoutingPattern` descriptors for offshore routing classification. All routing evidence feeds `WarehouseHandlingProfile` for warehouse-class assignments — the marine domain does NOT assign `confirmedFlowCode`.
+Bulk and project cargo in the HVDC logistics network use `MarineRoutingPattern` descriptors for offshore routing classification. Marine routing evidence is captured through `offshoreDeliveryPattern` and MOSB staging milestones.
 
 | MarineRoutingPattern | Bulk Cargo Pattern | Typical Cargo | Routing |
 |----------------------|-------------------|---------------|---------|
@@ -124,7 +122,7 @@ Bulk and project cargo in the HVDC logistics network use `MarineRoutingPattern` 
 
 #### LCT Transport Model
 
-Landing Craft Tank (LCT) and barge operations are the **exclusive mode** for bulk cargo delivery to AGI/DAS offshore platforms. This transport model enforces the following Flow Code characteristics:
+Landing Craft Tank (LCT) and barge operations are the **exclusive mode** for bulk cargo delivery to AGI/DAS offshore platforms. This transport model uses `MarineRoutingPattern` and `offshoreDeliveryPattern` to describe the marine leg:
 
 ```
 LCT Operation Process:
@@ -142,7 +140,7 @@ Marine Routing Classification:
 
 #### MOSB as Offshore Staging / Marine Interface Node
 
-MOSB (Mussafah Offshore Supply Base) is the **mandatory transit point** for all AGI/DAS bulk cargo. MOSB is an **Offshore Staging / Marine Interface Node** — it is NOT a warehouse and does NOT trigger `confirmedFlowCode`. MOSB staging is recorded via Milestone **M115 (MOSB Staged)**.
+MOSB (Mussafah Offshore Supply Base) is the **mandatory transit point** for all AGI/DAS bulk cargo. MOSB is an **Offshore Staging / Marine Interface Node** and MOSB staging is recorded via Milestone **M115 (MOSB Staged)**.
 
 ```
 MOSB Functional Role:
@@ -159,7 +157,7 @@ Marine Routing Impact:
 
 ### RDF/OWL Implementation
 
-#### Route Type Properties for Bulk Cargo
+#### Marine Routing Properties for Bulk Cargo
 
 ```turtle
 @prefix debulk: <https://hvdc-project.com/ontology/bulk-cargo/> .
@@ -168,7 +166,7 @@ Marine Routing Impact:
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Marine Routing Pattern for Bulk Cargo
-debulk:hasRouteType a owl:DatatypeProperty ;
+debulk:marineRoutingPattern a owl:DatatypeProperty ;
     rdfs:label "Marine Routing Pattern" ;
     rdfs:comment "Marine routing pattern for bulk cargo operations" ;
     rdfs:domain debulk:Cargo ;
@@ -213,9 +211,9 @@ debulk:mosbDepartureDate a owl:DatatypeProperty ;
     rdfs:domain debulk:Cargo ;
     rdfs:range xsd:date .
 
-debulk:hasRouteDescription a owl:DatatypeProperty ;
-    rdfs:label "Route Description" ;
-    rdfs:comment "Human-readable route description for the cargo (e.g. Port → MOSB → AGI). Replaces deprecated hasRouteDescription." ;
+debulk:marineRoutingDescription a owl:DatatypeProperty ;
+    rdfs:label "Marine Routing Description" ;
+    rdfs:comment "Human-readable marine routing description for the cargo (e.g. Port → MOSB → AGI)." ;
     rdfs:domain debulk:Cargo ;
     rdfs:range xsd:string .
 
@@ -229,7 +227,7 @@ debulk:AGIDASBulkConstraint a sh:NodeShape ;
             SELECT $this
             WHERE {
                 $this debulk:finalDestination ?dest ;
-                      debulk:hasRouteType ?routeType .
+                      debulk:marineRoutingPattern ?routeType .
                 FILTER(?dest IN ("AGI", "DAS") && ?routeType NOT IN ("MOSB_DIRECT","WH_MOSB","MIXED"))
             }
         """ ;
@@ -243,11 +241,12 @@ debulk:AGIDASBulkConstraint a sh:NodeShape ;
 debulk:cargo/TRANSFORMER-AGI-T1 a debulk:Cargo ;
     debulk:cargoId "TRANSFORMER-AGI-T1" ;
     debulk:cargoType "Power Transformer" ;
-    debulk:weight 85000 ;  # kg
+    debulk:weight "85000.0"^^xsd:decimal ;  # kg
     debulk:dimensions "12.5m × 4.2m × 5.8m" ;
+    debulk:placedOn debulk:Deck_A1 ;
     debulk:finalDestination "AGI" ;
-    debulk:hasRouteType "MOSB_DIRECT" ;
-    debulk:hasRouteDescription "Port → MOSB → AGI (LCT direct)" ;
+    debulk:marineRoutingPattern "MOSB_DIRECT" ;
+    debulk:marineRoutingDescription "Port → MOSB → AGI (LCT direct)" ;
     debulk:requiresMOSBStaging true ;
     debulk:mosbArrivalDate "2024-11-10"^^xsd:date ;
     debulk:mosbDepartureDate "2024-11-12"^^xsd:date ;
@@ -284,14 +283,14 @@ debulk:operation/MOSB-STAGING-T1 a debulk:OperationTask ;
 ```sparql
 PREFIX debulk: <https://hvdc-project.com/ontology/bulk-cargo/>
 
-SELECT ?routeType (COUNT(?cargo) AS ?count) (SUM(?weight) AS ?totalWeight)
+SELECT ?marineRoutingPattern (COUNT(?cargo) AS ?count) (SUM(?weight) AS ?totalWeight)
 WHERE {
     ?cargo a debulk:Cargo ;
-           debulk:hasRouteType ?routeType ;
+           debulk:marineRoutingPattern ?marineRoutingPattern ;
            debulk:weight ?weight .
 }
-GROUP BY ?routeType
-ORDER BY ?routeType
+GROUP BY ?marineRoutingPattern
+ORDER BY ?marineRoutingPattern
 ```
 
 #### 2. MOSB Staging Duration Analysis
@@ -316,14 +315,14 @@ ORDER BY DESC(?stagingDays)
 ```sparql
 PREFIX debulk: <https://hvdc-project.com/ontology/bulk-cargo/>
 
-SELECT ?cargo ?destination ?routeType ?mosbStaging ?compliant
+SELECT ?cargo ?destination ?marineRoutingPattern ?mosbStaging ?compliant
 WHERE {
     ?cargo a debulk:Cargo ;
            debulk:finalDestination ?destination ;
-           debulk:hasRouteType ?routeType ;
+           debulk:marineRoutingPattern ?marineRoutingPattern ;
            debulk:requiresMOSBStaging ?mosbStaging .
     FILTER(?destination IN ("AGI", "DAS"))
-    BIND(IF(?routeType IN ("MOSB_DIRECT","WH_MOSB","MIXED") && ?mosbStaging = true, "PASS", "FAIL") AS ?compliant)
+    BIND(IF(?marineRoutingPattern IN ("MOSB_DIRECT","WH_MOSB","MIXED") && ?mosbStaging = true, "PASS", "FAIL") AS ?compliant)
 }
 ORDER BY ?compliant ?destination
 ```
@@ -456,23 +455,18 @@ debulk:LashingAssemblyShape a sh:NodeShape ;
   sh:targetClass debulk:LashingAssembly ;
   sh:property [ sh:path debulk:uses ; sh:minCount 2 ; sh:class debulk:LashingElement ] ;
   sh:rule [ a sh:SPARQLRule ;
-    sh:prefixes ( ) ;
     sh:construct """
+      PREFIX debulk: <http://example.com/bulk#>
       CONSTRUCT { ?this debulk:status "UNDER_CAPACITY" }
       WHERE {
         ?this debulk:requiredCapacity ?req .
-        {
-          SELECT ?this (SUM(?effWll) AS ?sumWll)
-          WHERE { ?this debulk:uses ?e . ?e debulk:wll ?w . ?e debulk:angleDeg ?a .
-                  BIND( (?w) * sin(?a * 3.14159/180) AS ?effWll ) }
-          GROUP BY ?this
-        }
+        ?this debulk:computedEffectiveWll ?sumWll .
         FILTER (?sumWll < (?req * 2.0))
       }
     """ ] .
 ```
 
-*해석*: 라싱 요소의 유효 WLL(각도 보정 합계)이 요구능력×안전율(2.0) 미만이면 `UNDER_CAPACITY` 플래그.
+*해석*: 라싱 요소의 유효 WLL 합계가 이미 계산돼 있다고 가정할 때, 요구능력×안전율(2.0) 미만이면 `UNDER_CAPACITY` 플래그.
 
 ## SPARQL 질의 예시
 
@@ -632,5 +626,3 @@ debulk:cogX a owl:DatatypeProperty .
 이 온톨로지는 **계획↔실행↔검증**을 하나의 그래프로 잇는다.
 동일 데이터를 문서, 체크리스트, 계산, 리포트로 **재사용**할 수 있게 해준다.
 CSV/OWL/SHACL 샘플을 기반으로 바로 파일화를 진행하면 현장 적용 속도가 빨라진다.
-
-

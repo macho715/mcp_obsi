@@ -1,446 +1,385 @@
-# [AGENTS.md](http://AGENTS.md)
+# AGENTS.md
 
-## Mandatory
+Repository-wide instructions for AI agents working in this HVDC Logistics Ontology / Knowledge Graph repository.
 
-- This repository builds the **HVDC Logistics Dashboard**, which is a **program-wide logistics control tower**, not a warehouse dashboard.
-- Always design for the **full shipment journey across all sites** first.
-- Apply the installed React / Next.js best-practices guidance when changing dashboard code.
-- Before changing UI, data model, API, labels, filters, or drilldowns, check whether the change improves **full-chain shipment visibility**.
-- Prefer **route_type / stage language / shipment history** over warehouse-only interpretation.
-- Do not add business-truth hardcoding when config, API, DB view, or i18n should own it.
-- If the requested change risks turning Overview into a warehouse-first screen, stop and correct the design before coding.
+This repository is an **end-to-end HVDC project logistics control model**, not a warehouse-only model. Work across procurement interface, packing, port / terminal, customs, marine / MOSB, warehouse, site delivery, inspection, exception, claim, and cost.
 
----
+## 1. Scope and precedence
 
-## 1. Product Definition
+1. This file applies repository-wide unless a deeper `AGENTS.md` overrides it for a subtree.
+2. `CONSOLIDATED-00-master-ontology.md` is the **canonical semantic spine**.
+3. `CONSOLIDATED-08-communication.md` is an **Evidence Layer** document, not a Core Master Model document.
+4. If any extension conflicts with `CONSOLIDATED-00`, follow `CONSOLIDATED-00` and patch the extension. Do not promote extension-local legacy semantics into the master spine.
+5. Treat legacy route-based Flow Code language as **migration debt**, not design authority.
 
-The product is a **program-level HVDC logistics dashboard**.
+## 2. Current repository state
 
-It must help users understand:
+The repository contains a correct master-spine direction plus mixed legacy content in some extensions.
 
-- what the cargo is
-- where it came from
-- where it is now
-- where it must go next
-- whether it arrived
-- when it arrived
-- what happened before now
+- Canonical authority: `CONSOLIDATED-00-master-ontology.md`
+- Evidence-only extension: `CONSOLIDATED-08-communication.md`
+- Files that often require semantic migration attention: `CONSOLIDATED-02`, `03`, `04`, `05`, `07`, `09`
+- `CONSOLIDATED-06` may contain both newer aligned patterns and older legacy fragments depending on section/example
 
-The dashboard must never be treated as:
+When editing any extension, actively remove legacy Flow Code route semantics instead of preserving them.
 
-- warehouse-only dashboard
-- warehouse operations board
-- warehouse storage board
-- warehouse aging board
+## 3. Mission of every change
 
-Warehouse is only **one stage** in the chain.
+Every change should improve one or more of these without breaking the others:
 
----
+- ontology-based data model
+- knowledge graph traversal
+- identifier-based traceability from any entry point
+- AI-ready operational logic
+- SHACL / SPARQL validation
+- dashboard / automation / visibility readiness
 
-## 2. Core Journey Contract
+## 4. Non-negotiable semantic rules
 
-The default logistics chain is:
+### 4.1 Flow Code boundary
 
-Origin → Port / Air Entry → Customs → Warehouse → MOSB / Offshore Leg → Site Delivery
+`Flow Code` is a **warehouse-handling classification only**.
 
-All main dashboard logic must preserve this chain.
+Allowed owner:
+- `WarehouseHandlingProfile.confirmedFlowCode`
 
-When implementing or reviewing any component, ask:
-
-1. Does this help users understand the full cargo journey?
-2. Does this show where cargo came from?
-3. Does this show where cargo is now?
-4. Does this show where cargo must go next?
-5. Does this preserve milestone timing and history?
-
-If not, it does not belong in Overview.
-
----
-
-## 3. Overview Guardrail
-
-Overview is **voyage-first / shipment-first / all-sites-first**.
-
-Overview must prioritize:
-
-- total shipment visibility
-- stage distribution across the full chain
-- current location
-- next movement
-- site delivery readiness
-- cross-site visibility
-- shipment lookup and history entry
-
-Overview must not be dominated by:
-
-- warehouse rows
-- warehouse-only KPIs
-- warehouse-only labels
-- warehouse-only filters
-- warehouse-only interpretation of status
-
-If warehouse content is needed, it must stay in:
-
-- Cargo
-- warehouse detail
-- case drilldown
-- site detail
-- operational tabs
-
----
-
-## 4. No Shipment Evaluation Rule
-
-There is **no approved shipment evaluation model** in this product.
-
-Do not create or expose:
-
-- shipment score
-- shipment grade
-- shipment rating
-- shipment performance score
-- shipment health score
-- shipment evaluation card
-- arbitrary anomaly judgment
-- traffic-light evaluation without approved business rule
-
-Allowed shipment information:
-
-- factual stage
-- factual location
-- timestamps
-- dwell
-- leadtime
-- missing milestone note
-- current stage
-- next stage
-- route_type
-- source confidence
-- record gap note
-
-If no explicit business-approved formula exists, shipment detail must remain **fact-only**.
-
----
-
-## 5. Shipment Detail Contract
-
-A shipment detail view must focus on **traceability**, not judgment.
-
-Every shipment detail must prioritize:
-
-### 5.1 Identity
-
-- SCT SHIP NO
-- HVDC reference
-- Packing No / Package No
-- invoice / shipment reference
-- case no when available
-- vendor
-- ship mode
-
-### 5.2 Current State
-
-- current stage
-- current location
-- last confirmed timestamp
-- destination site
-- next required stage
-
-### 5.3 Route
-
-- origin
-- entry point
+Do **not** use Flow Code as:
+- shipment route classification
+- port routing decision
 - customs stage
-- warehouse stage
-- MOSB / offshore stage
-- site stage
-- route_type
+- document-extracted operational status
+- invoice / cost ownership field
+- marine / offshore routing class
+- operations KPI bucket for end-to-end route logic
 
-### 5.4 Movement History
+If you see any of the following in new or edited content, treat them as invalid unless explicitly deprecated and migrated:
+
+- `assignedFlowCode`
+- `extractedFlowCode`
+- `costByFlowCode`
+- `hasLogisticsFlowCode` used as end-to-end route status
+- `Flow Code 0~5` used to describe Port → WH → MOSB → Site journey semantics
+
+### 4.2 Shipment visibility model
+
+Program-wide shipment visibility must use:
+
+- `RoutingPattern`
+- `JourneyStage`
+- `MilestoneEvent`
+- `JourneyLeg`
+
+Do not replace milestone logic, route logic, site delivery logic, or customs logic with Flow Code.
+
+### 4.3 MOSB classification
+
+`MOSB` is an **Offshore Staging / Marine Interface Node**.
+
+It is **not** a Warehouse in the top-level ontology.
+
+You may model optional storage capability at MOSB, but do not collapse MOSB into Warehouse semantics.
+
+### 4.4 Evidence versus ownership
+
+Documents, port records, and cost records may provide **evidence** about routing or handling. They do not own warehouse Flow Code.
+
+Examples:
+- Port may record `plannedRoutingPattern`, not `assignedFlowCode`
+- OCR may extract `routeEvidence`, not `extractedFlowCode`
+- Cost may read `routeBasedCostDriver` and warehouse evidence, not own Flow Code
+- Marine / bulk may use `MarineRoutingPattern`, not `Flow Code 3/4/5`
 
-- origin timestamp
-- entry timestamp
-- customs cleared timestamp
-- warehouse in timestamp
-- warehouse out timestamp
-- MOSB / offshore timestamp if applicable
-- site arrival timestamp
-- final delivered timestamp if applicable
+## 5. Canonical vocabulary by domain
 
-### 5.5 Duration
-
-- warehouse dwell days
-- customs dwell days
-- dispatch leadtime
-- total elapsed days when available
-
-### 5.6 Data Quality
-
-- missing milestone note
-- missing location note
-- source system
-- source confidence
-
-Do not default shipment detail to evaluation panels.
-
----
-
-## 6. History Lookup Is Mandatory
-
-The dashboard must support shipment history lookup by:
-
-- Packing No
-- Package No
-- HVDC reference
-- SCT SHIP NO
-- Shipment Invoice No
-- BL / CI reference when available
-- case no when available
-
-A search result must not stop at “current status”.
-
-It must make it possible to see:
-
-- where the cargo was before
-- how long it stayed there
-- when it moved
-- when it reached site
-- what stage is still pending
-
-History must be **timeline-first**.
-
----
-
-## 7. Search Contract
-
-Search is a logistics traceability function, not a warehouse row finder.
-
-Search must prioritize:
-
-1. shipment identity lookup
-2. current location lookup
-3. next movement lookup
-4. shipment history lookup
-5. site / vendor / route drilldown
-
-Search result and deep link behavior must preserve:
-
-- shipment id
-- SCT SHIP NO
-- site
-- vendor
-- route_type
-- stage context
-
-A drilldown must answer:
-
-- what it is
-- where it is
-- where it came from
-- what happened before
-- what happens next
-
----
-
-## 8. Warehouse Bias Prevention
-
-Before adding any KPI, card, table, map layer, drawer, tooltip, or filter, verify:
-
-“Is this helping users understand the whole shipment journey across all sites?”
-
-If the answer is no, do not place it in Overview.
-
-Warehouse-specific information must not dominate:
-
-- top-level KPI rail
-- overview map legend
-- overview status labels
-- shipment global search
-- shipment detail header
-- route interpretation
-
-Warehouse-specific content belongs only in detail contexts.
-
----
-
-## 9. Public Language Rule
-
-Use public shipment language, not internal-only warehouse shorthand.
-
-Prefer:
-
-- Origin
-- Port / Air Entry
-- Customs
-- Warehouse
-- MOSB / Offshore
-- Site Delivery
-- route_type
-- current stage
-- next stage
-- site arrival
-
-Avoid exposing internal-only language when a public logistics term exists.
-
-Overview-linked UI should prefer:
-
-- route_type
-- plain stage language
-- shipment movement language
-
-This matches the active component contract.
-
----
-
-## 10. Hardcode Ban for Operational Truth
-
-Do not hardcode operational facts in components.
-
-Never hardcode:
-
-- site list
-- vendor list
-- shipment status labels
-- stage labels
-- route labels
-- KPI values
-- totals
-- leadtime values
-- history labels tied to business truth
-- evaluation labels
-- business thresholds that belong to config or API
-
-These must come from:
-
-- API
-- DB view
-- shared config
-- i18n dictionary
-- typed constants with business ownership
-
-Allowed hardcode only for:
-
-- spacing
-- layout size
-- purely visual values
-- skeleton counts
-- non-business animation values
-
----
-
-## 11. Data Source Priority
-
-Use factual source priority.
-
-Program-wide shipment summary:
-
-- shipment-level SSOT
-- overview / chain / pipeline aggregates
-
-Hitachi / Siemens package detail:
-
-- WH truth source where approved
-
-Other vendors:
-
-- HVDC shipment aggregate source
-
-Do not fabricate case-level detail for vendors that only have shipment-level data.
-
-If detail exists, label it clearly.
-
-If only aggregate exists, label it clearly.
-
----
-
-## 12. Acceptance Criteria for Any Dashboard Change
-
-A dashboard change is incomplete unless all checks pass:
-
-1. It improves or preserves full-program logistics visibility.
-2. It does not turn Overview into a warehouse dashboard.
-3. It does not add shipment evaluation without approved logic.
-4. It preserves shipment history lookup behavior.
-5. It helps show origin, current location, next destination, and arrival timing.
-6. It uses dynamic data, not hardcoded business truth.
-7. It preserves URL-restored drilldown behavior.
-8. It documents source / fallback behavior.
-9. It includes loading / empty / error / success handling.
-10. It keeps user-facing stage language aligned with the active product contract.
-
----
-
-## 13. Stop Rules
-
-Stop implementation and ask for clarification if any of these occur:
-
-- Overview starts becoming warehouse-first.
-- A shipment evaluation / score / grade is requested without approved formula.
-- Shipment history is omitted from detail view.
-- Current location and next stage are not represented.
-- Site arrival timing is ignored when data exists.
-- Hardcoded business truth is added where config or API should own it.
-- A change hides the full chain and only shows warehouse state.
-
----
-
-## 14. Dashboard-Specific Review Questions
-
-Before merging any dashboard change, answer all of these:
-
-1. Is this still a full HVDC logistics dashboard, not a warehouse dashboard?
-2. Does this show origin → current location → next stage → destination?
-3. Did we avoid shipment scoring / evaluation UI?
-4. Can users retrieve shipment history by Packing No / HVDC / SCT reference?
-5. Are route labels public and factual?
-6. Did we add any new hardcoded business truth?
-7. If a user opens one shipment, can they understand its past, present, and next movement?
-
----
-
-## 15. Output Format for Dashboard Work
-
-For dashboard audits or implementation plans, return:
-
-- Problem
-- Scope
-- Risks
-- Data sources
-- Hardcoded items to remove
-- Required API / view changes
-- UI changes
-- Validation checklist
-- Stop conditions
-
-
-
-## Shipment History Minimum UX  
-Any shipment detail must show current location, next stage, milestone history, warehouse dwell if applicable, and site arrival datetime if available.  
-  
-## Overview Priority  
-Overview = whole program + whole chain + all sites.  
-Cargo / WH = detail and warehouse operations.  
-  
-## No Shipment Evaluation
-If no approved scoring model exists, show facts only.
-
----
-
-## 16. Technical Quick Reference
-
-> Full technical detail: `apps/logistics-dashboard/CLAUDE.md`
-
-**Key commands:**
-```bash
-pnpm --filter @repo/logistics-dashboard dev        # dev server
-pnpm --filter @repo/logistics-dashboard typecheck  # 0 errors required
-pnpm --filter @repo/logistics-dashboard test       # 70 tests, all must pass
-npx supabase db push                               # apply DB migrations
+### 5.1 Core shipment / logistics
+Use:
+- `ShipmentRoutingPattern`: `PRE_ARRIVAL`, `DIRECT`, `WH_ONLY`, `MOSB_DIRECT`, `WH_MOSB`, `MIXED`
+- `JourneyStage`
+- `MilestoneEvent`
+- `JourneyLeg`
+- `DeliveryStatus`
+- `SiteReceiptStatus`
+
+### 5.2 Port (`CONSOLIDATED-07`)
+Use:
+- `plannedRoutingPattern`
+- `declaredDestination`
+- `offshoreTransitRequired`
+- `importRoutingDecision`
+
+Do not use:
+- `assignedFlowCode`
+- `Port-Assigned Flow Code`
+
+### 5.3 Document / OCR (`CONSOLIDATED-03`)
+Use:
+- `routeEvidence`
+- `destinationEvidence`
+- `mosbLegIndicator`
+
+Do not use:
+- `extractedFlowCode`
+- document-owned Flow Code assignment
+
+### 5.4 Cost (`CONSOLIDATED-05`)
+Use:
+- `costByRoutingPattern`
+- `routeBasedCostDriver`
+- `WarehouseHandlingProfile.wh_handling_cnt`
+
+Do not use:
+- `costByFlowCode`
+- prose that says “Flow Code directly impacts cost” as canonical model language
+
+### 5.5 Marine / Bulk (`CONSOLIDATED-04`)
+Use:
+- `MarineRoutingPattern`
+- `offshoreDeliveryPattern`
+- `MOSB staging`
+- `LCT / barge leg`
+
+Do not use:
+- `Flow Code 3/4/5` as marine classification language
+
+### 5.6 Warehouse (`CONSOLIDATED-02`)
+Use:
+- `WarehouseHandlingProfile`
+- `confirmedFlowCode`
+- `flowConfirmationStatus`
+- `wh_handling_cnt`
+- warehouse receiving / put-away / storage / picking / staging / dispatch
+
+Keep warehouse Flow Code inside warehouse-internal operational logic.
+
+### 5.7 Operations / KPI (`CONSOLIDATED-09`)
+Use:
+- route-type analytics
+- milestone analytics
+- warehouse KPI
+- stock KPI
+- cost KPI
+
+Do not use:
+- end-to-end route analytics framed as Flow Code analytics
+
+## 6. Required data separation
+
+Keep these layers distinct in prose, TTL, SHACL, SPARQL, tables, and examples:
+
+- **Master Data**: Project, Package, PO, Vendor, MaterialMaster, Port, Terminal, Warehouse, Site, EquipmentResource
+- **Transaction Data**: Shipment, ShipmentLeg, PortCall, CustomsEntry, ReleaseOrder, Delivery, WarehouseTask, SiteReceipt
+- **Document Data**: CI, PL, BL, BOE, DO, Permit, MRR, MRI, ITP, MAR, MRS, MIS, POD, GRN, OSDR
+- **Event Data**: MilestoneEvent, InspectionEvent, WarehouseEvent, MarineEvent
+- **Exception Data**: Delay, Damage, Shortage, NCR, Claim
+- **Cost Data**: Invoice, InvoiceLine, Duty, DEM/DET, PortCharge, WarehouseCharge, MarineCharge
+- **Evidence Data**: AuditRecord, CommunicationEvent, ApprovalAction
+
+Do not collapse:
+- `CustomsEntry` into `BOE document`
+- `ReleaseOrder` into `DO document`
+- `SiteReceipt` into `MRR` / `OSDR document`
+
+## 7. Identity and key policy
+
+Follow the rule:
+
+**One internal object, many external identifiers.**
+
+Every design and example should support an identifier pattern with at least:
+
+- `identifierScheme`
+- `identifierValue`
+- `normalizedValue`
+- `sourceSystem`
+- `isPrimary`
+- `validFrom`
+- `validTo`
+
+Expected identifier families:
+- Project: `projectCode`
+- Procurement: `packageNo`, `poNo`, `vendorCode`
+- Material: `materialCode`, `mfgPartNo`, `serialNo`, `HVDC_CODE`
+- Shipment: `shipmentId`, `bookingNo`, `BL No.`, `voyageNo`, `rotationNo`
+- Container: `containerNo`, `sealNo`
+- Customs: `BOE No.`, declaration line ref
+- Release: `DO No.`, gate pass ref
+- Warehouse: warehouse receipt no., location code
+- Exception / Cost: `exceptionId`, `claimRef`, `invoiceNo`, `costCode`
+
+`HVDC_CODE` is a cross-cutting engineering / logistics tag. It is **not** the sole graph identity anchor.
+
+## 8. Milestone governance
+
+Use a first-class milestone model.
+
+Minimum canonical milestone dictionary:
+- `M10` Cargo Ready
+- `M20` Packed / Marked
+- `M30` Pickup Completed
+- `M40` Export Cleared
+- `M50` Terminal Received
+- `M60` Loaded On Board
+- `M61` ATD
+- `M70` Transshipment Occurred
+- `M80` ATA
+- `M90` BOE Submitted
+- `M91` BOE Cleared
+- `M92` DO Released
+- `M100` Gate-out Completed
+- `M110` Warehouse Received
+- `M111` Put-away Completed
+- `M120` Picked / Staged
+- `M121` Dispatched
+- `M130` Site Arrived
+- `M131` Site Inspected — Good
+- `M132` Site Inspected — OSD
+- `M140` POD / GRN / Handover
+- `M150` Claim Opened
+- `M160` Cost Closed
+
+Offshore-specific extensions such as `M115`, `M116`, `M117` may exist, but they must remain consistent with the master spine.
+
+`WarehouseHandlingProfile.confirmedFlowCode` may only be confirmed after `M110`.
+
+## 9. Validation gates that must never be bypassed
+
+### Standard validation command for consolidated ontology docs
+
+For the consolidated ontology document set, the repo-local standard validation gate is:
+
+```powershell
+.venv\Scripts\python.exe scripts\validate_logi_ontology_docs.py
 ```
 
-**SSOT files — never bypass these:**
-- Numeric thresholds / page sizes → `lib/config/dashboardSettings.ts`
-- Site list → `types/sites.ts` (`CORE_SITE_CODES`, `SITE_LAND_CODES`, `SITE_ISLAND_CODES`)
-- UI labels → `lib/i18n/translations.ts`
+Apply this gate to:
+- `CONSOLIDATED-02-warehouse-flow.md`
+- `CONSOLIDATED-04-barge-bulk-cargo.md`
+- `CONSOLIDATED-09-operations.md`
 
-**Deploy:** `git push origin main` → Vercel auto-deploys. No manual step needed.
+Use this command before claiming:
+- semantic migration complete
+- publication blocker count = 0
+- SHACL validation complete for the consolidated ontology subset
+
+`grep` gates and manual spot-checks are still useful, but they do not replace this command for the `02/04/09` document group.
+
+### VIOLATION-1
+`confirmedFlowCode` found outside `WarehouseHandlingProfile` → immediate block
+
+### VIOLATION-2
+For `AGI` / `DAS` shipments using `MOSB_DIRECT`, `WH_MOSB`, or `MIXED`, if `M130 Site Arrived` exists but `M115 MOSB Staged` does not exist → immediate block
+
+### Additional mandatory checks
+- no milestone model may be replaced by Flow Code
+- no new integer route-type property where the conceptual value is a named routing pattern
+- no document model may own operational status if it only provides evidence
+
+## 10. Standards alignment policy
+
+When adding or revising ontology content, align with these standards where relevant:
+
+- `GS1 EPCIS/CBV` for event visibility
+- `DCSA Track & Trace` for container / shipping milestones
+- `UN/CEFACT BSP-RDM` for semantic reference data
+- `WCO Data Model` for customs semantics
+- `PROV-O` for provenance / evidence
+- `OWL-Time` for time modeling
+- `SKOS` for controlled vocabularies
+- `DQV` for data quality metadata
+
+Use standards as alignment anchors, not boilerplate filler.
+
+## 11. File-specific responsibilities
+
+- `CONSOLIDATED-00-master-ontology.md`  
+  Canonical semantic spine. Any semantic change starts here.
+
+- `CONSOLIDATED-01-core-framework-infra.md`  
+  High-level standards, regulations, nodes, and project framework.
+
+- `CONSOLIDATED-02-warehouse-flow.md`  
+  Warehouse-only operational logic and `WarehouseHandlingProfile`. Remove route lifecycle semantics.
+
+- `CONSOLIDATED-03-document-ocr.md`  
+  Document evidence, OCR, trust, provenance, cross-document validation. Do not assign Flow Code here.
+
+- `CONSOLIDATED-04-barge-bulk-cargo.md`  
+  Marine / bulk / heavy-lift / offshore extension. Use marine routing semantics.
+
+- `CONSOLIDATED-05-invoice-cost.md`  
+  Invoice, tariff, cost guard, rate verification, cost traceability. Use route-based cost driver plus warehouse evidence.
+
+- `CONSOLIDATED-06-material-handling.md`  
+  End-to-end material-handling extension. Express movement through `RoutingPattern + MilestoneStatus`, not legacy Flow Code chains.
+
+- `CONSOLIDATED-07-port-operations.md`  
+  PortCall, ServiceEvent, tariff / invoice linkage, import routing decision. Port may declare routing intent, not warehouse Flow Code.
+
+- `CONSOLIDATED-08-communication.md`  
+  Evidence layer only. Connect to core through `AuditRecord`, `CommunicationEvent`, and `ApprovalAction` only.
+
+- `CONSOLIDATED-09-operations.md`  
+  Operations analytics / reporting / KPI layer. Consume canonical semantics; do not redefine them.
+
+## 12. Editing workflow for agents
+
+1. Read the relevant section of `CONSOLIDATED-00` first.
+2. For semantic changes, patch `CONSOLIDATED-00` before or together with the extension.
+3. If an extension still contains legacy terms, migrate the prose, TTL, SHACL, SPARQL, examples, and KPI language in the same change.
+4. Do not leave mixed terminology in one file.
+5. Do not patch examples only; update surrounding vocabulary and validation logic too.
+6. If evidence is insufficient, mark it explicitly as:
+   - `GAP:` missing design evidence
+   - `ASSUMPTION:` target-state design assumption
+7. Never invent current operational truth from analogy or guesswork.
+8. After editing `CONSOLIDATED-02`, `CONSOLIDATED-04`, or `CONSOLIDATED-09`, run `.venv\Scripts\python.exe scripts\validate_logi_ontology_docs.py` before reporting completion.
+
+## 13. Routing guidance for agents
+
+To avoid unnecessary reading:
+
+- Start with `CONSOLIDATED-00`
+- Then read only the target extension plus directly linked dependencies
+- Use `CONSOLIDATED-08` only for evidence / communication work
+- Use legacy fragments only when performing migration or deprecation work
+- Prefer canonical vocabulary from the spine over repeated prose in extensions
+
+## 14. Modeling and writing conventions
+
+- Use English standard logistics terms first
+- Add Korean explanation only where it improves local readability
+- Use ISO date / datetime formats
+- Use explicit milestone codes for event transitions
+- Use two decimal places for monetary examples
+- Keep object / property names stable once canonicalized
+- Prefer string enums / SKOS concepts for routing patterns; do not encode them as integers
+- Keep prose, TTL, SHACL, SPARQL, tables, and examples semantically aligned
+
+## 15. Query-connectivity requirement
+
+Any new design must preserve traversal from at least these entry points:
+
+- ETA / ETD / ATA / ATD
+- `HVDC_CODE`
+- Vendor / Vendor Code
+- Package No. / PO No.
+- Material Code
+- Shipment ID
+- Container No. / Seal No.
+- BL No.
+- BOE No.
+- DO No.
+- Warehouse / Warehouse Location
+- Site Code
+- Exception ID / Claim Ref
+- Cost Code / Invoice No.
+
+If a change breaks upstream / downstream traversal from one of these keys, it is not acceptable.
+
+## 16. Planning documents
+
+For large semantic migrations, cross-file refactors, or validation-pack rewrites:
+
+- create or update a plan document before editing many files
+- keep the plan synchronized with the actual patch set
+- do not start wide refactors without naming the canonical target vocabulary first

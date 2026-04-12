@@ -30,6 +30,19 @@ def test_parse_ttl(tmp_path):
 
     assert len(nodes) == 2
     assert any(n["data"]["id"] == "http://example.org/Issue1" for n in nodes)
+    assert all({"id", "label", "type"} <= set(node["data"].keys()) for node in nodes)
     assert len(edges) == 1
+    assert all({"source", "target", "label"} <= set(edge["data"].keys()) for edge in edges)
     assert edges[0]["data"]["source"] == "http://example.org/Shipment1"
     assert edges[0]["data"]["target"] == "http://example.org/Issue1"
+
+    node_by_id = {node["data"]["id"]: node["data"] for node in nodes}
+    assert node_by_id["http://example.org/Issue1"]["type"] == "LogisticsIssue"
+    assert node_by_id["http://example.org/Issue1"]["label"] == "Issue1"
+    assert node_by_id["http://example.org/Issue1"]["name"] == "Port Delay"
+    assert node_by_id["http://example.org/Shipment1"]["type"] == "Shipment"
+    assert node_by_id["http://example.org/Shipment1"]["label"] == "Shipment1"
+
+    node_ids = set(node_by_id)
+    assert all(edge["data"]["source"] in node_ids for edge in edges)
+    assert all(edge["data"]["target"] in node_ids for edge in edges)

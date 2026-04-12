@@ -304,3 +304,5 @@ export function GraphView({
     </div>
   );
 }
+
+export default GraphView;
