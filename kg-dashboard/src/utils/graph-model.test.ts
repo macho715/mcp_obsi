@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildGraphIndex,
   buildEgoView,
   buildIssueView,
   buildSearchView,
   buildSummaryView,
   computeDegrees,
+  deriveProvenanceChain,
   findSearchMatches,
   findMatchingNodes,
+  getEdgeId,
   getCollapsedCountSummary,
 } from './graph-model';
 import type { GraphEdge, GraphNode } from '../types/graph';
@@ -401,5 +404,26 @@ describe('graph-model helpers', () => {
       matchedField: 'portOfLoading',
       reasonLabel: 'Matched in POL',
     });
+  });
+
+  it('derives source -> claim -> issue/lesson provenance chain', () => {
+    const nodes = [
+      node('shipment/1', 'Shipment 1', 'Shipment'),
+      node('claim/1', 'Claim 1', 'Unknown'),
+      node('issue/1', 'Issue 1', 'LogisticsIssue'),
+    ];
+    const edges = [
+      edge('shipment/1', 'claim/1', 'supports'),
+      edge('claim/1', 'issue/1', 'indicates'),
+    ];
+    const index = buildGraphIndex(nodes, edges);
+    const selectedEdge = edges.find((item) => getEdgeId(item) === 'claim/1|issue/1|indicates') ?? null;
+    const selectedNode = nodes.find((item) => item.data.id === 'issue/1') ?? null;
+
+    const chain = deriveProvenanceChain(selectedNode, selectedEdge, index);
+
+    expect(chain.source?.data.id).toBe('claim/1');
+    expect(chain.claim?.data.id).toBe('issue/1');
+    expect(chain.issueOrLesson?.data.id).toBe('issue/1');
   });
 });

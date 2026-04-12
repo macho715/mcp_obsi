@@ -39,10 +39,24 @@ describe('kg-dashboard UI rule alignment', () => {
         searchTerm=""
         searchField="all"
         searchMatches={[searchMatch]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
         hubSummaries={[]}
         viewMode="summary"
         onSearchTermChange={() => {}}
         onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         hubThreshold={200}
@@ -76,6 +90,14 @@ describe('kg-dashboard UI rule alignment', () => {
         searchTerm=""
         searchField="all"
         searchMatches={[searchMatch]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
         hubSummaries={[
           {
             id: 'hub/mosb',
@@ -89,6 +111,12 @@ describe('kg-dashboard UI rule alignment', () => {
         viewMode="summary"
         onSearchTermChange={() => {}}
         onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
         onSelectSearchMatch={() => {}}
         onViewModeChange={() => {}}
         selectedNodeLabel="MOSB"

@@ -36,6 +36,18 @@ export interface GraphEdge {
   data: GraphEdgeData;
 }
 
+export interface ProvenanceChain {
+  source?: GraphNode | null;
+  claim?: GraphNode | null;
+  issueOrLesson?: GraphNode | null;
+}
+
+export interface VisibilityReason {
+  code: 'filter-match' | 'view-slice' | 'manual-pin' | 'manual-expand' | 'manual-hidden-excluded';
+  label: string;
+  detail: string;
+}
+
 export interface GraphSlice {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -55,6 +67,21 @@ export interface GraphMetrics {
 export type GraphViewMode = 'summary' | 'issues' | 'search' | 'ego';
 export type GraphCompanionView = 'graph' | 'table' | 'timeline' | 'schema';
 export type GraphSearchField = 'all' | 'coe' | 'pol' | 'pod' | 'shipMode' | 'atd' | 'ata';
+export type OntologyQueryPresetId = 'all' | 'issue_location' | 'shipment_route' | 'vendor_network';
+
+export interface GraphQueryState {
+  term: string;
+  searchField: GraphSearchField;
+  classFilter: string;
+  propertyFilter: string;
+  relationTypeFilter: string;
+}
+
+export interface SavedGraphQuery {
+  id: string;
+  name: string;
+  query: GraphQueryState;
+}
 
 export interface GraphSelection {
   nodeId: string | null;
