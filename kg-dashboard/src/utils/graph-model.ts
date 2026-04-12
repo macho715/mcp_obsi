@@ -13,6 +13,14 @@ const ISSUE_TYPE: GraphNodeType = 'LogisticsIssue';
 const LESSON_TYPE: GraphNodeType = 'IncidentLesson';
 type CollapsedNeighborType = 'Shipment' | 'Vessel' | 'Vendor';
 const COLLAPSED_TYPES: CollapsedNeighborType[] = ['Shipment', 'Vessel', 'Vendor'];
+const SEARCHABLE_METADATA_ALIASES: Array<[string, string[]]> = [
+  ['countryOfExport', ['coe', 'country of export']],
+  ['portOfLoading', ['pol', 'port of loading']],
+  ['portOfDischarge', ['pod', 'port of discharge']],
+  ['shipMode', ['ship mode', 'shipping mode', 'mode']],
+  ['actualDeparture', ['atd', 'actual departure']],
+  ['actualArrival', ['ata', 'actual arrival']],
+];
 
 function dedupeEdges(edges: GraphEdge[]): GraphEdge[] {
   const seen = new Set<string>();
@@ -502,17 +510,11 @@ function getPriority(node: GraphNode | undefined): number {
 }
 
 function matchesNodeQuery(node: GraphNode, normalizedQuery: string): boolean {
-  return [node.data.id, node.data.label, node.data['rdf-schema#label']]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-    .includes(normalizedQuery);
+  return getSearchableValues(node).some((value) => value.includes(normalizedQuery));
 }
 
 function getSearchScore(node: GraphNode, normalizedQuery: string): number {
-  const values = [node.data.label, node.data['rdf-schema#label'], node.data.id]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
+  const values = getSearchableValues(node);
 
   const exactMatch = values.some((value) => value === normalizedQuery);
   if (exactMatch) {
@@ -525,6 +527,22 @@ function getSearchScore(node: GraphNode, normalizedQuery: string): number {
   }
 
   return 1_000 - getPriority(node);
+}
+
+function getSearchableValues(node: GraphNode): string[] {
+  const values = [node.data.id, node.data.label, node.data['rdf-schema#label']]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  SEARCHABLE_METADATA_ALIASES.forEach(([field, aliases]) => {
+    const value = node.data[field];
+    if (typeof value === 'string' && value.trim()) {
+      values.push(value.toLowerCase());
+      values.push(...aliases);
+    }
+  });
+
+  return values;
 }
 
 function getNumericField(node: GraphNode, field: string): number {

@@ -329,4 +329,56 @@ describe('graph-model helpers', () => {
       'shipment/1',
     ]);
   });
+
+  it('matches shipment nodes by route metadata values', () => {
+    const nodes: GraphNode[] = [
+      node('shipment/1', 'HVDC-001', 'Shipment', {
+        portOfLoading: 'Le Havre',
+        portOfDischarge: 'Mina Zayed',
+        countryOfExport: 'FRANCE',
+        shipMode: 'SEA',
+        actualDeparture: '2023-11-12',
+        actualArrival: '2023-12-01',
+      }),
+      node('shipment/2', 'HVDC-002', 'Shipment', {
+        portOfLoading: 'Busan',
+        portOfDischarge: 'Jebel Ali',
+      }),
+    ];
+
+    expect(findMatchingNodes(nodes, 'Le Havre', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+    expect(findMatchingNodes(nodes, 'Mina Zayed', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+    expect(findMatchingNodes(nodes, 'FRANCE', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+  });
+
+  it('matches shipment nodes by route metadata aliases such as POL and POD', () => {
+    const nodes: GraphNode[] = [
+      node('shipment/1', 'HVDC-001', 'Shipment', {
+        portOfLoading: 'Le Havre',
+        portOfDischarge: 'Mina Zayed',
+        shipMode: 'SEA',
+        actualDeparture: '2023-11-12',
+        actualArrival: '2023-12-01',
+      }),
+    ];
+
+    expect(findMatchingNodes(nodes, 'POL', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+    expect(findMatchingNodes(nodes, 'POD', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+    expect(findMatchingNodes(nodes, 'ATD', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+    expect(findMatchingNodes(nodes, 'ATA', 5).map((item) => item.data.id)).toEqual([
+      'shipment/1',
+    ]);
+  });
 });
