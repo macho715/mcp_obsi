@@ -24,3 +24,7 @@ data/*.sqlite3
 .git/
 .cursor/hooks/logs/
 .cursor/hooks/state/
+~$*
+doc_diff.txt
+pytest_out.txt
+patchgpt*.md
