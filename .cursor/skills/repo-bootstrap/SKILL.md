@@ -3,6 +3,11 @@ name: repo-bootstrap
 description: Initialize the local Python environment, create .env from .env.example, and verify the basic repo scaffold. Use when bootstrapping the project on a new machine.
 disable-model-invocation: true
 ---
+
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> C:\Users\jichu\Downloads\valut
+
 # Repo Bootstrap
 
 ## When to Use

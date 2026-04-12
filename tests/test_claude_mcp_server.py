@@ -22,6 +22,8 @@ def test_create_claude_mcp_server_exposes_read_only_search_fetch_and_recent_list
         "search",
         "fetch",
         "list_recent_memories",
+        "search_wiki",
+        "fetch_wiki",
     ]
 
 
@@ -37,9 +39,16 @@ def test_create_claude_mcp_server_write_profile_exposes_memory_write_tools(tmp_p
         "search",
         "fetch",
         "list_recent_memories",
+        "search_wiki",
+        "fetch_wiki",
         "save_memory",
         "get_memory",
         "update_memory",
+        "sync_wiki_index",
+        "append_wiki_log",
+        "write_wiki_page",
+        "lint_wiki",
+        "reconcile_conflict",
     ]
 
 
@@ -74,6 +83,7 @@ def test_claude_write_profile_marks_write_tools_non_read_only(tmp_path: Path):
 
     save_tool = server._tool_manager.get_tool("save_memory")
     update_tool = server._tool_manager.get_tool("update_memory")
+    sync_tool = server._tool_manager.get_tool("sync_wiki_index")
 
     assert save_tool.annotations.readOnlyHint is False
     assert save_tool.annotations.destructiveHint is False
@@ -81,6 +91,7 @@ def test_claude_write_profile_marks_write_tools_non_read_only(tmp_path: Path):
     assert update_tool.annotations.readOnlyHint is False
     assert update_tool.annotations.destructiveHint is False
     assert update_tool.annotations.openWorldHint is False
+    assert sync_tool.annotations.readOnlyHint is False
 
 
 def test_claude_search_treats_explicit_recent_note_query_as_recent_browse(tmp_path: Path):

@@ -1,0 +1,328 @@
+# Guideline_Abu_Dhabi_Logistics
+
+## 1) Executive Summary
+
+* `Abu Dhabi Logistics`는 UAE HVDC 현장의 **중앙 물류 통제방**입니다. 단일 site 운영방이 아니라 **DAS / AGI / MOSB / MW4 / Port / Vessel / Yard / Gate pass / Crane / FLIFT / Inspection**을 한 채널에서 통합 조정합니다. 
+* 실제 운용은 `delivery plan + vessel movement + yard control + gate pass + equipment coordination + document/inspection follow-up`의 6축으로 움직입니다. 
+* 반복 리스크는 **FLIFT 지연, crane availability mismatch, high tide / harbor restriction, TPI/TUV/inspection hold, HCS damage, yard congestion**입니다. 
+* 따라서 이 그룹은 단순 보고방이 아니라 **project-wide dispatch control room**으로 정의하는 것이 맞습니다. 
+
+## 2) Group Profile
+
+| 항목     | 내용                                           |
+| ------ | -------------------------------------------- |
+| 표준 그룹명 | Abu Dhabi Logistics                          |
+| 목적/범위  | DAS·AGI·MOSB·MW4·Port 간 선적/하역/배차/장비/문서 통합 조정 |
+| 운영 성격  | Central logistics control room               |
+| 활동기간   | 2023-03-17 ~ 2025-08-08                      |
+| 트래픽    | High                                         |
+| 메시지 수  | 21,859                                       |
+| 언어 비율  | KR 20.30% / EN 79.70%                        |
+| 피크 시간대 | 09:00, 08:00, 10:00 GST                      |
+
+근거: 프로파일 JSON 기준. 
+
+### 주요 참여자(Top)
+
+* 정상욱 5,358
+* Jhysn 4,708
+* ronpap20 4,505
+* Haitham 3,490
+* Roy Kim 2,614
+* DaN 2,155
+* Shariff 2,150
+* Friday D 13th 1,957
+* kEn 🏄🏻🌊 1,335
+* Thusar 742 
+
+## 3) Observed Patterns
+
+### A. 핵심 역할
+
+1. **Delivery plan / ETA / ETD 허브**
+2. **Vessel movement SITREP 허브**
+3. **MOSB laydown / VP24 / yard traffic 통제**
+4. **Crane / FLIFT / lifting team 요청창**
+5. **Gate pass / exit pass / entry issue 해결창**
+6. **TPI / TUV / inspection / certificate follow-up**
+7. **Cross-site 우선순위 조정방**
+
+근거: 프로파일의 top topics에 delivery plan, MOSB/VP-24, loading/offloading, forklift, crane booking, gate pass가 상위권입니다. 
+
+### B. 실제 로그에서 확인된 반복 패턴
+
+| No | 패턴                                 | 실제 근거                                          |
+| -- | ---------------------------------- | ---------------------------------------------- |
+| 1  | 매일 아침 delivery list 공유             | `Deliveries for today` 반복                      |
+| 2  | 선박별 ETA/ETD 업데이트                   | JPT62/JPT71/Bushra/Thuraya 등 반복                |
+| 3  | FLIFT 상시 요청/지연                     | `FLIFT PLS`, `NOT YET ARRIVED` 다수 반복           |
+| 4  | Al Jaber RORO 제한                   | `Only A-Frames` 정책 명시                          |
+| 5  | HCS 안전 이슈                          | 균열로 offloading reject 및 반송 지시                  |
+| 6  | Webbing sling / TPI / TUV 관리       | renewal, inspection, certificate follow-up 반복  |
+| 7  | Gate pass / exit pass 세부 관리        | trailer no., container no., exit pass 상시 공유    |
+| 8  | Yard congestion / no BL shifted    | laydown capacity 통제 반복                         |
+| 9  | 2-LCT stowage / alternative LCT 운영 | 2척 적재계획, Taibah/Yeam 대체 논의                     |
+| 10 | Weather / fog / tide 대응            | heavy fog, high tide, berth wait 반복            |
+
+## 4) Pain Points & Risks
+
+| No | Risk                | Trigger                             | Impact                        |
+| -- | ------------------- | ----------------------------------- | ----------------------------- |
+| 1  | FLIFT 지연            | 3rd party 지연·무응답                    | offloading/collection 전부 연쇄지연 |
+| 2  | Crane mismatch      | crane other activity / late arrival | trailer standby, 작업순서 붕괴      |
+| 3  | HCS 손상              | crack / unsafe lift                 | 반송, 재작업, 증빙 필요                |
+| 4  | A-Frame / RORO 제한   | Al Jaber policy / tide              | 로딩계획 변경, dispensation 필요      |
+| 5  | Yard congestion     | no BL shifted / LD full             | 신규 반입 hold                    |
+| 6  | Gate pass 오류        | 수량·번호 mismatch                      | gate stop, trailer 회전 손실      |
+| 7  | 문서/인증 hold          | TPI/TUV/WELLS/TPI cert 미비           | inspection/stamping 중단        |
+| 8  | Weather             | fog / tide / berth congestion       | ETA slip, crane reschedule    |
+| 9  | Webbing/lashing 부족  | sling, belt 부족                      | shipment postpone             |
+| 10 | Cross-site conflict | DAS/AGI/MIR/SHU 동시 요청               | 우선순위 혼선                       |
+
+근거: 기존 프로파일 risk block과 원본 채팅의 반복 이슈가 일치합니다.  
+
+## 5) Tailored Rules
+
+### 5.1 채널 목적
+
+이 그룹은 아래 6개만 다룹니다.
+
+1. Daily delivery plan
+2. Vessel movement SITREP
+3. Crane / FLIFT / lifting team coordination
+4. Gate pass / exit pass / entry control
+5. Inspection / certificate / document follow-up
+6. Cross-site priority escalation
+
+### 5.2 태그 규칙
+
+첫 줄 태그 고정:
+`[URGENT][ACTION][FYI][ETA][COST][GATE][CRANE][MANIFEST][RISK]`
+
+Abu Dhabi Logistics 권장 조합:
+
+* 일일 delivery list: `[ETA][ACTION]`
+* 선박 현황: `[FYI][ETA]`
+* 장비 부족: `[CRANE][RISK]`
+* gate issue: `[GATE][URGENT]`
+* HCS crack / unsafe: `[RISK][URGENT]`
+* inspection / TPI: `[MANIFEST][ACTION]`
+
+### 5.3 첫줄 포맷
+
+* `[ABU]/[SITE]/[ITEM]/[ETA]/[ACTION]`
+* `[ABU]/[VESSEL]/[ETA-ETD]/[STATUS]`
+* `[ABU]/[EQUIPMENT]/[SITE]/[REQUEST]`
+* `[ABU]/[DOC]/[REF]/[ACTION]`
+
+예시:
+
+* `[ABU]/[DAS]/[UPC HCS]/[2025-08-29 10:30 GST]/[OFFLOADING PLAN]`
+* `[ABU]/[THURAYA]/[ETA 19:00 GST]/[LOADING STATUS]`
+* `[ABU]/[FLIFT 16T]/[MOSB LD]/[URGENT REQUEST]`
+
+### 5.4 Daily delivery plan 규칙
+
+* **D-1 16:00**까지 다음날 delivery plan 공유.
+* 반드시 포함:
+
+  * site
+  * supplier
+  * qty / trailer qty
+  * cargo type
+  * ETA
+  * required crane / forklift / manpower
+  * inspection / TPI / gate pass status
+* 오전 plan 변경 시 `R1, R2` revision 표기.
+* `today / tomorrow / afternoon` 같은 표현만 쓰지 말고 **절대시간** 병기.
+
+### 5.5 Vessel SITREP 규칙
+
+* 최소 **07:30 / 16:00** 2회 공유.
+* 포맷:
+
+  * Vessel
+  * current location
+  * ETA / ETD
+  * cargo
+  * constraint(tide / berth / weather / bunkering / permission)
+  * next action
+* 대상 선박:
+
+  * JPT62
+  * JPT71
+  * Bushra
+  * Thuraya
+  * Taibah
+  * Razan
+  * 기타 대체 LCT
+
+### 5.6 FLIFT / Crane 에스컬레이션 규칙
+
+* 10분 무응답: `[RISK]`
+* 20분 경과: 1차 escalation
+* 30분 경과: 2차 escalation + 작업순서 재배치
+* 반복 지연 3회 이상: vendor complaint email same day 발송
+
+근거: 기존 guideline draft에서도 10·20·30 Rule이 이미 정의되어 있고, 실제 채팅에서도 forklift 지연이 반복됩니다.  
+
+### 5.7 HCS / Cladding / Heavy cargo 규칙
+
+* crack, side damage, unsafe lifting 발견 시 즉시 stop.
+* 사진 다각도 + DN / bundle / trailer no. 확보.
+* lifting team reject 시 현장 판단으로 강행 금지.
+* cladding / HCS / bottom shell plate는 **사전 lifting method 합의** 후 진행.
+* 필요 시 load test video 기록.
+
+### 5.8 Port / Al Jaber 정책
+
+* Al Jaber는 **A-Frame 우선** 원칙.
+* 일반 RORO/FB 필요 시 dispensation 선확보.
+* tide / harbor / berth 제약은 plan 확정 전에 반영.
+* vessel / port limitation은 WhatsApp뿐 아니라 email 근거도 남김.
+
+### 5.9 Gate pass / Exit pass 규칙
+
+* gate pass는 **차량 도착 전** 완료 원칙.
+* exit pass 메시지 필수 항목:
+
+  * trailer no.
+  * cntr / basket no.
+  * cargo description
+  * full / empty
+  * destination
+* mismatch 발견 시 현장 출차 중지 후 즉시 수정.
+
+### 5.10 Yard capacity 규칙
+
+* `NO BL SHIFTED TO LD` 또는 LD full 상태면 신규 delivery 승인 금지.
+* DAS / AGI / MIR / SHU 반입 전, Mr Jeong 또는 Roy 확인 후 진행.
+* 공간 부족 시:
+
+  * hold at supplier
+  * partial delivery
+  * next shift / next day reschedule
+    중 하나를 즉시 결정.
+
+### 5.11 Certificate / Inspection 규칙
+
+* TPI / TUV / WELLS / sling color code / Mulkiya 만료 전 사전확인.
+* 증빙 미수령 상태에서는:
+
+  * inspection date
+  * blocking reason
+  * owner
+  * expected clearance time
+    를 함께 게시.
+* OTP, 카드, 민감정보는 그룹 직접 공유 금지.
+
+### 5.12 Cross-site 조정 규칙
+
+* Abu Dhabi Logistics는 실행방이 아니라 **우선순위·자원배분 방** 성격도 강함.
+* SHU / MIR / DAS / AGI 관련 지시는 이 그룹에서 정하고, site execution은 각 site room으로 넘긴다.
+* 따라서 이 방에는 반드시:
+
+  * owner
+  * site
+  * deadline
+  * next action
+    을 함께 남긴다.
+
+## 6) KPI & Monitoring
+
+| KPI                        |   Target |
+| -------------------------- | -------: |
+| D-1 16:00 plan 제출율         | ≥ 98.00% |
+| FLIFT 20분 내 응답율            | ≥ 90.00% |
+| crane/forklift 30분 내 현장도착율 | ≥ 90.00% |
+| HCS reject 사진증빙 첨부율        |  100.00% |
+| TPI/TUV 유효증명 확인율           |  100.00% |
+| Vessel SITREP 2회/일 준수율     | ≥ 95.00% |
+| gate pass 사전완료율            | ≥ 98.00% |
+| yard over-capacity 사전경보율   |  100.00% |
+
+## 7) Abu Dhabi Logistics 전용 템플릿
+
+### A. Daily Delivery Plan
+
+```markdown
+[ETA][ACTION] [ABU]/[SITE]/[ITEM]/[DELIVERY PLAN]
+
+- Supplier:
+- Cargo:
+- Qty / Trailer Qty:
+- ETA:
+- Crane / FLIFT / Manpower:
+- Gate Pass:
+- Inspection / TPI:
+- Owner:
+- Next Action:
+```
+
+### B. Vessel SITREP
+
+```markdown
+[FYI][ETA] [ABU]/[VESSEL]/[SITREP]/[STATUS]
+
+- Current Location:
+- ETA / ETD:
+- Cargo:
+- Constraint:
+- Next Port:
+- Required Action:
+```
+
+### C. Equipment Escalation
+
+```markdown
+[CRANE][RISK] [ABU]/[SITE]/[EQUIPMENT]/[DELAY]
+
+- Requested At:
+- Equipment:
+- Current Status:
+- Blocking Impact:
+- Escalated To:
+- Revised Start Time:
+```
+
+### D. Reject / Damage
+
+```markdown
+[RISK][URGENT] [ABU]/[ITEM]/[REJECT]/[ACTION]
+
+- Ref / Bundle / Trailer:
+- Issue:
+- Photo:
+- Immediate Action:
+- Vendor / Owner:
+- Rework Plan:
+```
+
+## 8) 운영 판정
+
+* 이 그룹의 본질은 **Abu Dhabi 전체 물류 운영의 control tower**입니다. 
+* 따라서 핵심 통제 포인트는 아래 5개입니다.
+
+  1. Plan
+  2. Equipment
+  3. Gate
+  4. Vessel
+  5. Evidence
+
+## 9) Change Log
+
+* v1.0: 원본 업로드 txt 기준 재작성
+* 반영 핵심:
+
+  * 2023-03-17 생성 이력 반영
+  * delivery / vessel / yard / gate 중심으로 재정의
+  * Al Jaber Only A-Frame, HCS reject, FLIFT escalation 반영
+  * cross-site control room 성격 강화
+  * D-1 16:00 plan + 07:30/16:00 SITREP 운영 명문화
+
+AMBER:
+
+* 현재 업로드 로그는 매우 길어 전체 정밀 통계 재계산은 별도 파싱이 더 정확합니다.
+* 다만 기존 프로파일과 이번 원본 로그의 방향은 서로 일치합니다.  
+
+원하시면 다음 단계로 `SHU + MIR + Abu Dhabi Logistics + DSV Delivery`를 묶은 **현장 운영형 Master Policy v2**로 바로 정리하겠습니다.

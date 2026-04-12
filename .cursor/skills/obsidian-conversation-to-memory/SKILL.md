@@ -13,6 +13,11 @@ metadata:
   primary_source: conversation
 ---
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> C:\Users\jichu\Downloads\valut
+
+
 # Obsidian Conversation to Memory
 
 Use this skill to turn general conversation into Obsidian-friendly Markdown artifacts without relying on semantic folders.
@@ -32,6 +37,8 @@ Do **not** use this skill for:
 - auth or deployment changes
 - storage schema changes outside the note output contract
 - destructive file operations without explicit approval
+- **one-shot paste-and-persist flows** (use `paste-conversation-to-obsidian` which
+  orchestrates this skill internally along with scout/split/verify/MCP persistence)
 
 ## Inputs
 

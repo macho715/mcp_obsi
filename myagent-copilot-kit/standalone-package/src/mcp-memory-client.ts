@@ -37,6 +37,20 @@ export type MemoryRecord = {
   metadata: Record<string, unknown>;
 };
 
+export type WikiSearchItem = {
+  source: "wiki";
+  id: string;
+  title: string;
+  slug?: string | null;
+  path?: string | null;
+  category?: string | null;
+  tags?: string[];
+  snippet?: string | null;
+  score: number;
+  fetch_route: "fetch_wiki";
+  related_memory_id?: string | null;
+};
+
 let requestCounter = 0;
 
 function nextRequestId(): number {
@@ -316,6 +330,34 @@ export async function getMemory(
     {
       id: memoryId,
     },
+  );
+  return unwrapToolResult(envelope);
+}
+
+export async function searchWiki(
+  options: MemoryClientOptions,
+  params: { query: string; pathPrefix?: string; limit?: number },
+): Promise<{ results: WikiSearchItem[] }> {
+  const envelope = await callTool<ToolEnvelope<{ results: WikiSearchItem[] }>>(
+    options,
+    "search_wiki",
+    {
+      query: params.query,
+      path_prefix: params.pathPrefix ?? "wiki/analyses",
+      limit: params.limit ?? 8,
+    },
+  );
+  return unwrapToolResult(envelope);
+}
+
+export async function fetchWiki(
+  options: MemoryClientOptions,
+  params: { path?: string; slug?: string },
+): Promise<Record<string, unknown>> {
+  const envelope = await callTool<ToolEnvelope<Record<string, unknown>>>(
+    options,
+    "fetch_wiki",
+    params.path ? { path: params.path } : { slug: params.slug },
   );
   return unwrapToolResult(envelope);
 }

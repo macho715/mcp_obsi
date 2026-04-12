@@ -15,6 +15,7 @@ dependencies = [
   "pydantic-settings>=2.4",
   "PyYAML>=6.0",
   "jsonschema>=4.23",
+  "requests>=2.32",
 ]
 
 [project.optional-dependencies]
@@ -24,6 +25,10 @@ dev = [
   "ruff>=0.6",
   "coverage[toml]>=7.6",
   "pre-commit>=3.8",
+  "rdflib>=7.0",
+  "pyshacl>=0.30",
+  "pandas>=2.2",
+  "openpyxl>=3.1",
 ]
 mcp = [
   "mcp[cli]>=1.0.0",

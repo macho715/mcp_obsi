@@ -1,5 +1,9 @@
 # System Architecture
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> `C:\Users\jichu\Downloads\valut`
+
 이 문서는 `mcp_obsidian` 루트의 현재 런타임 구조를 정리한 아키텍처 참조 문서다.
 기준 우선순위는 `AGENTS.md`, 현재 코드, 그리고 실제 검증 결과다.
 
@@ -22,14 +26,23 @@
 - `/chatgpt-healthz`, `/claude-healthz`는 hosted specialist read-only profile 상태 확인용 경로다.
 - `/chatgpt-write-healthz`, `/claude-write-healthz`는 hosted specialist write-capable sibling profile 상태 확인용 경로다.
 - `/mcp`는 FastMCP 스트리머블 HTTP 앱을 마운트한 경로다.
-- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
+- `/chatgpt-mcp`는 ChatGPT용 read-only `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` profile이다.
+- `/chatgpt-mcp`는 현재 코드 기준으로 read-only tools 외에 `resources`와 `prompts` discoverability surface도 함께 가진다.
 - `/chatgpt-mcp-write`는 ChatGPT용 authenticated specialist write-capable sibling profile이다.
-- `/claude-mcp`는 Claude용 read-only `search` / `fetch` / `list_recent_memories` profile이다.
+- `/claude-mcp`는 Claude용 read-only `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` profile이다.
+- `/claude-mcp`는 현재 코드 기준으로 read-only tools 외에 `resources`와 `prompts` discoverability surface도 함께 가진다.
 - `/claude-mcp-write`는 Claude용 authenticated specialist write-capable sibling profile이다.
 - 인증은 route별 effective token이 비어 있지 않을 때 Bearer token으로 적용된다. `/mcp`는 `MCP_API_TOKEN`, `/chatgpt-mcp-write`는 `CHATGPT_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`, `/claude-mcp-write`는 `CLAUDE_MCP_WRITE_TOKEN` 또는 `MCP_API_TOKEN`을 사용한다.
 - 현재 Bearer auth는 `/mcp`, `/chatgpt-mcp-write`, `/claude-mcp-write` 경로에 적용된다.
-- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`를 노출한다.
-- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch` / `list_recent_memories`와 authenticated sibling `search`, `fetch`, `list_recent_memories`, `save_memory`, `get_memory`, `update_memory` 조합을 제공한다.
+- `/chatgpt-mcp`와 `/claude-mcp`는 현재 코드에서 bearer 없이 노출되는 read-only specialist mounts다. 이 경로들은 auth middleware 대상이 아니다.
+- MCP 도구층은 `app/mcp_server.py`에 있으며 `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`와 wiki-native tools를 노출한다.
+- `app/resources_server.py`는 `wiki/index`, `wiki/log/recent`, `wiki/topic/{slug}`, `schema/memory`, `ops/verification/latest`, `ops/routes/profile-matrix` resource를 노출한다.
+- `app/prompts_server.py`는 `ingest_memory_to_wiki`, `reconcile_conflict`, `weekly_lint_report`, `summarize_recent_project_state` prompt를 노출한다.
+- `app/services/wiki_search_service.py`는 `wiki/analyses` 범위의 read-only search/fetch를 담당한다.
+- `app/wiki_tools.py`는 write profile 전용 `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict` tool을 노출한다.
+- `app/chatgpt_mcp_server.py`, `app/claude_mcp_server.py`는 read-only standard `search` / `fetch` / `list_recent_memories` / `search_wiki` / `fetch_wiki` + `resources/prompts`와 authenticated sibling `search`, `fetch`, `list_recent_memories`, `search_wiki`, `fetch_wiki`, `save_memory`, `get_memory`, `update_memory`, wiki-native tools 조합을 제공한다.
+- `app/chatgpt_mcp_server.py`와 `app/claude_mcp_server.py`에서 write tools는 `include_write_tools=True`일 때만 등록된다.
+- `app/config.py`는 `WIKI_OVERLAY_DIRNAME`을 노출하며, 현재 기본값은 `wiki`다.
 - `MemoryStore`는 저장·조회·검색·업데이트를 묶는 서비스 계층이다.
 - `RawArchiveStore`는 raw conversation note를 `mcp_raw/` 아래에 저장한다.
 - `MarkdownStore`는 vault 안의 Markdown 파일을 SSOT로 기록한다.
@@ -41,8 +54,14 @@
 - Railway preview에서는 `Dockerfile` 기반 컨테이너가 실행되고, volume `/data`가 vault/index 저장소를 제공한다.
 - Railway production에서는 `/mcp`, `/chatgpt-mcp`, `/chatgpt-mcp-write`, `/claude-mcp`, `/claude-mcp-write`가 같은 volume `/data`를 공유한다.
 - Railway public domain에서는 FastMCP DNS rebinding protection 때문에 explicit host/origin allowlist가 필요하다.
-- `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
-- optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
+### 2026-04-12 KG Dashboard UI Alignment Addendum
+
+이 섹션은 기존 설명을 지우지 않고, 현재 코드 기준의 dashboard UI 변화만 덧붙인다.
+
+- **Dashboard UI Rule Alignment**:
+  - `kg-dashboard` 앱의 UI 구조를 도구형 애플리케이션으로 정비했다. 
+  - hero 패널 제거, nested-card 중첩 해소, radius 8px 이하 적용, letter-spacing 초기화, GraphView의 불필요한 장식용 프레임 제거가 완료되었다.
+  - 현재 코드는 그 위에 field-aware search, `Graph / Table / Timeline / Schema` companion view, `Node / Edge / Evidence / Related` inspector, manual `Pin / Hide / Expand 1-hop / Reset` node controls를 얹는다.
 
 ## Companion Runtime Boundary
 
@@ -185,6 +204,9 @@ sequenceDiagram
 - `app/utils/specialist_readonly.py`는 specialist read-only `search`가 generic recent/list query를 recent browse로 보정하도록 돕는다.
 - `app/config.py`는 `MCP_ALLOWED_HOSTS`, `MCP_ALLOWED_ORIGINS`를 CSV env로 읽는다.
 - `app/config.py`는 `MCP_HMAC_SECRET`와 `mcp_hmac_enabled` flag를 제공한다. 실제 signed-write runtime 적용 여부는 별도 contract / implementation 확인이 필요하다.
+- `app/config.py`는 `WIKI_OVERLAY_DIRNAME`으로 wiki overlay root를 바꿀 수 있게 한다. 현재 구현의 기본값은 `wiki`다.
+- optional dependency `[mcp]`가 빠져 있으면 `/mcp/`, `/chatgpt-mcp/`, `/chatgpt-mcp-write/`, `/claude-mcp/`, `/claude-mcp-write/`와 그 하위 path는 `503 mcp_dependency_missing` fallback을 반환한다.
+- `docs/HMAC_PHASE_2.md`는 optional signed-write phase-2 계약 문서다. 현재 루트 runtime 설명에서는 adjacent contract로 취급한다.
 - `app/mcp_server.py`는 allowlist가 있으면 `TransportSecuritySettings`를 명시적으로 주입한다.
 - `app/services/memory_store.py`는 normalize, path build, save, get, recent, update 책임을 가진다.
 - `app/services/raw_archive_store.py`는 raw conversation frontmatter/body를 `mcp_raw/`에 저장한다.
@@ -192,6 +214,12 @@ sequenceDiagram
 - `app/services/markdown_store.py`는 frontmatter와 body 형식으로 Markdown SSOT를 기록한다.
 - `app/services/daily_store.py`는 daily note append를 보조한다.
 - `app/services/schema_validator.py`는 `schemas/`를 로드한다.
+- `app/services/wiki_store.py`는 compiled wiki overlay를 관리한다. overlay root 아래에 `index.md`, `log.md`, `topics/`, `entities/`, `conflicts/`, `reports/`를 만들고, compiled page에는 `compiled_layer: true` frontmatter를 넣는다.
+- `app/services/wiki_index_service.py`는 recent memory pointers를 바탕으로 `wiki/index.md`를 다시 만든다.
+- `app/services/wiki_log_service.py`는 recent memory activity를 `wiki/log.md`에 반영하고, append-style log entry도 추가한다.
+- `app/resources_server.py`의 wiki resources는 overlay를 직접 읽는 것이 아니라 compiled overlay surface를 읽는 용도다.
+- `search_wiki` / `fetch_wiki`는 기존 `memory` search/fetch semantics를 바꾸지 않고 `wiki/analyses`를 별도 corpus로 읽는 용도다.
+- `app/wiki_tools.py`의 write tools는 compiled wiki overlay만 갱신한다. raw archive나 memory SSOT를 직접 대체하지 않는다.
 - `schemas/`는 raw/memory note contract의 단일 기준선이다.
 - `app/utils/ids.py`, `app/utils/sanitize.py`, `app/utils/time.py`는 계약 보조 헬퍼다.
 
@@ -203,6 +231,20 @@ sequenceDiagram
 - `.venv\Scripts\python.exe -m ruff check .` → **fail** (`11` existing issues, including tracked `app.py`)
 - `.venv\Scripts\python.exe -m ruff format --check .` → **fail** (`3` files would be reformatted, `58` files already formatted)
 - `.venv\Scripts\python.exe -c "from app.main import app; print(app.title)"` → `obsidian-mcp`
+
+### 2026-04-12 workbook and dashboard snapshot
+
+- Outlook Email Ontology Pipeline은 현재 [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) 문서에 구현 계획(Plan)으로 정리되어 있다.
+- current KG dashboard 검증은 로컬 frontend 기준으로 `npm test`, `npm run lint`, `npm run build`, local preview 확인으로 따로 관리한다.
+
+### 2026-04-11 current session — local code vs deployed production surface
+
+- current local code 기준 `/mcp`는 15개 tool을 가진다: `search_memory`, `save_memory`, `get_memory`, `list_recent_memories`, `update_memory`, `archive_raw`, `search`, `fetch`, `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- current local `/chatgpt-mcp`, `/claude-mcp`는 read-only tools 외에 `resources`와 `prompts`도 노출한다.
+- current local write-capable sibling mounts는 `save_memory`, `get_memory`, `update_memory`와 wiki-native tools를 함께 노출한다.
+- current session의 final state에서는 `railway up -d` 이후 production `/chatgpt-mcp`와 `/claude-mcp` read-only recheck가 PASS였고, 두 route 모두 `search`, `fetch`, `list_recent_memories`, `search_wiki`, `fetch_wiki`, `resources = 5`, `prompts = 4` surface를 노출했다.
+- current session의 final state에서는 production `/chatgpt-mcp-write`와 `/claude-mcp-write` write-side recheck도 PASS였고, 두 route 모두 `save_memory`, `get_memory`, `update_memory`와 wiki-native tools를 포함한 same 13-tool surface를 노출했다.
+- 같은 세션 안의 earlier fail snapshot은 redeploy 전 배포 지연과 verifier header/tool expectation mismatch를 보여 준 중간 증거다. 현재 상태 판정은 later PASS 기준으로 읽고, earlier fail detail은 `docs/MCP_RUNTIME_EVIDENCE.md`에 시간순으로 남긴다.
 
 ### 2026-04-08 companion ingest + local route verification
 
@@ -283,6 +325,7 @@ sequenceDiagram
   - `/chatgpt-mcp-write` authenticated `search` / `fetch` / `save_memory` / `get_memory` / `update_memory` -> pass
   - `/claude-mcp` read-only `search` / `fetch` -> pass
   - `/claude-mcp-write` authenticated `search` / `fetch` / `save_memory` / `get_memory` / `update_memory` -> pass
+- note: 위 항목은 2026-03-28 historical specialist verification이다. 2026-04-11 current session의 earlier snapshot에서는 production write sibling route가 아직 wiki-native tools를 노출하지 않는다는 점이 확인됐고, later redeploy snapshot에서는 PASS로 갱신됐다.
 
 ```mermaid
 flowchart TD
@@ -318,6 +361,10 @@ delivery snapshot의 내용 중 아래는 현재 루트 계약에 맞지 않아 
 - `search_memory`와 compatibility wrapper의 반환 shape가 유지되는가
 - delivery archive는 문서 참조 대상으로만 남아 있는가
 - Railway preview가 로컬 계약을 깨지 않고 같은 MCP surface를 노출하는가
+- 현재 local code와 production deployment의 검증은 분리해서 봐야 한다. local code의 tool/resource surface는 이 문서의 기준이며, production은 별도 redeploy와 smoke recheck가 있어야 같은 상태로 판정할 수 있다.
+- `tests/test_auth.py`는 bearer-required route와 bearer-free specialist read-only route를 검증한다.
+- `tests/test_wiki_overlay_surface.py`와 `tests/test_wiki_write_surface.py`는 compiled wiki overlay resource/prompt surface와 write-only wiki tool surface를 검증한다.
+- `tests/test_wiki_search_service.py`와 `tests/test_dual_corpus_mcp.py`는 wiki read surface와 dual-corpus MCP contract를 검증한다.
 
 ## 2026-03-28 Search V2 And Path Migration Addendum
 
@@ -392,7 +439,7 @@ flowchart TD
 - `GET /claude-mcp/` with `Accept: text/event-stream` -> `400 Missing session ID`
 - `GET /chatgpt-mcp-write/` without bearer -> `401 unauthorized`
 - `GET /claude-mcp-write/` without bearer -> `401 unauthorized`
-- authenticated full tool smoke는 `scripts/verify_specialist_mcp_write.py` 경로가 현재 기준 런북이며, 이번 워크스페이스에서는 `MCP_BEARER_TOKEN`이 없어 재실행하지 않았다.
+- 위 2026-03-28 항목은 historical snapshot이다. current 2026-04-11 session에서는 `scripts/verify_specialist_mcp_write.py`로 production `/chatgpt-mcp-write/`와 `/claude-mcp-write/` authenticated full tool smoke를 다시 실행했고, 결과는 `docs/MCP_RUNTIME_EVIDENCE.md`에 current-session PASS로 기록했다.
 
 ### Latest verification evidence tied to this addendum
 
@@ -662,3 +709,119 @@ Karpathy의 LLM Wiki 아키텍처([Gist](https://gist.github.com/karpathy/442a6b
 | 토큰 절감 측정 | 미구현 (`scripts/token_savings.py` deferred) | ❌ |
 
 **원안 대비 추가된 강점**: `mcp_raw/` (불변 인덱싱된 아카이브) + `memory/` (검색 포인터) 레이어가 추가됨. 원안은 단순 파일 시스템이지만 현재 구현은 FastAPI + FastMCP + SQLite FTS5까지 결합된 더 견고한 구조.
+
+## 2026-04-09 WhatsApp Knowledge Graph & Dashboard Integration
+
+이 섹션은 6개 주요 물류 WhatsApp 채널(Abu Dhabi, DSV, Project Lightning, Jopetwil 71, MIR, SHU)의 대화 로그를 기반으로 한 지식 추출 및 시각화 아키텍처를 상세히 정의한다. 기존 시스템 아키텍처와 결합하여 원본 메시지가 지식 그래프(Knowledge Graph)로 변환되고 최종적으로 React 기반 대시보드에 렌더링되는 전체 파이프라인의 구체적인 구현 내역을 포함한다.
+
+> 2026-04-12 current code note:
+> 아래 섹션의 원래 2026-04-09 설명은 보존한다. 다만 현재 canonical dashboard export 경로는 `scripts/build_dashboard_graph_data.py`이며, `scripts/build_knowledge_graph.py`와 `scripts/ttl_to_json.py`는 legacy wrapper / 보조 경로로 남아 있다.
+
+### 통합 데이터 파이프라인 (WhatsApp → Dashboard) 상세
+
+이 파이프라인은 정규식과 LLM 병렬 에이전트를 혼합하여 효율적으로 데이터를 추출하고, 온톨로지(RDF)를 거쳐 브라우저 친화적인 JSON으로 시각화하는 과정으로 이루어진다.
+
+```mermaid
+flowchart TD
+    subgraph 1. Raw Extraction
+        Log[WhatsApp Chat Logs<br/>.txt]
+        ParseScript[scripts/parse_whatsapp_logistics.py<br/>Keyword & 2-Hour Event Grouping]
+        RawVault[vault/raw/articles/*.md<br/>Raw Event Block]
+    end
+
+    subgraph 2. Knowledge Generation
+        Subagents[Parallel LLM Subagents<br/>Assistant Delegation]
+        Wiki[vault/wiki/analyses/*.md<br/>Frontmatter & Markdown]
+        Consolidate[scripts/consolidate_vaults.py<br/>Multi-vault Merge]
+    end
+
+    subgraph 3. Knowledge Graph Build
+        Excel[4 HVDC Workbooks<br/>Shipment · Warehouse · JPT · Cost]
+        BuildScript[scripts/build_dashboard_graph_data.py<br/>Canonical Graph / JSON / Audit Export]
+        TTL[vault/knowledge_graph.ttl<br/>Optional RDF Triples]
+    end
+
+    subgraph 4. Web Visualization
+        JSONScript[scripts/ttl_to_json.py<br/>Legacy TTL to JSON Helper]
+        JSON[nodes.json & edges.json<br/>Static Assets + Note Metadata]
+        React[kg-dashboard React App<br/>Cytoscape.js]
+    end
+
+    Log --> ParseScript
+    ParseScript -->|Save Raw Events| RawVault
+    ParseScript -.->|Delegate Structuring| Subagents
+    RawVault --> Subagents
+    Subagents -->|Generate Wiki Notes| Wiki
+    Consolidate -.->|Merge Multiple Vaults| Wiki
+    
+    Excel --> BuildScript
+    Wiki -->|Parse Frontmatter & Tags| BuildScript
+    BuildScript -->|Serialize Graph| TTL
+    
+    TTL --> JSONScript
+    JSONScript -->|Export| JSON
+    JSON -->|Async Fetch| React
+```
+
+### 상세 구현 프로세스
+
+1. **로그 파싱 및 이벤트 그룹화 (`parse_whatsapp_logistics.py`)**:
+   - `[URGENT]`, `delay`, `hold`, `weather` 등 특정 키워드(표준 태그, 제약 사항, 예외 키워드)를 감지한다.
+   - 키워드가 포함된 메시지를 기준으로 2시간(±2시간) 단위의 이벤트 블록(Event Block)을 생성한다.
+   - 추출된 이벤트 블록은 `vault/raw/articles/`에 마크다운 형식으로 원문 그대로 저장된다.
+   - 메인 스크립트 블로킹을 방지하기 위해 LLM 직접 호출은 생략하고 병렬 Subagent(Assistant)에게 구조화 및 위키 작성을 위임(Delegate)한다.
+   - **처리 용량 제한**: 병렬 서브에이전트 위임 테스트를 위해 채널당 최대 10개의 이벤트 블록(`MAX_TO_PROCESS = 10`)만 처리하도록 용량을 제어한다.
+
+2. **다중 Vault 병합 (`consolidate_vaults.py`)**:
+   - 여러 작업 환경(`vault`, `vault-test` 등)에 분산된 마크다운 데이터들을 스캔한다.
+   - 파일 수정 시간(`mtime`)을 비교하여 최신 버전의 파일을 대상 디렉토리(`C:\Users\jichu\Downloads\valut`)로 통합 병합한다.
+
+3. **지식 그래프 구축 (`build_dashboard_graph_data.py`)**:
+   - **기본 물류 데이터 통합**: `HVDC STATUS.xlsx`, `HVDC WAREHOUSE STATUS.xlsx`, `JPT-reconciled_v6.0.xlsx`, `HVDC Logistics cost(inland,domestic).xlsx`를 읽어 shipment, case, route event, cost attribution 후보를 구성한다.
+   - **분석 문서 선택 규칙**: 현재 canonical exporter는 `C:\Users\jichu\Downloads\valut\wiki\analyses`를 먼저 읽고, 없을 때만 repo-local `vault/wiki/analyses`를 fallback으로 사용한다.
+   - **이슈/레슨 데이터 매핑**: analyses markdown를 읽어 `LogisticsIssue`와 `IncidentLesson`을 만들고, `analysisPath`, `analysisVault` metadata를 노드에 함께 실어 보낸다.
+   - **태그 기반 릴레이션**: 파싱된 태그를 기반으로 issue/lesson anchor를 shipment, location, carrier, pattern으로 해석하고 `relatedToLesson`, `occursAt` 관계를 생성한다.
+   - **감사 로그 출력**: source/resolution/projection/mapping audit을 `runtime/audits/hvdc_ttl_*.json`에 기록한다.
+   - **TTL 출력 경계**: 함수 호출로 `ttl_path`를 명시하면 TTL도 쓸 수 있다. 현재 CLI 기본 실행은 JSON + audit 재생성에 집중하도록 `ttl_path=None`으로 동작한다.
+
+4. **Legacy JSON / TTL 경로 (`build_knowledge_graph.py`, `ttl_to_json.py`)**:
+   - `scripts/build_knowledge_graph.py`와 `scripts/ttl_to_json.py`는 호환용 wrapper / 보조 경로로 남아 있다.
+   - 현재 dashboard 데이터 갱신의 기준 진입점은 `scripts/build_dashboard_graph_data.py`다.
+
+5. **대시보드 렌더링 아키텍처 및 UI/UX (`kg-dashboard/src/App.tsx`, `GraphView.tsx`, `NodeInspector.tsx`)**:
+   - **엔진**: `react-cytoscapejs` 라이브러리를 사용하여 네트워크 그래프를 고성능으로 렌더링한다. (초기 계획안의 Cosmograph 대신 채택)
+   - **그래프 인덱싱 및 최적화 (`buildGraphIndex`)**: 전체 노드와 엣지를 O(1) 조회가 가능하도록 `nodeById`, `degreeById` 인덱스를 사전 구축하여 렌더링 성능을 확보한다.
+   - **다이나믹 스타일링**: 노드 타입별 컬러 코딩을 적용하고(`LogisticsIssue`는 빨간색, `Shipment`는 파란색 등), 줌 아웃 시 노드 라벨 텍스트가 겹치는 Hairball 현상을 막기 위해 `min-zoomed-font-size` 속성을 적용해 확대 시에만 라벨이 보이도록 최적화했다. 선택된 노드는 애니메이션(`cy.animate`)을 통해 화면 중앙으로 포커스된다.
+   - **App-level orchestration (`App.tsx`)**: `dashboard-state.ts`를 사용해 `q`, `field`, `view`, `panel`, `node`, `edge`를 URL query에 반영하고, `graph-companion-data.ts`와 `graph-manual-controls.ts`를 조합해 base slice 위에 companion view와 manual override를 얹는다.
+   - **구조화 검색 (`GraphSidebar.tsx` + `graph-model.ts`)**: 자유 검색 외에 `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA` field chip을 제공하고, quick result마다 `Matched in ...` 이유를 함께 표시한다.
+   - **4가지 View Modes (뷰 모드)**:
+     - **Summary (요약 뷰)**: 기본 모드. 하위 노드를 숨기고 이슈와 핵심 인프라(허브) 위주로 보여주며, issue-context infra anchor에 붙은 lesson만 유지한다. `getCollapsedCountLabel`을 통해 생략된 선박/화물 개수(Shipment, Vessel, Vendor 등)를 요약 라벨로 제공한다. (concentric 레이아웃)
+     - **Issues (이슈 중심 뷰)**: `LogisticsIssue`, 이슈와 직접 연결된 핵심 인프라 anchor, 그리고 그 anchor에 붙은 lesson만 남겨 문제 흐름을 좁혀 시각화한다.
+     - **Search (검색 뷰)**: `useDeferredValue`를 활용해 검색어(`searchTerm`) 입력 시 렌더링 지연을 방지하는 지연 검색(Deferred Search)을 구현했다. `buildSearchView`를 통해 검색된 노드와 주변 맥락(1-depth 이웃)만 필터링하여 보여준다.
+     - **Ego (선택 노드 뷰)**: 노드를 선택했을 때 활성화되며, 해당 노드 주변 1~2 hop의 이웃만 남겨 허브를 명확히 읽을 수 있도록 한다. 선택 노드에 직접 연결된 lesson은 유지하되, 무관한 lesson은 확장하지 않는다. (`breadthfirst` 레이아웃 적용)
+   - **Companion Views**: `GraphCompanionTabs.tsx`, `GraphDataTable.tsx`, `GraphTimeline.tsx`, `GraphSchemaSummary.tsx`가 같은 visible slice를 각각 graph, row, timeline, schema count surface로 렌더링한다.
+   - **수동 node 제어 (`graph-manual-controls.ts`)**: 사용자가 선택한 node를 `Pin`, `Hide`, `Expand 1-hop`, `Reset`으로 직접 조작하고, 이 상태를 sidebar의 `Pinned`, `Hidden`, `Expanded` 목록에서 다시 해제할 수 있다.
+   - **동적 메트릭 도출 (`deriveMetrics`)**: 현재 뷰(visibleGraph)에 맞춰 표시/숨김 상태의 노드 및 엣지 개수, 핫스팟(이슈 및 허브 개수) 지표를 실시간 연산하여 대시보드 상단 Stat Grid에 제공한다.
+   - **탭형 인스펙터 (`NodeInspector.tsx`)**: inspector는 `Node`, `Edge`, `Evidence`, `Related` 탭으로 나뉘며, issue/lesson note는 `analysisVault`, `analysisPath` metadata를 사용해 encoded Obsidian 링크로 연다. `VESSEL NAME/ FLIGHT No.` 계열 raw metadata는 node detail에서 숨긴다.
+
+### 2026-04-12 current implementation addendum
+
+- current session verification 기준 source audit:
+  - `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`
+  - `analyses_dir_fallback_used = false`
+  - `loaded_notes = 115`
+- current exported node metadata counts:
+  - `LogisticsIssue` nodes `113`, metadata 포함 `113`
+  - `IncidentLesson` nodes `102`, metadata 포함 `102`
+- current dashboard verification:
+  - Python contract `5 passed`
+  - dashboard tests `37 passed`
+  - lint / build pass
+  - preview `http://127.0.0.1:4177/` HTTP `200`
+  - Playwright snapshot에서 Summary visible nodes `227`, Issues visible nodes `216`
+- current dashboard usability additions:
+  - field-aware search chips `COE`, `POL`, `POD`, `Mode`, `ATD`, `ATA`
+  - quick-result reason labels `Matched in ...`
+  - companion views `Graph`, `Table`, `Timeline`, `Schema`
+  - manual node controls `Pin`, `Hide`, `Expand 1-hop`, `Reset`
+  - tabbed inspector `Node`, `Edge`, `Evidence`, `Related`

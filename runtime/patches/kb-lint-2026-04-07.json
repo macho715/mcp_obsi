@@ -1,0 +1,33 @@
+{
+  "date": "2026-04-07",
+  "total_notes": 4,
+  "deterministic_findings": {
+    "missing_link": [
+      "llm-wiki-karpathy",
+      "gemma-4-llm-model",
+      "gemma-4-llm-specs"
+    ],
+    "missing_frontmatter": [],
+    "orphan_page": [
+      "karpathy-llm-wiki-query-result",
+      "gemma-4-llm-model",
+      "gemma-4-llm-specs"
+    ],
+    "evidence_gap": [
+      "karpathy-llm-wiki-query-result",
+      "gemma-4-llm-model",
+      "gemma-4-llm-specs"
+    ],
+    "missing_cross_ref": [
+      "llm-wiki-karpathy",
+      "gemma-4-llm-model",
+      "gemma-4-llm-specs"
+    ]
+  },
+  "total_deterministic": 12,
+  "contradictions": [],
+  "stale_notes": [],
+  "quality_score": 10,
+  "auto_fixable": 4,
+  "recommendation": "Add outgoing [[links]] to orphan pages; confirm evidence in sources."
+}

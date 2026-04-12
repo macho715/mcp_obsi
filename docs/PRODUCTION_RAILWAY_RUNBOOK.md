@@ -72,8 +72,8 @@ MCP_API_TOKEN=<long-random-production-token>
 MCP_HMAC_SECRET=<long-random-hmac-secret>
 TIMEZONE=Asia/Dubai
 OBS_VAULT_NAME=<production-vault-name>
-MCP_ALLOWED_HOSTS=mcp.example.com
-MCP_ALLOWED_ORIGINS=https://mcp.example.com
+MCP_ALLOWED_HOSTS=<production-public-host>
+MCP_ALLOWED_ORIGINS=https://<production-public-host>
 ```
 
 Repository template:
@@ -86,7 +86,7 @@ Rules:
 - production token must not reuse preview token
 - generated Railway domain is acceptable as the primary operator endpoint until a custom domain exists
 - production volume must not reuse synthetic preview dataset unless intentionally promoted
-- specialist read-only routes may be exposed without auth only if they keep `search` / `fetch` only
+- specialist read-only routes may be exposed without auth only if they remain read-only and bounded; current contract is `search` / `list_recent_memories` / `fetch` / `search_wiki` / `fetch_wiki` plus read-only `resources/prompts` discoverability
 - specialist write-capable sibling routes must remain Bearer-authenticated
 
 ## Deployment Model
@@ -101,13 +101,16 @@ Rules:
    - `/healthz`
    - `/mcp`
    - `/mcp/`
-   - `/chatgpt-healthz`
-   - `/chatgpt-write-healthz`
-   - `/claude-healthz`
-   - `/claude-write-healthz`
+   - `/chatgpt-healthz` (liveness only)
+   - `/chatgpt-write-healthz` (liveness only)
+   - `/claude-healthz` (liveness only)
+   - `/claude-write-healthz` (liveness only)
    - `scripts/verify_mcp_readonly.py`
    - `scripts/verify_mcp_write_once.py`
    - `scripts/verify_mcp_secret_paths.py`
+   - `scripts/verify_chatgpt_mcp_readonly.py`
+   - `scripts/verify_claude_mcp_readonly.py`
+   - `scripts/mcp_local_tool_smoke.py`
    - `scripts/verify_specialist_mcp_write.py`
 
 ## Operational Policy
@@ -125,6 +128,12 @@ Rules:
 - rotate `MCP_API_TOKEN` whenever operator scope changes
 - keep preview and production services logically separate
 
+## Operator Client Note
+
+- repo-local production client profile lives in `.cursor/mcp.json`
+- operator workstation must provide `MCP_PRODUCTION_BEARER_TOKEN` for `obsidian-memory-production`
+- Railway service-side `MCP_API_TOKEN` and workstation-side `MCP_PRODUCTION_BEARER_TOKEN` must be aligned for the production `/mcp` profile to connect
+
 ## Verification Probe Hygiene
 
 - production verification probes must use:
@@ -137,8 +146,12 @@ Rules:
   - `python scripts\verify_mcp_write_once.py --server-url https://mcp-server-production-90cb.up.railway.app/mcp/ --token <TOKEN> --confirm production-write-once`
   - `python scripts\verify_mcp_secret_paths.py --server-url https://mcp-server-production-90cb.up.railway.app/mcp/ --token <TOKEN> --confirm production-secret-paths`
 - specialist read-only commands:
-  - `python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/ --expected-title RailwayProductionDecision`
-  - `python scripts\verify_claude_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp/ --expected-title RailwayProductionDecision`
+  - `python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/`
+  - `python scripts\verify_claude_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp/`
+  - `python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /chatgpt-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit`
+  - `python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /claude-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit`
+  - `--token <TOKEN>` is optional for the read-only specialist route; it is no longer required to auto-resolve a recent title
+  - verifier request headers must accept both `application/json` and `text/event-stream`; `text/event-stream` only requests can return `406`
 - specialist write sibling commands:
   - `python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write/ --token <TOKEN> --profile chatgpt`
   - `python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp-write/ --token <TOKEN> --profile claude`
@@ -169,11 +182,46 @@ Production is only considered ready when all are true:
 - Railway public HTTPS endpoint is active and adopted
 - production token rotated from preview token
 - read-only MCP verification passed
+- specialist read-only route verification passed
+- specialist write-capable sibling verification passed
 - write-once verification passed
 - secret-path verification passed
 - backup/restore path documented and tested once
 
-## Current Dry Run Result
+## 2026-04-11 Current-Session Production Parity Recheck
+
+- deploy:
+  - `railway up -d`
+- health:
+  - `/healthz` -> pass
+  - `/chatgpt-healthz` -> pass
+  - `/chatgpt-write-healthz` -> pass
+  - `/claude-healthz` -> pass
+  - `/claude-write-healthz` -> pass
+- specialist read-only routes:
+  - `python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/` -> pass
+  - `python scripts\verify_claude_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp/` -> pass
+  - `python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /chatgpt-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit` -> pass
+  - `python scripts\mcp_local_tool_smoke.py --base-url https://mcp-server-production-90cb.up.railway.app --path /claude-mcp/ --search-query "초기 실행 절차를 CLAUDE.md와 wiki 업데이트 규칙으로 고정한다" --require-read-hit` -> pass
+  - current-session read-only surface:
+    - `search`, `list_recent_memories`, `fetch`, `search_wiki`, `fetch_wiki`
+  - current-session read-only discoverability:
+    - `resources = 5`
+    - `prompts = 4`
+- specialist write-capable sibling routes:
+  - `python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp-write/ --token <TOKEN> --profile chatgpt` -> pass
+    - sample id: `MEM-20260411-194216-B12AE8`
+  - `python scripts\verify_specialist_mcp_write.py --server-url https://mcp-server-production-90cb.up.railway.app/claude-mcp-write/ --token <TOKEN> --profile claude` -> pass
+    - sample id: `MEM-20260411-194215-091F41`
+  - current-session write surface:
+    - 13 tools including `search_wiki`, `fetch_wiki`, `sync_wiki_index`, `append_wiki_log`, `write_wiki_page`, `lint_wiki`, `reconcile_conflict`
+- verifier note:
+  - current verifier header must include `Accept: application/json, text/event-stream`
+  - earlier same-session `406` was caused by `Accept: text/event-stream` only and is no longer the current runbook state
+- evidence:
+  - `docs/MCP_RUNTIME_EVIDENCE.md`
+
+## 2026-03-28 Historical Dry Run Result
 
 - split project created:
   - `mcp-obsidian-production`
@@ -203,7 +251,7 @@ Production is only considered ready when all are true:
   - specialist read-only routes passed
     - ChatGPT route: `/chatgpt-mcp`
     - Claude route: `/claude-mcp`
-    - both exposed `search`, `fetch` only and passed no-auth verification
+    - both exposed `search`, `fetch`, `list_recent_memories` and passed read-only verification
   - specialist write-capable sibling routes passed
     - ChatGPT route: `/chatgpt-mcp-write`
     - Claude route: `/claude-mcp-write`
@@ -212,6 +260,9 @@ Production is only considered ready when all are true:
 - current release-gate decision:
   - closed for interim production mode
   - generated Railway domain is officially adopted until a custom domain exists
+- note:
+  - this block is a 2026-03-28 historical baseline
+  - current production PASS state is tracked in the 2026-04-11 parity recheck above
 
 Future hardening / optional upgrades:
 
@@ -241,7 +292,7 @@ Future hardening / optional upgrades:
   - new writes land under `memory/YYYY/MM/...`
   - previously migrated legacy notes also now resolve under `memory/YYYY/MM/...`
 
-## Specialist Route Smoke Recheck After Path Migration
+## 2026-03-28 Historical Specialist Route Smoke Recheck After Path Migration
 
 - read-only routes rechecked:
   - `python scripts\verify_chatgpt_mcp_readonly.py --server-url https://mcp-server-production-90cb.up.railway.app/chatgpt-mcp/ --expected-title RailwayProductionDecision`

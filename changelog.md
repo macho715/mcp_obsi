@@ -1,6 +1,301 @@
 # Changelog
 
+> ⚠️ **CRITICAL WARNING / 중요 경고** ⚠️
+> **모든 작업 및 데이터는 반드시 아래 Vault 경로를 사용해야 합니다:**
+> `C:\Users\jichu\Downloads\valut`
+
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
+
+## 2026-04-12 — Root docs sync for current KG dashboard usability flow
+
+### Changed
+
+- `README.md`
+  - `kg-dashboard` 섹션을 현재 코드 기준으로 갱신했다.
+  - field-aware search, companion views, manual node controls, tabbed inspector, URL state 복원을 사용자 기능 기준으로 추가 설명했다.
+  - current 검증 결과에 맞게 verification 관련 문장을 최신 상태로 정리했다.
+- `SYSTEM_ARCHITECTURE.md`
+  - dashboard addendum에 현재 UI alignment 이후 추가된 companion view, structured search, manual node controls, tabbed inspector 구조를 반영했다.
+  - `App.tsx`, `dashboard-state.ts`, `graph-companion-data.ts`, `graph-manual-controls.ts`가 어떤 역할을 가지는지 architecture 관점으로 보강했다.
+- `LAYOUT.md`
+  - `GraphCompanionTabs.tsx`, `GraphDataTable.tsx`, `GraphTimeline.tsx`, `GraphSchemaSummary.tsx`, `dashboard-state.ts`, `graph-companion-data.ts`, `graph-manual-controls.ts`를 active layout에 추가했다.
+  - `GraphSidebar.tsx`, `GraphView.tsx`, `NodeInspector.tsx`, `graph-model.ts` 설명을 최신 책임 기준으로 갱신했다.
+- `changelog.md`
+  - 이번 root docs sync 기록을 추가했다.
+
+### Verification
+
+- 아래 항목은 이번 docs sync를 위해 참조한 read-only code review와 existing verification evidence다.
+- direct code review basis
+  - `kg-dashboard/src/App.tsx`
+  - `kg-dashboard/src/components/GraphSidebar.tsx`
+  - `kg-dashboard/src/components/GraphView.tsx`
+  - `kg-dashboard/src/components/NodeInspector.tsx`
+  - `kg-dashboard/src/components/GraphCompanionTabs.tsx`
+  - `kg-dashboard/src/components/GraphDataTable.tsx`
+  - `kg-dashboard/src/components/GraphTimeline.tsx`
+  - `kg-dashboard/src/components/GraphSchemaSummary.tsx`
+  - `kg-dashboard/src/utils/dashboard-state.ts`
+  - `kg-dashboard/src/utils/graph-companion-data.ts`
+  - `kg-dashboard/src/utils/graph-manual-controls.ts`
+- current-session verification used
+  - `cd kg-dashboard; npm test` -> 37 passed
+  - `cd kg-dashboard; npm run lint` -> pass
+  - `cd kg-dashboard; npm run build` -> pass
+  - local preview `http://127.0.0.1:4177/` -> HTTP 200
+  - browser verify: `Pin`, `Hide`, `Expand 1-hop`, `Reset`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. runtime behavior 자체를 바꾸지 않았다.
+- 기존 history는 지우지 않고, latest KG dashboard usability state를 루트 문서 4개에 덧붙였다.
+
+## 2026-04-12 — KG Dashboard UI Rule Alignment & Outlook Email Ontology Workbook Pipeline
+
+### Changed
+
+- [`docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md`](docs/superpowers/plans/2026-04-12-outlook-email-ontology-workbook-redesign-implementation.md) — Added detailed implementation plan for the Outlook Email Ontology Workbook Pipeline, including new classification logic, review gates, and ontology mapping.
+- `kg-dashboard/src/App.tsx`, `App.css` — Removed hero-style intro panel, simplified topbar, unified card radius to <=8px, removed negative letter spacing.
+- `kg-dashboard/src/components/GraphSidebar.tsx` — Cleaned up nested card-in-card patterns into flatter list/row structures.
+- `kg-dashboard/src/components/NodeInspector.tsx` — Simplified details grid into row/list-centric density structures.
+- `kg-dashboard/src/components/GraphView.tsx` — Simplified main graph frame to a functional viewport level.
+- `README.md`, `SYSTEM_ARCHITECTURE.md`, `LAYOUT.md` — Updated to reflect the dashboard UI alignment and the Outlook Email Ontology Workbook Pipeline plan.
+
+### Verification
+- Verified dashboard tests, linting, and build pass cleanly without the hero panel.
+
+## 2026-04-12 — KG dashboard graph visibility docs sync
+
+### Changed
+
+- `README.md`
+  - kg-dashboard graph export, dashboard projection, NodeInspector, and wiki analysis sections를 현재 workspace 상태에 맞게 갱신했다.
+  - `scripts/build_dashboard_graph_data.py`의 분석 경로 우선순위, fallback 표시, metadata export, malformed frontmatter tolerance, CLI default 호출 방식을 문서에 반영했다.
+  - `app/services/graph_projection_builder.py`와 `kg-dashboard/src/utils/graph-model.ts`의 lesson metadata 보존 동작을 README에 연결해 설명했다.
+- `changelog.md`
+  - 이번 docs sync 기록을 상단에 추가했다.
+
+### Verification
+
+- targeted doc refresh review
+  - `README.md`
+  - `changelog.md`
+- current-session evidence used
+  - `.venv\Scripts\python.exe -m pytest tests/test_dashboard_graph_export.py -q`
+  - `.venv\Scripts\python.exe scripts/build_dashboard_graph_data.py`
+  - `cd kg-dashboard; npm test`
+  - `cd kg-dashboard; npm run lint`
+  - `cd kg-dashboard; npm run build`
+  - browser preview `http://127.0.0.1:4175/`
+  - `runtime/audits/hvdc_ttl_source_audit.json`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. 코드 동작 자체를 바꾸지 않았다.
+- current workspace state 기준으로 kg-dashboard export와 NodeInspector가 lesson metadata를 보존하고 링크로 여는 흐름을 README에 반영했다.
+- verified counts와 path fallback 결과를 함께 적어, 이후 문서가 현재 상태에서 벗어나지 않도록 했다.
+
+## 2026-04-11 — Root docs sync for confirmed production PASS state
+
+### Changed
+
+- `README.md`
+  - current-session production parity recheck를 기준으로 read-only/write-side PASS 상태를 동기화했다.
+  - production read-only routes의 `search_wiki` / `fetch_wiki` + `resources/prompts` surface와 write-side 13-tool surface를 현재 상태로 올렸다.
+  - pre-redeploy 기록은 historical note로만 읽히게 정리했다.
+- `SYSTEM_ARCHITECTURE.md`
+  - `/chatgpt-mcp`, `/claude-mcp`의 read-only + `resources/prompts` surface와 write sibling route의 wiki-native tools surface를 현재 코드 기준으로 다시 명시했다.
+  - `WIKI_OVERLAY_DIRNAME` 기본값 `wiki`, compiled wiki overlay semantics, current-session local vs production verification boundary를 추가했다.
+  - current-session production PASS final state를 앞에 두고, earlier fail snapshot은 evidence 문서로 분리해 읽게 정리했다.
+- `LAYOUT.md`
+  - compiled wiki overlay runtime surface에 `app/services/wiki_search_service.py`를 포함시켰다.
+  - readonly/write specialist verification scripts와 current production evidence 위치를 더 명확하게 적었다.
+- `changelog.md`
+  - 이번 root docs sync 기록을 추가했다.
+
+### Verification
+
+- code recheck
+  - `app/main.py`
+  - `app/config.py`
+  - `app/mcp_server.py`
+  - `app/chatgpt_mcp_server.py`
+  - `app/claude_mcp_server.py`
+  - `app/resources_server.py`
+  - `app/prompts_server.py`
+  - `app/wiki_tools.py`
+  - `app/services/wiki_store.py`
+  - `app/services/wiki_index_service.py`
+  - `app/services/wiki_log_service.py`
+- targeted verification
+  - `tests/test_auth.py`
+  - `tests/test_chatgpt_mcp_server.py`
+  - `tests/test_claude_mcp_server.py`
+  - `tests/test_wiki_overlay_surface.py`
+  - `tests/test_wiki_write_surface.py`
+- live evidence basis
+  - `scripts/verify_chatgpt_mcp_readonly.py`
+  - `scripts/verify_claude_mcp_readonly.py`
+  - `scripts/verify_specialist_mcp_write.py`
+  - `scripts/mcp_local_tool_smoke.py`
+  - `scripts/run_mcp_verification_round.ps1`
+  - `docs/MCP_RUNTIME_EVIDENCE.md`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. 앱 동작 자체를 바꾸지 않았다.
+- current-session 기준으로 production readonly/write routes는 redeploy 후 local과 같은 surface로 다시 확인됐다.
+- earlier fail snapshot은 지우지 않고 evidence 문서에 남겼다. 다만 root docs의 현재 상태 설명은 latest PASS 기준으로 맞췄다.
+
+## 2026-04-11 — Dual-corpus read surface for memory + wiki analyses
+
+### Added
+
+- `app/services/wiki_search_service.py`
+  - Added read-only wiki search/fetch service scoped to `wiki/analyses`.
+- `tests/test_wiki_search_service.py`
+  - Added service tests for path scoping, path/slug fetch, YAML robustness, and frontmatter title fallback.
+- `tests/test_dual_corpus_mcp.py`
+  - Added MCP contract tests for `search_wiki` and `fetch_wiki`.
+- `myagent-copilot-kit/standalone-package/src/unified-search.ts`
+  - Added orchestration-only merge helper for memory + wiki results.
+- `myagent-copilot-kit/standalone-package/src/unified-search.test.ts`
+  - Added node test for source preservation and memory-priority ordering.
+
+### Changed
+
+- `app/mcp_server.py`
+  - Added `search_wiki` and `fetch_wiki` to the main read surface.
+- `app/chatgpt_mcp_server.py`
+  - Added `search_wiki` and `fetch_wiki` to ChatGPT specialist routes.
+- `app/claude_mcp_server.py`
+  - Added `search_wiki` and `fetch_wiki` to Claude specialist routes.
+- `tests/test_chatgpt_mcp_server.py`
+  - Updated expected tool lists for ChatGPT specialist routes.
+- `tests/test_claude_mcp_server.py`
+  - Updated expected tool lists for Claude specialist routes.
+- `scripts/verify_chatgpt_mcp_readonly.py`
+  - Expanded local readonly verification to include `search_wiki` and `fetch_wiki`.
+- `scripts/verify_claude_mcp_readonly.py`
+  - Expanded local readonly verification to include `search_wiki` and `fetch_wiki`.
+- `scripts/mcp_local_tool_smoke.py`
+  - Expanded wrapper smoke expectations and local wiki tool probing.
+- `myagent-copilot-kit/standalone-package/src/mcp-memory-client.ts`
+  - Added `searchWiki()` and `fetchWiki()` helpers.
+- `myagent-copilot-kit/standalone-package/src/server.ts`
+  - Added `/api/wiki/search`, `/api/wiki/fetch`, and `/api/search/unified`.
+- `myagent-copilot-kit/standalone-package/src/docs-browser.ts`
+  - Added unified search UI with source-aware fetch routing.
+- `myagent-copilot-kit/standalone-package/README.md`
+  - Added standalone wiki/unified search endpoint docs.
+
+### Verification
+
+- `.venv\Scripts\python.exe -m pytest tests\test_wiki_search_service.py -q` -> pass
+- `.venv\Scripts\python.exe -m pytest tests\test_dual_corpus_mcp.py tests\test_chatgpt_mcp_server.py tests\test_claude_mcp_server.py -q` -> pass
+- `.venv\Scripts\python.exe scripts\verify_chatgpt_mcp_readonly.py --server-url http://127.0.0.1:8011/chatgpt-mcp/` -> pass
+- `.venv\Scripts\python.exe scripts\verify_claude_mcp_readonly.py --server-url http://127.0.0.1:8011/claude-mcp/` -> pass
+- `.venv\Scripts\python.exe scripts\mcp_local_tool_smoke.py --base-url http://127.0.0.1:8011 --path /chatgpt-mcp/` -> pass
+- `node --import tsx --test src/unified-search.test.ts src/proxy-middleware.test.ts` -> pass
+- `pnpm check` -> pass
+- `GET /api/wiki/search?q=hazmat` -> pass
+- `GET /api/search/unified?q=hazmat` -> pass
+- `GET /api/wiki/fetch?path=wiki/analyses/logistics_issue_shu_2025-11-26_3` -> pass
+
+### Notes
+
+- unified search remains orchestration-only and is not exposed as a public MCP tool.
+- 이 항목은 dual-corpus local/runtime 구현 변경을 기록한다.
+- 같은 날 later production redeploy + readonly/write recheck가 PASS였으므로, current root docs에서는 이 기능을 local-only 상태로 적지 않는다.
+
+## 2026-04-11 — KG Dashboard View Modes and WhatsApp Parsing Enhancement
+
+### Added
+
+- `kg-dashboard/src/components/NodeInspector.tsx`
+  - Added new NodeInspector component for viewing node details (extracted from GraphView).
+- `kg-dashboard/src/components/GraphSidebar.tsx`
+  - Added Sidebar component for search, metrics, and Hub node summaries.
+
+### Changed
+
+- `kg-dashboard/src/App.tsx`
+  - Extracted Sidebar component to `GraphSidebar.tsx`.
+  - Introduced 4 View Modes: Summary (요약 뷰), Issues (이슈 중심 뷰), Search (검색 뷰), and Ego (선택 노드 뷰).
+  - Added deferred search functionality (`useDeferredValue`) and graph metrics calculation.
+  - Implemented advanced graph indexing for faster relationship lookups.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Refactored graph rendering to support the 4 new View Modes.
+  - Added advanced Hub node styling (larger size, bold text, star shape) for nodes with degree >= `HUB_THRESHOLD` (200).
+  - Added dynamic node and edge classes based on view state (`hub-node`, `collapsed-summary-node`, `issue-edge`).
+- `kg-dashboard/src/main.tsx`
+  - Cleaned up formatting and removed React `StrictMode` wrapper for production rendering compatibility.
+- `scripts/parse_whatsapp_logistics.py`
+  - Increased `MAX_TO_PROCESS` to 10 for event block processing, allowing larger batches of WhatsApp logs to be delegated to subagents.
+
+## 2026-04-09 — Knowledge Graph extraction, RDF TTL build, and KG Dashboard Phase 1
+
+```mermaid
+flowchart TD
+    A[WhatsApp Logs & Excel] -->|parse_whatsapp_logistics.py| B(Raw Markdown & Event Blocks)
+    I[Multiple Vault Sources] -->|consolidate_vaults.py| C(Consolidated Vault)
+    B --> C
+    C -->|build_knowledge_graph.py| D(knowledge_graph.ttl)
+    D -->|test_kg_queries.py| E{SPARQL Validations}
+    D -->|ttl_to_json.py| F(nodes.json & edges.json)
+    F --> G[Vite React Dashboard]
+    G --> H[Interactive Cytoscape GraphView]
+```
+
+### Added
+
+- `scripts/parse_whatsapp_logistics.py`
+  - Added batch parsing for WhatsApp logs with regex matching, time-based event blocking, and markdown frontmatter generation.
+- `scripts/build_knowledge_graph.py`
+  - Added RDF TTL Knowledge Graph generation combining `HVDC STATUS.xlsx` records and `vault/wiki/analyses/` markdown notes using `rdflib`.
+- `scripts/ttl_to_json.py`
+  - Added python script to convert `.ttl` knowledge graph format into `nodes.json` and `edges.json` for frontend visualization.
+- `scripts/consolidate_vaults.py`
+  - Added multi-vault consolidation tool to merge files from `vault`, `vault-test`, `vault-test2`, and `vault-test3` based on modified time (`mtime`).
+- `scripts/test_kg_queries.py`
+  - Added SPARQL test scripts to validate graph relationships (e.g., matching Logistics Issues to Sites, Shipments to Vendors, and Issues to Vessels).
+- `kg-dashboard/src/App.tsx`
+  - Added interactive sidebar with Search & Expand, Min Degree filter to prevent Hairball views, and Focus Issue Mode.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Added Cytoscape graph view component with zoom-responsive font sizing (`min-zoomed-font-size: 12`) and element styling.
+- `kg-dashboard/src/main.tsx`
+  - Added Vite React entry point enforcing React `StrictMode`.
+
+### Changed
+
+- `kg-dashboard/`
+  - Initialized Vite React app for the `kg-dashboard` with interactive state management for nodes and edges.
+  - Applied detailed color coding based on entity type (`LogisticsIssue`, `Shipment`, `Vessel`, `Site`, `Warehouse`) to graph nodes for better visibility.
+
+### Fixed
+
+- `kg-dashboard/src/main.tsx`
+  - Enforced `StrictMode` in the React rendering tree to highlight potential component lifecycle issues.
+- `kg-dashboard/src/components/GraphView.tsx`
+  - Fixed readability issues on zoomed-out graphs by implementing `min-zoomed-font-size: 12` to prevent label clutter.
+
+### Verification
+
+- WhatsApp event extraction creates accurate time-grouped blocks.
+- Multi-vault consolidation completes without file conflicts, prioritizing latest `mtime`.
+- `knowledge_graph.ttl` successfully generates expected RDF Triples.
+- SPARQL queries execute successfully and return matching logical insights.
+- Cytoscape graph view rendering, Node Degree filtering, and panel interaction verified in the browser.
+- Python TTL to JSON parsing validated via output data files.
+
+### Git commits
+
+- `50c020a` feat: add sidebar filtering and node details panel
+- `c6ec07b` style: apply color coding based on entity type
+- `517b874` feat: add cytoscape graph view component
+- `63192e8` chore: initialize vite react app for kg-dashboard
+- `bff2988` feat: add python ttl to json parser
+- *(Untracked scripts `parse_whatsapp_logistics.py`, `build_knowledge_graph.py`, `test_kg_queries.py`, `consolidate_vaults.py` present in workspace)*
 
 ## 2026-04-09 — standalone memory enrichment + RAG auto-route + local-rag retrieval
 

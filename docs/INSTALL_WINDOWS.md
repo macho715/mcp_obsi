@@ -16,8 +16,8 @@ flowchart LR
 - `.env.example` → installer copies to `.env` when missing
 - `AGENTS.md`, `CLAUDE.md`, `README.md` (repo contract + editor hints)
 - `.cursor/rules/`, `.cursor/skills/`, `.cursor/agents/`, `.cursor/hooks.json`
+- `.cursor/mcp.json` (active project-local Cursor MCP config)
 - `.cursor/mcp.sample.json` (preserved sample)
-- active global Cursor MCP config: `C:\Users\jichu\.cursor\mcp.json`
 - `schemas/` (shared raw/memory JSON Schema)
 - `obsidian-memory-plugin/` (local curator plugin scaffold)
 
@@ -30,20 +30,22 @@ flowchart LR
 powershell -ExecutionPolicy Bypass -File .\install_cursor_fullsetup.ps1
 ```
 
-The script creates `.venv` if needed, runs `pip install -e .[dev]`, copies `.env.example` to `.env` when `.env` is missing, runs `git init` when `.git` is missing, and runs `python -m pre_commit install` from the virtual environment.
+The script creates `.venv` if needed, runs `pip install -e .[dev]`, copies `.env.example` to `.env` when `.env` is missing, seeds `.cursor/mcp.json` from `.cursor/mcp.sample.json` when missing, runs `git init` when `.git` is missing, and runs `python -m pre_commit install` from the virtual environment.
 
 4. Open Cursor in this folder.
 
 ## Token and MCP (Cursor)
 1. Edit `.env` and set `MCP_API_TOKEN` (and `VAULT_PATH`, `INDEX_DB_PATH`, `TIMEZONE`, etc.).
-2. Set `MCP_API_TOKEN` and `MCP_PRODUCTION_BEARER_TOKEN` in your **Windows user environment** so Cursor can expand them from `C:\Users\jichu\.cursor\mcp.json`.
-3. If local direct save should go to your real Obsidian vault, set `OBSIDIAN_LOCAL_VAULT_PATH` too.
+2. Set `MCP_API_TOKEN` and `MCP_PRODUCTION_BEARER_TOKEN` in your **Windows user environment** so Cursor can expand them from `.cursor/mcp.json`.
+3. If local direct save or production-to-local sync helpers should target your real Obsidian vault, set `OBSIDIAN_LOCAL_VAULT_PATH` too. This is primarily consumed by helper scripts rather than the core FastAPI settings model.
 4. **Restart Cursor** (or reload the window) after changing those environment variables.
 5. Start the FastAPI app (see below), then in Cursor check **Settings → MCP** or **Output → MCP Logs** for `obsidian-memory-local` and `obsidian-memory-production`.
 
-Auth is enforced whenever the app token is non-empty. Because the installer copies `.env.example` by default, local bootstraps start with a placeholder token until you replace it.
+Auth is enforced whenever the effective token for the target route is non-empty. Because the installer copies `.env.example` by default, local bootstraps start with a placeholder token until you replace it.
 
-Streamable HTTP is the preferred transport for this pack. The current documented Cursor configuration is user-global (`C:\Users\jichu\.cursor\mcp.json`).
+Streamable HTTP is the preferred transport for this pack. The preferred Cursor configuration for this repo is project-local (`.cursor/mcp.json`).
+
+로컬 MCP만 빠르게 정리한 허브: [LOCAL_MCP.md](LOCAL_MCP.md) (Cursor 내장 “Local MCP”가 아니라 **이 레포 uvicorn + `.cursor/mcp.json`** 조합임을 명시).
 
 ## Run the MCP HTTP app locally
 With `.venv` activated:
@@ -58,7 +60,7 @@ or:
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Entry point is `app.main:app` per `AGENTS.md`. Without optional `[mcp]` deps, `/mcp` may return **503** with a developer message instead of crashing.
+Entry point is `app.main:app` per `AGENTS.md`. Without optional `[mcp]` deps, `/mcp/` 또는 그 하위 path may return **503** with a developer message instead of crashing.
 
 현재 hybrid 방향에서는 다음 경로도 함께 존재할 수 있다.
 
@@ -83,7 +85,7 @@ Try:
 
 | Client | Localhost works | Public HTTPS required | Notes |
 | --- | --- | --- | --- |
-| Cursor | Yes | No | This repo is documented around global Cursor MCP with local + production profiles. |
+| Cursor | Yes | No | This repo uses project-local `.cursor/mcp.json` with local + production profiles. |
 | Claude Code | Yes | No | Local validation can happen before public exposure. |
 | OpenAI Responses API | No | Yes | Remote MCP usage belongs after local validation. |
 | Anthropic Messages API | No | Yes | MCP connector is tool-call oriented. |
@@ -103,12 +105,12 @@ ruff format --check .
 
 ## Config syntax checks
 ```powershell
-python -c "import json, pathlib; json.load(open('.cursor/mcp.sample.json')); json.load(open(r'C:\Users\jichu\.cursor\mcp.json')); json.load(open('.cursor/hooks.json')); print('json ok')"
+python -c "import json; json.load(open('.cursor/mcp.json')); json.load(open('.cursor/mcp.sample.json')); json.load(open('.cursor/hooks.json')); print('json ok')"
 ```
 
 ## Known manual checks
 - Cursor MCP connects with no **401** once `MCP_API_TOKEN` matches `.env` and Cursor was restarted after env changes.
-- Current workspace evidence includes a manual confirmation that `obsidian-memory-local` and `obsidian-memory-production` appear as **connected** in **Settings → MCP**.
+- Current workspace evidence includes a manual confirmation that `obsidian-memory-local` and `obsidian-memory-production` appear as **connected** in **Settings → MCP** once `.cursor/mcp.json` is present, env vars are set, and Cursor has been reloaded.
 - `/mcp` may answer with **307** and `/mcp/` may answer with **400 Missing session ID** or another protocol-level response depending on request headers and MCP session state, so confirm both reachability and actual Cursor status together.
 - Install optional MCP Python stack when you need a live `/mcp` implementation (`pip install -e .[mcp]` or per `pyproject.toml`).
 - `.cursor/cli.json` is not part of this pack; add only with official Cursor CLI documentation for your version.

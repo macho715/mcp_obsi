@@ -173,6 +173,82 @@ def test_update_normalizes_content_and_tags(tmp_path: Path):
     assert item["tags"] == ["new-tag", "second-tag", "role/decision"]
 
 
+def test_update_rewrites_project_metadata_without_reinserting_legacy_project(tmp_path: Path):
+    vault = tmp_path / "vault"
+    db = tmp_path / "data" / "memory_index.sqlite3"
+    store = MemoryStore(vault, db)
+
+    created = store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="Project rewrite",
+            content="Original project metadata",
+            source="manual",
+            project="Legacy Project",
+            projects=["Legacy Project", "Legacy Program"],
+            tags=["keep-me"],
+            append_daily=False,
+        )
+    )
+
+    result = store.update(
+        MemoryPatch(
+            memory_id=created["id"],
+            projects=["Replacement Project"],
+        )
+    )
+
+    assert result["status"] == "updated"
+    item = store.get(created["id"])
+    assert item is not None
+    assert item["project"] == "Replacement Project"
+    assert item["projects"] == ["Replacement Project"]
+    assert item["tags"] == ["keep-me", "role/decision", "project/replacement-project"]
+
+
+def test_update_rebuilds_derived_tags_when_metadata_changes_without_tags_patch(tmp_path: Path):
+    vault = tmp_path / "vault"
+    db = tmp_path / "data" / "memory_index.sqlite3"
+    store = MemoryStore(vault, db)
+
+    created = store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="Metadata rewrite",
+            content="Original metadata",
+            source="manual",
+            topics=["Old Topic"],
+            entities=["Old Entity"],
+            projects=["Old Project"],
+            tags=["keep-me"],
+            append_daily=False,
+        )
+    )
+
+    result = store.update(
+        MemoryPatch(
+            memory_id=created["id"],
+            topics=["New Topic"],
+            entities=["New Entity"],
+            projects=["New Project"],
+        )
+    )
+
+    assert result["status"] == "updated"
+    item = store.get(created["id"])
+    assert item is not None
+    assert item["topics"] == ["New Topic"]
+    assert item["entities"] == ["New Entity"]
+    assert item["projects"] == ["New Project"]
+    assert item["tags"] == [
+        "keep-me",
+        "role/decision",
+        "topic/new-topic",
+        "entity/new-entity",
+        "project/new-project",
+    ]
+
+
 def test_search_filters_by_normalized_tags_and_recency(tmp_path: Path):
     vault = tmp_path / "vault"
     db = tmp_path / "data" / "memory_index.sqlite3"
@@ -212,6 +288,96 @@ def test_search_filters_by_normalized_tags_and_recency(tmp_path: Path):
 
     assert len(result["results"]) == 1
     assert result["results"][0]["title"] == "Recent safety note"
+
+
+def test_recent_supports_paged_listing(tmp_path: Path):
+    vault = tmp_path / "vault"
+    db = tmp_path / "data" / "memory_index.sqlite3"
+    store = MemoryStore(vault, db, timezone="UTC")
+
+    oldest = datetime(2026, 3, 1, tzinfo=UTC)
+    middle = datetime(2026, 3, 2, tzinfo=UTC)
+    newest = datetime(2026, 3, 3, tzinfo=UTC)
+
+    store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="Oldest note",
+            content="Oldest content",
+            source="manual",
+            append_daily=False,
+            occurred_at=oldest,
+        )
+    )
+    store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="Middle note",
+            content="Middle content",
+            source="manual",
+            append_daily=False,
+            occurred_at=middle,
+        )
+    )
+    store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="Newest note",
+            content="Newest content",
+            source="manual",
+            append_daily=False,
+            occurred_at=newest,
+        )
+    )
+
+    first_page = store.recent(limit=2)
+    second_page = store.recent(limit=2, offset=2)
+
+    assert [row["title"] for row in first_page["results"]] == ["Newest note", "Middle note"]
+    assert first_page["has_more"] is True
+    assert first_page["next_offset"] == 2
+    assert [row["title"] for row in second_page["results"]] == ["Oldest note"]
+    assert second_page["has_more"] is False
+    assert second_page["next_offset"] is None
+
+
+def test_recent_prioritizes_business_before_verification(tmp_path: Path):
+    vault = tmp_path / "vault"
+    db = tmp_path / "data" / "memory_index.sqlite3"
+    store = MemoryStore(vault, db, timezone="UTC")
+
+    for offset in range(60):
+        store.save(
+            MemoryCreate(
+                memory_type="decision",
+                title=f"ChatGPT Specialist Write Check {offset:02d}",
+                content="Verification content",
+                source="manual",
+                project="local-verification",
+                tags=["verification", "rollback-archived"],
+                append_daily=False,
+                occurred_at=datetime(2026, 4, 8, 1, 0, offset, tzinfo=UTC),
+            )
+        )
+    business = store.save(
+        MemoryCreate(
+            memory_type="decision",
+            title="HVDC shipment memo",
+            content="Business content",
+            source="manual",
+            project="HVDC",
+            append_daily=False,
+            occurred_at=datetime(2026, 4, 8, 0, 59, 0, tzinfo=UTC),
+        )
+    )
+
+    result = store.recent(limit=3)
+
+    assert result["results"][0]["id"] == business["id"]
+    assert result["results"][0]["classification"] == "business"
+    assert result["results"][1]["classification"] == "verification"
+    assert result["results"][1]["classification_reasons"]
+    assert result["inspection_limit"] > 50
 
 
 def test_save_persists_normalized_record_and_index_row(tmp_path: Path):

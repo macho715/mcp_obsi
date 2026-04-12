@@ -24,3 +24,15 @@ data/*.sqlite3
 .git/
 .cursor/hooks/logs/
 .cursor/hooks/state/
+~$*
+doc_diff.txt
+pytest_out.txt
+patchgpt*.md
+.playwright-cli/
+runtime/logs/
+runtime/*.log
+runtime/*.err.log
+runtime/*.out.log
+runtime/last_ingest.json
+commit_msg.txt
+Untitled-1.ini
