@@ -44,13 +44,9 @@ def test_build_knowledge_objects_creates_guide_rule_lesson_and_pattern():
     assert all(guide["slug"] != "misc_note" for guide in knowledge.guides)
     assert all(rule["guide_slug"] != "misc_note" for rule in knowledge.rules)
     assert any(
-        lesson["slug"] == "logistics_issue_jpt71_2024-12-23_3"
-        for lesson in knowledge.lessons
+        lesson["slug"] == "logistics_issue_jpt71_2024-12-23_3" for lesson in knowledge.lessons
     )
-    assert any(
-        item["slug"] == "logistics_issue_jpt71_2024-12-23_3"
-        for item in knowledge.evidence
-    )
+    assert any(item["slug"] == "logistics_issue_jpt71_2024-12-23_3" for item in knowledge.evidence)
     assert knowledge.patterns[0]["pattern_key"] == "HighTideDelay"
     assert knowledge.rules[0]["guide_slug"] == "guideline_jopetwil_71_group"
     assert knowledge.rules[1]["guide_slug"] == "guideline_jopetwil_71_group"

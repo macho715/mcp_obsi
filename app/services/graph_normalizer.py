@@ -33,12 +33,7 @@ def _clean_text(value: Any) -> str | None:
     if pd.isna(value):
         return None
     if isinstance(value, datetime):
-        if (
-            value.hour == 0
-            and value.minute == 0
-            and value.second == 0
-            and value.microsecond == 0
-        ):
+        if value.hour == 0 and value.minute == 0 and value.second == 0 and value.microsecond == 0:
             return value.date().isoformat()
         return value.isoformat(timespec="seconds")
     if isinstance(value, date):

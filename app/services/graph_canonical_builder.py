@@ -31,6 +31,7 @@ _TYPE_BY_BUCKET = {
     "mappings": HVDC.Mapping,
 }
 
+
 def _coerce_sources(
     args: tuple[object, ...],
     kwargs: dict[str, Any],

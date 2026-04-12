@@ -69,6 +69,35 @@ def _safe_uri(value: object | None) -> str | None:
     return text.replace(" ", "_")
 
 
+def _legacy_dashboard_id(value: object | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.startswith("http://hvdc.logistics/ontology/"):
+        return text
+
+    for prefix in (
+        "https://hvdc.logistics/resource/",
+        "http://hvdc.logistics/resource/",
+    ):
+        if not text.startswith(prefix):
+            continue
+        parts = text.rstrip("/").split("/")
+        if len(parts) < 2:
+            return text
+        kind = parts[-2]
+        value_text = parts[-1]
+        if kind in {"site", "hub"}:
+            value_text = value_text.upper()
+        if kind in {"shipment", "site", "hub", "carrier", "pattern"}:
+            return node_uri(kind, value_text)
+        return text
+
+    return text
+
+
 def _is_present(value: object) -> bool:
     if value is None:
         return False
@@ -490,7 +519,7 @@ def _normalize_for_projection(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     shipments = [
         {
-            "id": shipment.id,
+            "id": _legacy_dashboard_id(shipment.id),
             "label": shipment.shipment_no,
             "type": "Shipment",
         }
@@ -498,12 +527,10 @@ def _normalize_for_projection(
     ]
     events = [
         {
-            "subject_id": event.subject_id,
-            "location_id": event.location_id,
+            "subject_id": _legacy_dashboard_id(event.subject_id),
+            "location_id": _legacy_dashboard_id(event.location_id),
             "location_label": (
-                event.location_id.rstrip("/").split("/")[-1].upper()
-                if event.location_id
-                else None
+                event.location_id.rstrip("/").split("/")[-1].upper() if event.location_id else None
             ),
         }
         for event in normalized.route_events
@@ -590,6 +617,17 @@ def export_dashboard_graph_data(
     knowledge = build_knowledge_objects(sources.analysis_notes)
     canonical_lessons, unmapped_lessons = _notes_to_canonical_lessons(sources.analysis_notes)
     compatibility_mappings = build_compatibility_mappings()
+    dashboard_lessons = [
+        {
+            **lesson,
+            "id": _safe_uri(lesson.get("id")),
+            "shipment_id": _legacy_dashboard_id(_safe_uri(lesson.get("shipment_id"))),
+            "location_id": _legacy_dashboard_id(_safe_uri(lesson.get("location_id"))),
+            "carrier_id": _legacy_dashboard_id(_safe_uri(lesson.get("carrier_id"))),
+            "pattern_id": _legacy_dashboard_id(_safe_uri(lesson.get("pattern_id"))),
+        }
+        for lesson in canonical_lessons
+    ]
 
     canonical_graph = build_canonical_graph(
         shipments=[
@@ -640,7 +678,7 @@ def export_dashboard_graph_data(
     projected_nodes, projected_edges, projection_audit = build_dashboard_projection(
         shipments=dashboard_shipments,
         events=dashboard_events,
-        lessons=[],
+        lessons=dashboard_lessons,
     )
     legacy_nodes, legacy_edges = _build_legacy_shipment_projection(sources.shipment_rows)
     issue_nodes, issue_edges, unresolved_issue_notes = _build_issue_projection(

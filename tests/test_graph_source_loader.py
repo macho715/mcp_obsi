@@ -15,9 +15,9 @@ def test_load_graph_sources_reads_required_tabs_and_markdown(tmp_path: Path):
     analyses.mkdir()
 
     pd.DataFrame([{"SCT SHIP NO.": "HVDC-001"}]).to_excel(hvdc_status, index=False)
-    pd.DataFrame(
-        [{"SCT SHIP NO.": "HVDC-001", "Case No.": "CASE-01"}]
-    ).to_excel(warehouse_status, index=False)
+    pd.DataFrame([{"SCT SHIP NO.": "HVDC-001", "Case No.": "CASE-01"}]).to_excel(
+        warehouse_status, index=False
+    )
     with pd.ExcelWriter(jpt) as writer:
         pd.DataFrame([{"Vessel": "JOPETWIL 71"}]).to_excel(
             writer,
@@ -81,9 +81,9 @@ def test_load_graph_sources_raises_for_missing_required_jpt_sheets(tmp_path: Pat
     analyses.mkdir()
 
     pd.DataFrame([{"SCT SHIP NO.": "HVDC-001"}]).to_excel(hvdc_status, index=False)
-    pd.DataFrame(
-        [{"SCT SHIP NO.": "HVDC-001", "Case No.": "CASE-01"}]
-    ).to_excel(warehouse_status, index=False)
+    pd.DataFrame([{"SCT SHIP NO.": "HVDC-001", "Case No.": "CASE-01"}]).to_excel(
+        warehouse_status, index=False
+    )
     with pd.ExcelWriter(jpt) as writer:
         pd.DataFrame([{"Vessel": "JOPETWIL 71"}]).to_excel(
             writer,

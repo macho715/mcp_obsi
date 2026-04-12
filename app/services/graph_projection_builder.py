@@ -124,13 +124,26 @@ def build_dashboard_projection(*, shipments, events, lessons):
         lesson_id = _coerce_text(lesson, "id")
         lesson_label = _coerce_text(lesson, "label", "title", "slug")
         lesson_type = _coerce_text(lesson, "type") or "IncidentLesson"
-        shipment_id = _coerce_text(lesson, "shipment_id", "shipmentId")
-        if not lesson_id or not lesson_label or not shipment_id:
+        anchor_id = None
+        for anchor_key in (
+            "shipment_id",
+            "location_id",
+            "carrier_id",
+            "pattern_id",
+            "shipmentId",
+            "locationId",
+            "carrierId",
+            "patternId",
+        ):
+            anchor_id = _coerce_text(lesson, anchor_key)
+            if anchor_id:
+                break
+        if not lesson_id or not lesson_label or not anchor_id:
             unknown_nodes += 1
             continue
 
         _upsert_node(nodes, lesson_id, lesson_label, lesson_type)
-        _upsert_edge(edges, shipment_id, lesson_id, "relatedToLesson")
+        _upsert_edge(edges, anchor_id, lesson_id, "relatedToLesson")
 
     node_payload = sorted(
         nodes.values(),

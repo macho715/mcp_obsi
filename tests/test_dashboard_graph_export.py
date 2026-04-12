@@ -36,14 +36,14 @@ def test_build_dashboard_projection_emits_flat_consumer_contract():
                 "label": "Delay at AGI",
                 "type": "IncidentLesson",
                 "shipment_id": shipment_id,
+                "location_id": location_id,
             }
         ],
     )
 
     node_by_id = {node["data"]["id"]: node["data"] for node in nodes}
     edge_keys = {
-        (edge["data"]["source"], edge["data"]["target"], edge["data"]["label"])
-        for edge in edges
+        (edge["data"]["source"], edge["data"]["target"], edge["data"]["label"]) for edge in edges
     }
 
     assert shipment_id in node_by_id
@@ -83,6 +83,17 @@ slug: delay-at-agi
 tags:
   - agi
   - mosb
+---
+Issue body
+""",
+        encoding="utf-8",
+    )
+    (wiki_dir / "logistics_issue_delay_at_agi.md").write_text(
+        """---
+title: Delay at AGI
+slug: delay-at-agi
+tags:
+  - agi
 ---
 Issue body
 """,
@@ -144,6 +155,26 @@ Issue body
     assert issue_nodes[0]["data"]["label"] == "Delay at AGI"
     assert all(node["data"]["type"] != "rdf-schema#Class" for node in nodes)
     assert all(node["data"]["type"] != "Unknown" for node in nodes)
+
+    node_ids = {node["data"]["id"] for node in nodes}
+    shipment_legacy_id = "http://hvdc.logistics/ontology/shipment/SHIP-001"
+    shipment_canonical_id = "https://hvdc.logistics/resource/shipment/SHIP-001"
+    location_legacy_id = "http://hvdc.logistics/ontology/site/AGI"
+    location_canonical_id = "https://hvdc.logistics/resource/site/agi"
+    lesson_id = "http://hvdc.logistics/ontology/lesson/delay-at-agi"
+
+    assert shipment_legacy_id in node_ids
+    assert shipment_canonical_id not in node_ids
+    assert location_legacy_id in node_ids
+    assert location_canonical_id not in node_ids
+    assert sum(
+        1
+        for node in nodes
+        if node["data"]["type"] == "Shipment" and node["data"]["label"] == "SHIP-001"
+    ) == 1
+    assert (location_legacy_id, lesson_id, "relatedToLesson") in {
+        (edge["data"]["source"], edge["data"]["target"], edge["data"]["label"]) for edge in edges
+    }
 
 
 def test_export_dashboard_graph_data_keeps_legacy_id_style_for_values_with_spaces_and_slashes(
