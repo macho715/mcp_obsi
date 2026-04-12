@@ -36,6 +36,18 @@ export interface GraphEdge {
   data: GraphEdgeData;
 }
 
+export interface ProvenanceChain {
+  source?: GraphNode | null;
+  claim?: GraphNode | null;
+  issueOrLesson?: GraphNode | null;
+}
+
+export interface VisibilityReason {
+  code: 'filter-match' | 'view-slice' | 'manual-pin' | 'manual-expand' | 'manual-hidden-excluded';
+  label: string;
+  detail: string;
+}
+
 export interface GraphSlice {
   nodes: GraphNode[];
   edges: GraphEdge[];

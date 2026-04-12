@@ -4,6 +4,7 @@ import type {
   GraphMetrics,
   GraphNode,
   GraphNodeType,
+  ProvenanceChain,
   GraphSearchField,
   GraphSlice,
   SearchViewOptions,
@@ -488,6 +489,38 @@ export function findSearchMatches(
 
 export function getEdgeId(edge: GraphEdge): string {
   return edge.data.id ?? `${edge.data.source}|${edge.data.target}|${edge.data.label ?? ''}`;
+}
+
+export function deriveProvenanceChain(
+  node: GraphNode | null,
+  edge: GraphEdge | null,
+  index: GraphIndex,
+): ProvenanceChain {
+  const issueOrLesson =
+    node?.data.type === ISSUE_TYPE || node?.data.type === LESSON_TYPE ? node : null;
+  const edgeSourceNode = edge ? (index.nodeById.get(edge.data.source) ?? null) : null;
+  const edgeTargetNode = edge ? (index.nodeById.get(edge.data.target) ?? null) : null;
+  const claim =
+    issueOrLesson ??
+    edgeTargetNode ??
+    edgeSourceNode ??
+    node ??
+    null;
+
+  const source =
+    edgeSourceNode ??
+    (claim
+      ? [...(index.adjacency.get(claim.data.id) ?? [])]
+          .map((neighborId) => index.nodeById.get(neighborId) ?? null)
+          .find((neighbor) => Boolean(neighbor && neighbor.data.type !== ISSUE_TYPE && neighbor.data.type !== LESSON_TYPE)) ??
+        null
+      : null);
+
+  return {
+    source,
+    claim,
+    issueOrLesson,
+  };
 }
 
 function limitHubExpansion(
