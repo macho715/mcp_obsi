@@ -142,7 +142,14 @@ def build_dashboard_projection(*, shipments, events, lessons):
             unknown_nodes += 1
             continue
 
-        _upsert_node(nodes, lesson_id, lesson_label, lesson_type)
+        _upsert_node(
+            nodes,
+            lesson_id,
+            lesson_label,
+            lesson_type,
+            analysisPath=_coerce_text(lesson, "analysisPath"),
+            analysisVault=_coerce_text(lesson, "analysisVault"),
+        )
         _upsert_edge(edges, anchor_id, lesson_id, "relatedToLesson")
 
     node_payload = sorted(

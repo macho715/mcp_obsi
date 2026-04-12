@@ -1,5 +1,5 @@
 import type { GraphNode } from '../types/graph';
-import { getCollapsedCountSummary, getIssueSlug } from '../utils/graph-model';
+import { getCollapsedCountSummary } from '../utils/graph-model';
 
 export interface NodeInspectorProps {
   node: GraphNode | null;
@@ -30,6 +30,10 @@ function formatCount(value: number | null): string {
   return typeof value === 'number' ? new Intl.NumberFormat('en-US').format(value) : '—';
 }
 
+function buildObsidianOpenHref(vault: string, file: string): string {
+  return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
+}
+
 export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
   if (!node) {
     return (
@@ -50,8 +54,14 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
     );
   }
 
-  const issueSlug = node.data.type === 'LogisticsIssue' ? getIssueSlug(node.data.id) : null;
-  const obsidianPath = issueSlug ? `vault/wiki/analyses/${issueSlug}.md` : null;
+  const analysisVault = typeof node.data.analysisVault === 'string' ? node.data.analysisVault : null;
+  const analysisPath = typeof node.data.analysisPath === 'string' ? node.data.analysisPath : null;
+  const obsidianPath =
+    (node.data.type === 'LogisticsIssue' || node.data.type === 'IncidentLesson') &&
+    analysisVault &&
+    analysisPath
+      ? { vault: analysisVault, file: analysisPath }
+      : null;
   const collapsedCounts = getCollapsedCountSummary(node);
   const extraFields = Object.entries(node.data)
     .filter(([key, value]) => !STANDARD_FIELDS.has(key) && value !== undefined && value !== null)
@@ -86,7 +96,7 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
 
       <p className="panel-copy">
         {node.data.type} node · {degreeLabel} connections
-        {issueSlug ? ` · linked note ${issueSlug}` : ''}
+        {obsidianPath ? ` · linked note ${analysisPath}` : ''}
       </p>
 
       <div className="inspector-badges">
@@ -106,7 +116,7 @@ export function NodeInspector({ node, degree, onClose }: NodeInspectorProps) {
       {obsidianPath ? (
         <a
           className="obsidian-link"
-          href={`obsidian://open?vault=mcp_obsidian&file=${obsidianPath}`}
+          href={buildObsidianOpenHref(obsidianPath.vault, obsidianPath.file)}
           target="_blank"
           rel="noreferrer"
         >

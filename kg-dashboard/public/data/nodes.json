@@ -9,42 +9,1022 @@
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-09-27_8",
-      "label": "DAS 사이트 매립형 플레이트(Embedded Plates) 긴급 수리 및 육상 운송 조치",
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-22_1",
+      "label": "[Abu Dhabi Issue] 2024-08-22 Event #1",
       "type": "IncidentLesson",
-      "rdf-schema#label": "DAS 사이트 매립형 플레이트(Embedded Plates) 긴급 수리 및 육상 운송 조치"
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-22 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-22_1.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-09-27_7",
-      "label": "DAS 하역 방식 변경 및 HCS/트레일러 안전 조치 보고",
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-23_2",
+      "label": "[Abu Dhabi Issue] 2024-08-23 Event #2",
       "type": "IncidentLesson",
-      "rdf-schema#label": "DAS 하역 방식 변경 및 HCS/트레일러 안전 조치 보고"
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-23 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-23_2.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-09-29_9",
-      "label": "DAS 항구 하역 장비 부족 및 AGI 사전 정보 공유 지연에 따른 물류 이슈 보고서",
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-27_3",
+      "label": "[Abu Dhabi Issue] 2024-08-27 Event #3",
       "type": "IncidentLesson",
-      "rdf-schema#label": "DAS 항구 하역 장비 부족 및 AGI 사전 정보 공유 지연에 따른 물류 이슈 보고서"
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-27 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-27_3.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-09-22_6",
-      "label": "[Project Lightning] DAS 현장 식수 공급 지연 및 주요 자재/장비 운송 현황",
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-28_4",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #4",
       "type": "IncidentLesson",
-      "rdf-schema#label": "[Project Lightning] DAS 현장 식수 공급 지연 및 주요 자재/장비 운송 현황"
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_4.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-10-01_10",
-      "label": "저조위(Low Tide)로 인한 램프 접안 및 하역 지연 (JPT71)",
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-28_5",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #5",
       "type": "IncidentLesson",
-      "rdf-schema#label": "저조위(Low Tide)로 인한 램프 접안 및 하역 지연 (JPT71)"
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #5",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_5.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-28_6",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #6",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #6",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_6.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-29_7",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #7",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #7",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_7.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-29_8",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #8",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #8",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_8.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-29_9",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #9",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #9",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_9.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-08-30_9",
+      "label": "[Abu Dhabi Issue] 2024-08-30 Event #9",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-30 Event #9",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-30_9.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-05_10",
+      "label": "[Abu Dhabi Issue] 2024-09-05 Event #10",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-05 Event #10",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-05_10.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-06_11",
+      "label": "[Abu Dhabi Issue] 2024-09-06 Event #11",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-06 Event #11",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-06_11.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-06_4",
+      "label": "[Abu Dhabi Issue] 2024-09-06 Event #4",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-06 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-06_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-07_12",
+      "label": "[Abu Dhabi Issue] 2024-09-07 Event #12",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-07 Event #12",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-07_12.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-09_13",
+      "label": "[Abu Dhabi Issue] 2024-09-09 Event #13",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-09 Event #13",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-09_13.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-10_14",
+      "label": "[Abu Dhabi Issue] 2024-09-10 Event #14",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-10 Event #14",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-10_14.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-11_15",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #15",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #15",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_15.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-11_16",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #16",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #16",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_16.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-11_17",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #17",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #17",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_17.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-12_18",
+      "label": "[Abu Dhabi Issue] 2024-09-12 Event #18",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-12 Event #18",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-12_18.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-13_19",
+      "label": "[Abu Dhabi Issue] 2024-09-13 Event #19",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-13 Event #19",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-13_19.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-17_20",
+      "label": "[Abu Dhabi Issue] 2024-09-17 Event #20",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-17 Event #20",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-17_20.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-17_5",
+      "label": "[Abu Dhabi Issue] 2024-09-17 Event #5",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-17 Event #5",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-17_5.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-22_21",
+      "label": "[Abu Dhabi Issue] 2024-09-22 Event #21",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-22 Event #21",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-22_21.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-23_22",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #22",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #22",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_22.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-23_23",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #23",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #23",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_23.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-23_24",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #24",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #24",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_24.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-23_25",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #25",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #25",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_25.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-23_7",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #7",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #7",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_7.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-25_26",
+      "label": "[Abu Dhabi Issue] 2024-09-25 Event #26",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-25 Event #26",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-25_26.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-26_27",
+      "label": "[Abu Dhabi Issue] 2024-09-26 Event #27",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-26 Event #27",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-26_27.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-27_28",
+      "label": "[Abu Dhabi Issue] 2024-09-27 Event #28",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-27 Event #28",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-27_28.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-27_8",
+      "label": "[Abu Dhabi Issue] 2024-09-27 Event #8",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-27 Event #8",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-27_8.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-09-30_29",
+      "label": "[Abu Dhabi Issue] 2024-09-30 Event #29",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-30 Event #29",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-30_29.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-01_30",
+      "label": "[Abu Dhabi Issue] 2024-10-01 Event #30",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-01 Event #30",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-01_30.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-03_31",
+      "label": "[Abu Dhabi Issue] 2024-10-03 Event #31",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-03 Event #31",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-03_31.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-03_32",
+      "label": "[Abu Dhabi Issue] 2024-10-03 Event #32",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-03 Event #32",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-03_32.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-04_33",
+      "label": "[Abu Dhabi Issue] 2024-10-04 Event #33",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-04 Event #33",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-04_33.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-05_34",
+      "label": "[Abu Dhabi Issue] 2024-10-05 Event #34",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-05 Event #34",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-05_34.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-07_35",
+      "label": "[Abu Dhabi Issue] 2024-10-07 Event #35",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-07 Event #35",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-07_35.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-07_36",
+      "label": "[Abu Dhabi Issue] 2024-10-07 Event #36",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-07 Event #36",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-07_36.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-08_37",
+      "label": "[Abu Dhabi Issue] 2024-10-08 Event #37",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-08 Event #37",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-08_37.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-09_38",
+      "label": "[Abu Dhabi Issue] 2024-10-09 Event #38",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-09 Event #38",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-09_38.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-10_39",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #39",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #39",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_39.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-10_40",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #40",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #40",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_40.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-10_41",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #41",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #41",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_41.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-12_42",
+      "label": "[Abu Dhabi Issue] 2024-10-12 Event #42",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-12 Event #42",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-12_42.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-13_43",
+      "label": "[Abu Dhabi Issue] 2024-10-13 Event #43",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-13 Event #43",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-13_43.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-13_44",
+      "label": "[Abu Dhabi Issue] 2024-10-13 Event #44",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-13 Event #44",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-13_44.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-14_45",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #45",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #45",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_45.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-14_46",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #46",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #46",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_46.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-14_47",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #47",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #47",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_47.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-15_48",
+      "label": "[Abu Dhabi Issue] 2024-10-15 Event #48",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-15 Event #48",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-15_48.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-15_49",
+      "label": "[Abu Dhabi Issue] 2024-10-15 Event #49",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-15 Event #49",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-15_49.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-17_50",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #50",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #50",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_50.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-17_51",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #51",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #51",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_51.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-17_52",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #52",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #52",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_52.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-17_53",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #53",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #53",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_53.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-18_54",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #54",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #54",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_54.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-18_55",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #55",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #55",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_55.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-18_56",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #56",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #56",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_56.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-18_6",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #6",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #6",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_6.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-19_57",
+      "label": "[Abu Dhabi Issue] 2024-10-19 Event #57",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-19 Event #57",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-19_57.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-19_58",
+      "label": "[Abu Dhabi Issue] 2024-10-19 Event #58",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-19 Event #58",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-19_58.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-20_59",
+      "label": "[Abu Dhabi Issue] 2024-10-20 Event #59",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-20 Event #59",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-20_59.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-20_60",
+      "label": "[Abu Dhabi Issue] 2024-10-20 Event #60",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-20 Event #60",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-20_60.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-21_61",
+      "label": "[Abu Dhabi Issue] 2024-10-21 Event #61",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-21 Event #61",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-21_61.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-25_62",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #62",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #62",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_62.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-25_63",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #63",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #63",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_63.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-25_64",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #64",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #64",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_64.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-26_65",
+      "label": "[Abu Dhabi Issue] 2024-10-26 Event #65",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-26 Event #65",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-26_65.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-27_66",
+      "label": "[Abu Dhabi Issue] 2024-10-27 Event #66",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-27 Event #66",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-27_66.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-10-30_67",
+      "label": "[Abu Dhabi Issue] 2024-10-30 Event #67",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-30 Event #67",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-30_67.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-01_68",
+      "label": "[Abu Dhabi Issue] 2024-11-01 Event #68",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-01 Event #68",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-01_68.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-01_69",
+      "label": "[Abu Dhabi Issue] 2024-11-01 Event #69",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-01 Event #69",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-01_69.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-03_70",
+      "label": "[Abu Dhabi Issue] 2024-11-03 Event #70",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-03 Event #70",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-03_70.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-04_71",
+      "label": "[Abu Dhabi Issue] 2024-11-04 Event #71",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-04 Event #71",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-04_71.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-05_72",
+      "label": "[Abu Dhabi Issue] 2024-11-05 Event #72",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-05 Event #72",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-05_72.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-05_73",
+      "label": "[Abu Dhabi Issue] 2024-11-05 Event #73",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-05 Event #73",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-05_73.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-06_74",
+      "label": "[Abu Dhabi Issue] 2024-11-06 Event #74",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-06 Event #74",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-06_74.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-07_75",
+      "label": "[Abu Dhabi Issue] 2024-11-07 Event #75",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-07 Event #75",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-07_75.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-07_76",
+      "label": "[Abu Dhabi Issue] 2024-11-07 Event #76",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-07 Event #76",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-07_76.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-10_77",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #77",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #77",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_77.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-10_78",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #78",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #78",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_78.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_abu_dhabi_2024-11-10_79",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #79",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #79",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_79.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_dsv_delivery_2025-01-21_1",
+      "label": "[Dsv Delivery Issue] 2025-01-21 Event #1",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-21 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-21_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_dsv_delivery_2025-01-27_2",
+      "label": "[Dsv Delivery Issue] 2025-01-27 Event #2",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-27 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-27_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_dsv_delivery_2025-01-28_3",
+      "label": "[Dsv Delivery Issue] 2025-01-28 Event #3",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-28 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-28_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_dsv_delivery_2025-04-30_4",
+      "label": "[Dsv Delivery Issue] 2025-04-30 Event #4",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-04-30 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-04-30_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_jpt71_2024-08-31_1",
+      "label": "[Jpt71 Issue] 2024-08-31 Event #1",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-08-31 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-08-31_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_jpt71_2024-09-21_2",
+      "label": "[Jpt71 Issue] 2024-09-21 Event #2",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-09-21 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-09-21_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_jpt71_2024-12-23_3",
+      "label": "[Jpt71 Issue] 2024-12-23 Event #3",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-12-23 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-12-23_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_2024-08-22_1",
+      "label": "[Logistics Issue] 2024-08-22 Event #1",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-22 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-22_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_2024-08-23_2",
+      "label": "[Logistics Issue] 2024-08-23 Event #2",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-23 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-23_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_2024-08-27_3",
+      "label": "[Logistics Issue] 2024-08-27 Event #3",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-27 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-27_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_mir_2025-09-18_1",
+      "label": "[MIR Logistics Issue] 2025-09-18 Event #1",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[MIR Logistics Issue] 2025-09-18 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2025-09-18_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_mir_2025-10-15_2",
+      "label": "[MIR Logistics Issue] 2025-10-15 Event #2",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[MIR Logistics Issue] 2025-10-15 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2025-10-15_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_mir_2026-02-25_3",
+      "label": "[MIR Logistics Issue] 2026-02-25 Event #3",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[MIR Logistics Issue] 2026-02-25 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2026-02-25_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_shu_2024-11-19_1",
+      "label": "[SHU Issue] 2024-11-19 Event #1",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[SHU Issue] 2024-11-19 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2024-11-19_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_shu_2025-09-04_2",
+      "label": "[SHU Issue] 2025-09-04 Event #2",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[SHU Issue] 2025-09-04 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2025-09-04_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_shu_2026-01-26_4",
+      "label": "[SHU Issue] 2026-01-26 Event #4",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "[SHU Issue] 2026-01-26 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2026-01-26_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/lesson/logistics_issue_project_lightning_2024-08-27_1",
+      "label": "미르파(Mirfa) 실내 창고 건설 지연 및 변압기(TR 5&6) 손상 의심 보고",
+      "type": "IncidentLesson",
+      "rdf-schema#label": "미르파(Mirfa) 실내 창고 건설 지연 및 변압기(TR 5&6) 손상 의심 보고",
+      "analysisPath": "wiki/analyses/logistics_issue_project_lightning_2024-08-27_1.md",
+      "analysisVault": "valut"
     }
   },
   {
@@ -57,106 +1037,1132 @@
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-20_5",
-      "label": "ADNOC LNS 장비 결함으로 인한 선박 정박지 대기 및 긴급 배차",
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-25_9",
+      "label": "ADNOC LNS 장비 문제로 인한 선박 대기 및 지연 이슈",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "ADNOC LNS 장비 결함으로 인한 선박 정박지 대기 및 긴급 배차"
+      "rdf-schema#label": "ADNOC LNS 장비 문제로 인한 선박 대기 및 지연 이슈",
+      "analysisPath": "wiki/analyses/logistics_issue_project_lightning_2024-09-25_9.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-27_8",
-      "label": "DAS 사이트 매립형 플레이트(Embedded Plates) 긴급 수리 및 육상 운송 조치",
+      "id": "http://hvdc.logistics/ontology/issue/guideline_abu_dhabi_logistics",
+      "label": "Abu Dhabi Logistics Operations Analysis",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "DAS 사이트 매립형 플레이트(Embedded Plates) 긴급 수리 및 육상 운송 조치"
+      "rdf-schema#label": "Abu Dhabi Logistics Operations Analysis",
+      "analysisPath": "wiki/analyses/guideline_abu_dhabi_logistics.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-27_7",
-      "label": "DAS 하역 방식 변경 및 HCS/트레일러 안전 조치 보고",
+      "id": "http://hvdc.logistics/ontology/issue/guideline_dsv_delivery",
+      "label": "DSV Delivery Operation Guidelines",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "DAS 하역 방식 변경 및 HCS/트레일러 안전 조치 보고"
+      "rdf-schema#label": "DSV Delivery Operation Guidelines",
+      "analysisPath": "wiki/analyses/guideline_dsv_delivery.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-29_9",
-      "label": "DAS 항구 하역 장비 부족 및 AGI 사전 정보 공유 지연에 따른 물류 이슈 보고서",
+      "id": "http://hvdc.logistics/ontology/issue/guideline_hvdc_project_lightning",
+      "label": "HVDC Project Lightning Logistics Control Tower",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "DAS 항구 하역 장비 부족 및 AGI 사전 정보 공유 지연에 따른 물류 이슈 보고서"
+      "rdf-schema#label": "HVDC Project Lightning Logistics Control Tower",
+      "analysisPath": "wiki/analyses/guideline_hvdc_project_lightning.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/hvdc-logistics-ontology-guide",
+      "label": "HVDC 물류 도메인 지식 온톨로지 작성 가이드 v2.0",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "HVDC 물류 도메인 지식 온톨로지 작성 가이드 v2.0",
+      "analysisPath": "wiki/analyses/hvdc-logistics-ontology-guide.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/hvdc-logistics-ontology-guide-v2-round2-140323",
+      "label": "HVDC 물류 도메인 지식 온톨로지 작성 가이드 v2.0",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "HVDC 물류 도메인 지식 온톨로지 작성 가이드 v2.0",
+      "analysisPath": "wiki/analyses/hvdc-logistics-ontology-guide-v2-round2-140323.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/guideline_jopetwil_71_group",
+      "label": "Jopetwil 71 Port Operations Control Analysis",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "Jopetwil 71 Port Operations Control Analysis",
+      "analysisPath": "wiki/analyses/guideline_jopetwil_71_group.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/llm_wiki_karpathy_analysis",
+      "label": "LLM 기반 지식베이스 구축 워크플로우 분석",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "LLM 기반 지식베이스 구축 워크플로우 분석",
+      "analysisPath": "wiki/analyses/llm_wiki_karpathy_analysis.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/guideline_mir_logistics",
+      "label": "MIR Site Logistics Operations Guideline",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "MIR Site Logistics Operations Guideline",
+      "analysisPath": "wiki/analyses/guideline_mir_logistics.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/guideline_shu_logistics",
+      "label": "SHU Logistics Operational Guidelines",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "SHU Logistics Operational Guidelines",
+      "analysisPath": "wiki/analyses/guideline_shu_logistics.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-22_1",
+      "label": "[Abu Dhabi Issue] 2024-08-22 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-22 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-22_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-23_2",
+      "label": "[Abu Dhabi Issue] 2024-08-23 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-23 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-23_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-27_3",
+      "label": "[Abu Dhabi Issue] 2024-08-27 Event #3",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-27 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-27_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-28_4",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #4",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-28_5",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #5",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #5",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_5.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-28_6",
+      "label": "[Abu Dhabi Issue] 2024-08-28 Event #6",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-28 Event #6",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-28_6.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-29_7",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #7",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #7",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_7.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-29_8",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #8",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #8",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_8.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-29_9",
+      "label": "[Abu Dhabi Issue] 2024-08-29 Event #9",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-29 Event #9",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-29_9.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-08-30_9",
+      "label": "[Abu Dhabi Issue] 2024-08-30 Event #9",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-08-30 Event #9",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-08-30_9.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-05_10",
+      "label": "[Abu Dhabi Issue] 2024-09-05 Event #10",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-05 Event #10",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-05_10.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-06_11",
+      "label": "[Abu Dhabi Issue] 2024-09-06 Event #11",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-06 Event #11",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-06_11.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-06_4",
+      "label": "[Abu Dhabi Issue] 2024-09-06 Event #4",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-06 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-06_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-07_12",
+      "label": "[Abu Dhabi Issue] 2024-09-07 Event #12",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-07 Event #12",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-07_12.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-09_13",
+      "label": "[Abu Dhabi Issue] 2024-09-09 Event #13",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-09 Event #13",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-09_13.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-10_14",
+      "label": "[Abu Dhabi Issue] 2024-09-10 Event #14",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-10 Event #14",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-10_14.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-11_15",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #15",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #15",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_15.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-11_16",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #16",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #16",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_16.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-11_17",
+      "label": "[Abu Dhabi Issue] 2024-09-11 Event #17",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-11 Event #17",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-11_17.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-12_18",
+      "label": "[Abu Dhabi Issue] 2024-09-12 Event #18",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-12 Event #18",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-12_18.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-13_19",
+      "label": "[Abu Dhabi Issue] 2024-09-13 Event #19",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-13 Event #19",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-13_19.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-17_20",
+      "label": "[Abu Dhabi Issue] 2024-09-17 Event #20",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-17 Event #20",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-17_20.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-17_5",
+      "label": "[Abu Dhabi Issue] 2024-09-17 Event #5",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-17 Event #5",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-17_5.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-22_21",
+      "label": "[Abu Dhabi Issue] 2024-09-22 Event #21",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-22 Event #21",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-22_21.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-23_22",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #22",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #22",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_22.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-23_23",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #23",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #23",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_23.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-23_24",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #24",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #24",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_24.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-23_25",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #25",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #25",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_25.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-23_7",
+      "label": "[Abu Dhabi Issue] 2024-09-23 Event #7",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-23 Event #7",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-23_7.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-25_26",
+      "label": "[Abu Dhabi Issue] 2024-09-25 Event #26",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-25 Event #26",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-25_26.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-26_27",
+      "label": "[Abu Dhabi Issue] 2024-09-26 Event #27",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-26 Event #27",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-26_27.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-27_28",
+      "label": "[Abu Dhabi Issue] 2024-09-27 Event #28",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-27 Event #28",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-27_28.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-27_8",
+      "label": "[Abu Dhabi Issue] 2024-09-27 Event #8",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-27 Event #8",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-27_8.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-09-30_29",
+      "label": "[Abu Dhabi Issue] 2024-09-30 Event #29",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-09-30 Event #29",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-09-30_29.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-01_30",
+      "label": "[Abu Dhabi Issue] 2024-10-01 Event #30",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-01 Event #30",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-01_30.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-03_31",
+      "label": "[Abu Dhabi Issue] 2024-10-03 Event #31",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-03 Event #31",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-03_31.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-03_32",
+      "label": "[Abu Dhabi Issue] 2024-10-03 Event #32",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-03 Event #32",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-03_32.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-04_33",
+      "label": "[Abu Dhabi Issue] 2024-10-04 Event #33",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-04 Event #33",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-04_33.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-05_34",
+      "label": "[Abu Dhabi Issue] 2024-10-05 Event #34",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-05 Event #34",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-05_34.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-07_35",
+      "label": "[Abu Dhabi Issue] 2024-10-07 Event #35",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-07 Event #35",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-07_35.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-07_36",
+      "label": "[Abu Dhabi Issue] 2024-10-07 Event #36",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-07 Event #36",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-07_36.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-08_37",
+      "label": "[Abu Dhabi Issue] 2024-10-08 Event #37",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-08 Event #37",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-08_37.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-09_38",
+      "label": "[Abu Dhabi Issue] 2024-10-09 Event #38",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-09 Event #38",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-09_38.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-10_39",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #39",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #39",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_39.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-10_40",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #40",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #40",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_40.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-10_41",
+      "label": "[Abu Dhabi Issue] 2024-10-10 Event #41",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-10 Event #41",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-10_41.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-12_42",
+      "label": "[Abu Dhabi Issue] 2024-10-12 Event #42",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-12 Event #42",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-12_42.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-13_43",
+      "label": "[Abu Dhabi Issue] 2024-10-13 Event #43",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-13 Event #43",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-13_43.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-13_44",
+      "label": "[Abu Dhabi Issue] 2024-10-13 Event #44",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-13 Event #44",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-13_44.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-14_45",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #45",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #45",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_45.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-14_46",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #46",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #46",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_46.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-14_47",
+      "label": "[Abu Dhabi Issue] 2024-10-14 Event #47",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-14 Event #47",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-14_47.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-15_48",
+      "label": "[Abu Dhabi Issue] 2024-10-15 Event #48",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-15 Event #48",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-15_48.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-15_49",
+      "label": "[Abu Dhabi Issue] 2024-10-15 Event #49",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-15 Event #49",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-15_49.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-17_50",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #50",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #50",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_50.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-17_51",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #51",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #51",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_51.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-17_52",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #52",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #52",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_52.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-17_53",
+      "label": "[Abu Dhabi Issue] 2024-10-17 Event #53",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-17 Event #53",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-17_53.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-18_54",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #54",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #54",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_54.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-18_55",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #55",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #55",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_55.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-18_56",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #56",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #56",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_56.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-18_6",
+      "label": "[Abu Dhabi Issue] 2024-10-18 Event #6",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-18 Event #6",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-18_6.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-19_57",
+      "label": "[Abu Dhabi Issue] 2024-10-19 Event #57",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-19 Event #57",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-19_57.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-19_58",
+      "label": "[Abu Dhabi Issue] 2024-10-19 Event #58",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-19 Event #58",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-19_58.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-20_59",
+      "label": "[Abu Dhabi Issue] 2024-10-20 Event #59",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-20 Event #59",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-20_59.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-20_60",
+      "label": "[Abu Dhabi Issue] 2024-10-20 Event #60",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-20 Event #60",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-20_60.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-21_61",
+      "label": "[Abu Dhabi Issue] 2024-10-21 Event #61",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-21 Event #61",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-21_61.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-25_62",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #62",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #62",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_62.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-25_63",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #63",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #63",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_63.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-25_64",
+      "label": "[Abu Dhabi Issue] 2024-10-25 Event #64",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-25 Event #64",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-25_64.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-26_65",
+      "label": "[Abu Dhabi Issue] 2024-10-26 Event #65",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-26 Event #65",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-26_65.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-27_66",
+      "label": "[Abu Dhabi Issue] 2024-10-27 Event #66",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-27 Event #66",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-27_66.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-10-30_67",
+      "label": "[Abu Dhabi Issue] 2024-10-30 Event #67",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-10-30 Event #67",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-10-30_67.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-01_68",
+      "label": "[Abu Dhabi Issue] 2024-11-01 Event #68",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-01 Event #68",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-01_68.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-01_69",
+      "label": "[Abu Dhabi Issue] 2024-11-01 Event #69",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-01 Event #69",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-01_69.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-03_70",
+      "label": "[Abu Dhabi Issue] 2024-11-03 Event #70",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-03 Event #70",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-03_70.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-04_71",
+      "label": "[Abu Dhabi Issue] 2024-11-04 Event #71",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-04 Event #71",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-04_71.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-05_72",
+      "label": "[Abu Dhabi Issue] 2024-11-05 Event #72",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-05 Event #72",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-05_72.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-05_73",
+      "label": "[Abu Dhabi Issue] 2024-11-05 Event #73",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-05 Event #73",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-05_73.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-06_74",
+      "label": "[Abu Dhabi Issue] 2024-11-06 Event #74",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-06 Event #74",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-06_74.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-07_75",
+      "label": "[Abu Dhabi Issue] 2024-11-07 Event #75",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-07 Event #75",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-07_75.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-07_76",
+      "label": "[Abu Dhabi Issue] 2024-11-07 Event #76",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-07 Event #76",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-07_76.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-10_77",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #77",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #77",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_77.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-10_78",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #78",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #78",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_78.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_abu_dhabi_2024-11-10_79",
+      "label": "[Abu Dhabi Issue] 2024-11-10 Event #79",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Abu Dhabi Issue] 2024-11-10 Event #79",
+      "analysisPath": "wiki/analyses/logistics_issue_abu_dhabi_2024-11-10_79.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_dsv_delivery_2025-01-21_1",
+      "label": "[Dsv Delivery Issue] 2025-01-21 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-21 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-21_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_dsv_delivery_2025-01-27_2",
+      "label": "[Dsv Delivery Issue] 2025-01-27 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-27 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-27_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_dsv_delivery_2025-01-28_3",
+      "label": "[Dsv Delivery Issue] 2025-01-28 Event #3",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-01-28 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-01-28_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_dsv_delivery_2025-04-30_4",
+      "label": "[Dsv Delivery Issue] 2025-04-30 Event #4",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Dsv Delivery Issue] 2025-04-30 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_dsv_delivery_2025-04-30_4.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_jpt71_2024-08-31_1",
+      "label": "[Jpt71 Issue] 2024-08-31 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-08-31 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-08-31_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_jpt71_2024-09-21_2",
+      "label": "[Jpt71 Issue] 2024-09-21 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-09-21 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-09-21_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_jpt71_2024-12-23_3",
+      "label": "[Jpt71 Issue] 2024-12-23 Event #3",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Jpt71 Issue] 2024-12-23 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_jpt71_2024-12-23_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_2024-08-22_1",
+      "label": "[Logistics Issue] 2024-08-22 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-22 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-22_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_2024-08-23_2",
+      "label": "[Logistics Issue] 2024-08-23 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-23 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-23_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_2024-08-27_3",
+      "label": "[Logistics Issue] 2024-08-27 Event #3",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[Logistics Issue] 2024-08-27 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_2024-08-27_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_mir_2025-09-18_1",
+      "label": "[MIR Logistics Issue] 2025-09-18 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[MIR Logistics Issue] 2025-09-18 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2025-09-18_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_mir_2025-10-15_2",
+      "label": "[MIR Logistics Issue] 2025-10-15 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[MIR Logistics Issue] 2025-10-15 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2025-10-15_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_mir_2026-02-25_3",
+      "label": "[MIR Logistics Issue] 2026-02-25 Event #3",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[MIR Logistics Issue] 2026-02-25 Event #3",
+      "analysisPath": "wiki/analyses/logistics_issue_mir_2026-02-25_3.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_shu_2024-11-19_1",
+      "label": "[SHU Issue] 2024-11-19 Event #1",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[SHU Issue] 2024-11-19 Event #1",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2024-11-19_1.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_shu_2025-09-04_2",
+      "label": "[SHU Issue] 2025-09-04 Event #2",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[SHU Issue] 2025-09-04 Event #2",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2025-09-04_2.md",
+      "analysisVault": "valut"
+    }
+  },
+  {
+    "data": {
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_shu_2026-01-26_4",
+      "label": "[SHU Issue] 2026-01-26 Event #4",
+      "type": "LogisticsIssue",
+      "rdf-schema#label": "[SHU Issue] 2026-01-26 Event #4",
+      "analysisPath": "wiki/analyses/logistics_issue_shu_2026-01-26_4.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
       "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-08-27_1",
-      "label": "Mirfa 현장 실내 창고 건설 및 운송 중 변압기 충격 이슈",
+      "label": "미르파(Mirfa) 실내 창고 건설 지연 및 변압기(TR 5&6) 손상 의심 보고",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "Mirfa 현장 실내 창고 건설 및 운송 중 변압기 충격 이슈"
+      "rdf-schema#label": "미르파(Mirfa) 실내 창고 건설 지연 및 변압기(TR 5&6) 손상 의심 보고",
+      "analysisPath": "wiki/analyses/logistics_issue_project_lightning_2024-08-27_1.md",
+      "analysisVault": "valut"
     }
   },
   {
     "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-20_4",
-      "label": "PC 하역 중 장비 불일치 파손 및 선박 장기 정박 대기",
+      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-24_7",
+      "label": "변압기(TR 5 & 6) 충격 기록계 및 게이지 이상 보고",
       "type": "LogisticsIssue",
-      "rdf-schema#label": "PC 하역 중 장비 불일치 파손 및 선박 장기 정박 대기"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics-lightning-mirfa-warehouse",
-      "label": "Project Lightning - Mirfa 실내 창고 건설 현황",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "Project Lightning - Mirfa 실내 창고 건설 현황"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics-lightning-tr-impact-recorder",
-      "label": "Project Lightning - TR 5 & 6 충격 기록계 및 게이지 이상 (OSDR 발행)",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "Project Lightning - TR 5 & 6 충격 기록계 및 게이지 이상 (OSDR 발행)"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics-lightning-wardeh1-loading",
-      "label": "Project Lightning - Wardeh-1 선박 AGI 출항 및 라우팅",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "Project Lightning - Wardeh-1 선박 AGI 출항 및 라우팅"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-10_2",
-      "label": "Zakum 라디오 룸 매니페스트 번호 중복 사용 오류",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "Zakum 라디오 룸 매니페스트 번호 중복 사용 오류"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-22_6",
-      "label": "[Project Lightning] DAS 현장 식수 공급 지연 및 주요 자재/장비 운송 현황",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "[Project Lightning] DAS 현장 식수 공급 지연 및 주요 자재/장비 운송 현황"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-10-01_10",
-      "label": "저조위(Low Tide)로 인한 램프 접안 및 하역 지연 (JPT71)",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "저조위(Low Tide)로 인한 램프 접안 및 하역 지연 (JPT71)"
-    }
-  },
-  {
-    "data": {
-      "id": "http://hvdc.logistics/ontology/issue/logistics_issue_project_lightning_2024-09-11_3",
-      "label": "조수 문제로 인한 하역 지연 및 선박 임의 경로 변경",
-      "type": "LogisticsIssue",
-      "rdf-schema#label": "조수 문제로 인한 하역 지연 및 선박 임의 경로 변경"
+      "rdf-schema#label": "변압기(TR 5 & 6) 충격 기록계 및 게이지 이상 보고",
+      "analysisPath": "wiki/analyses/logistics_issue_project_lightning_2024-09-24_7.md",
+      "analysisVault": "valut"
     }
   },
   {

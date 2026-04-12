@@ -10,6 +10,7 @@ import type {
 
 const INFRA_TYPES = new Set<GraphNodeType>(['Hub', 'Site', 'Warehouse']);
 const ISSUE_TYPE: GraphNodeType = 'LogisticsIssue';
+const LESSON_TYPE: GraphNodeType = 'IncidentLesson';
 type CollapsedNeighborType = 'Shipment' | 'Vessel' | 'Vendor';
 const COLLAPSED_TYPES: CollapsedNeighborType[] = ['Shipment', 'Vessel', 'Vendor'];
 
@@ -67,14 +68,15 @@ export function isHubNode(node: GraphNode, index: GraphIndex, hubThreshold = 200
 }
 
 export function buildSummaryView(nodes: GraphNode[], edges: GraphEdge[]): GraphSlice {
-  const keptNodes = nodes.filter(
+  const baseNodes = nodes.filter(
     (node) => node.data.type === ISSUE_TYPE || INFRA_TYPES.has(node.data.type),
   );
+  const index = buildGraphIndex(nodes, edges);
+  const keptNodes = addIssueContextLessons(nodes, baseNodes, index);
   const keptIds = new Set(keptNodes.map((node) => node.data.id));
   const keptEdges = edges.filter(
     (edge) => keptIds.has(edge.data.source) && keptIds.has(edge.data.target),
   );
-  const index = buildGraphIndex(nodes, edges);
   const enrichedNodes = keptNodes.map((node) => {
     if (!INFRA_TYPES.has(node.data.type)) {
       return node;
@@ -99,16 +101,29 @@ export function buildSummaryView(nodes: GraphNode[], edges: GraphEdge[]): GraphS
 }
 
 export function buildIssueView(nodes: GraphNode[], edges: GraphEdge[]): GraphSlice {
-  const keptNodes = nodes.filter(
+  const baseNodes = nodes.filter(
     (node) => node.data.type === ISSUE_TYPE || INFRA_TYPES.has(node.data.type),
   );
-  const keptIds = new Set(keptNodes.map((node) => node.data.id));
+  const index = buildGraphIndex(nodes, edges);
+  const visibleIssueIds = collectVisibleIssueIds(baseNodes);
+  const issueContextInfraIds = collectIssueContextInfraIds(baseNodes, index);
+  const issueContextLessonIds = new Set(
+    nodesConnectedToInfra(nodes, index, issueContextInfraIds).map((node) => node.data.id),
+  );
+  const keptNodeIds = new Set([
+    ...visibleIssueIds,
+    ...issueContextInfraIds,
+    ...issueContextLessonIds,
+  ]);
+  const keptNodes = nodes.filter((node) => keptNodeIds.has(node.data.id));
   const keptEdges = edges.filter(
     (edge) =>
-      keptIds.has(edge.data.source) &&
-      keptIds.has(edge.data.target) &&
+      keptNodeIds.has(edge.data.source) &&
+      keptNodeIds.has(edge.data.target) &&
       (nodeHasType(edge.data.source, ISSUE_TYPE, keptNodes) ||
-        nodeHasType(edge.data.target, ISSUE_TYPE, keptNodes)),
+        nodeHasType(edge.data.target, ISSUE_TYPE, keptNodes) ||
+        nodeHasType(edge.data.source, LESSON_TYPE, keptNodes) ||
+        nodeHasType(edge.data.target, LESSON_TYPE, keptNodes)),
   );
 
   return {
@@ -152,6 +167,7 @@ export function buildEgoView(
     const secondHop = [...(index.adjacency.get(neighborId) ?? [])];
     const limitedSecondHop = secondHop
       .filter((candidateId) => candidateId !== focusNodeId)
+      .filter((candidateId) => nodeById.get(candidateId)?.data.type !== LESSON_TYPE)
       .slice(0, neighborIsHub ? Math.min(6, maxNeighborsPerHub) : maxNeighborsPerHub);
 
     limitedSecondHop.forEach((candidateId) => {
@@ -290,6 +306,82 @@ export function getCollapsedCountLabel(node: GraphNode): string | null {
 
 function nodeHasType(nodeId: string, type: GraphNodeType, nodes: GraphNode[]): boolean {
   return nodes.some((node) => node.data.id === nodeId && node.data.type === type);
+}
+
+function collectVisibleIssueIds(baseNodes: GraphNode[]): Set<string> {
+  return new Set(
+    baseNodes.filter((node) => node.data.type === ISSUE_TYPE).map((node) => node.data.id),
+  );
+}
+
+function collectIssueContextInfraIds(baseNodes: GraphNode[], index: GraphIndex): Set<string> {
+  const visibleIssueIds = collectVisibleIssueIds(baseNodes);
+  const issueConnectedInfraIds = new Set<string>();
+
+  if (visibleIssueIds.size === 0) {
+    return issueConnectedInfraIds;
+  }
+
+  baseNodes.forEach((node) => {
+    if (!INFRA_TYPES.has(node.data.type)) {
+      return;
+    }
+
+    for (const neighborId of index.adjacency.get(node.data.id) ?? []) {
+      if (visibleIssueIds.has(neighborId)) {
+        issueConnectedInfraIds.add(node.data.id);
+        break;
+      }
+    }
+  });
+
+  return issueConnectedInfraIds;
+}
+
+function addIssueContextLessons(
+  allNodes: GraphNode[],
+  baseNodes: GraphNode[],
+  index: GraphIndex,
+): GraphNode[] {
+  const visibleIssueIds = collectVisibleIssueIds(baseNodes);
+
+  if (visibleIssueIds.size === 0) {
+    return baseNodes;
+  }
+
+  const issueConnectedInfraIds = collectIssueContextInfraIds(baseNodes, index);
+
+  if (issueConnectedInfraIds.size === 0) {
+    return baseNodes;
+  }
+
+  const lessonNodes = nodesConnectedToInfra(allNodes, index, issueConnectedInfraIds);
+  if (lessonNodes.length === 0) {
+    return baseNodes;
+  }
+
+  const seen = new Set(baseNodes.map((node) => node.data.id));
+  return [...baseNodes, ...lessonNodes.filter((node) => !seen.has(node.data.id))];
+}
+
+function nodesConnectedToInfra(
+  nodes: GraphNode[],
+  index: GraphIndex,
+  infraIds: Set<string>,
+): GraphNode[] {
+  return nodes.filter((node) => {
+    if (node.data.type !== LESSON_TYPE) {
+      return false;
+    }
+
+    for (const neighborId of index.adjacency.get(node.data.id) ?? []) {
+      if (infraIds.has(neighborId)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
 }
 
 function computeCollapsedCounts(

@@ -2,20 +2,22 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass, field
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import yaml
+from openpyxl import load_workbook
 from rdflib import Graph, Namespace, URIRef
 
 from app.services.graph_canonical_builder import build_canonical_graph
 from app.services.graph_knowledge_builder import build_knowledge_objects
 from app.services.graph_mapping_builder import build_compatibility_mappings
-from app.services.graph_normalizer import normalize_sources
 from app.services.graph_projection_builder import build_dashboard_projection
 from app.services.graph_resolver import resolve_analysis_note, resolve_location
-from app.services.graph_source_loader import LoadedGraphSources, load_graph_sources
+from app.services.graph_source_loader import REQUIRED_JPT_SHEETS
+from app.services.graph_types import CanonicalCase, CanonicalEvent, CanonicalShipment
 
 HVDC_BASE = "http://hvdc.logistics/ontology/"
 HVDC = Namespace(HVDC_BASE)
@@ -25,6 +27,7 @@ DEFAULT_WAREHOUSE_STATUS_PATH = Path("Logi ontol core doc/HVDC WAREHOUSE STATUS.
 DEFAULT_JPT_RECONCILED_PATH = Path("Logi ontol core doc/JPT-reconciled_v6.0.xlsx")
 DEFAULT_INLAND_COST_PATH = Path("Logi ontol core doc/HVDC Logistics cost(inland,domestic).xlsx")
 DEFAULT_WIKI_DIR = Path("vault/wiki/analyses")
+PRIMARY_ANALYSES_DIR = Path(r"C:\Users\jichu\Downloads\valut\wiki\analyses")
 DEFAULT_OUTPUT_DIR = Path("kg-dashboard/public/data")
 DEFAULT_TTL_PATH = Path("vault/knowledge_graph.ttl")
 DEFAULT_AUDIT_DIR = Path("runtime/audits")
@@ -50,6 +53,25 @@ WAREHOUSE_COLUMNS = [
 ]
 
 SITE_COLUMNS = ["SHU", "MIR", "DAS", "AGI"]
+
+
+@dataclass(slots=True)
+class LoadedGraphSources:
+    shipment_rows: list[dict[str, Any]] = field(default_factory=list)
+    warehouse_rows: list[dict[str, Any]] = field(default_factory=list)
+    jpt_sheets: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    inland_cost_rows: list[dict[str, Any]] = field(default_factory=list)
+    analysis_notes: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class NormalizedSources:
+    shipments: list[CanonicalShipment]
+    cases: list[CanonicalCase]
+    route_events: list[CanonicalEvent]
+    document_refs: list[dict[str, Any]]
+    status_snapshots: list[dict[str, Any]]
+    charge_candidates: list[dict[str, Any]]
 
 
 def normalize_fragment(value: str) -> str:
@@ -112,30 +134,68 @@ def _read_frontmatter(path: Path) -> dict[str, Any]:
     parts = content.split("---", 2)
     if len(parts) < 3:
         return {}
-    frontmatter = yaml.safe_load(parts[1]) or {}
+    try:
+        frontmatter = yaml.safe_load(parts[1]) or {}
+    except yaml.YAMLError:
+        return {}
     return frontmatter if isinstance(frontmatter, dict) else {}
 
 
-def _read_analysis_notes(analyses_dir: Path) -> list[dict[str, Any]]:
-    if not analyses_dir.exists():
+def _find_obsidian_vault_root(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+
+    current = path.resolve()
+    while True:
+        if (current / ".obsidian").exists():
+            return current
+        if current.parent == current:
+            return None
+        current = current.parent
+
+
+def _analysis_note_metadata(note_path: Path, analyses_dir: Path | None) -> dict[str, str | None]:
+    vault_root = _find_obsidian_vault_root(analyses_dir)
+    if vault_root is None:
+        return {
+            "analysisPath": None,
+            "analysisVault": None,
+        }
+
+    return {
+        "analysisPath": note_path.resolve().relative_to(vault_root).as_posix(),
+        "analysisVault": vault_root.name,
+    }
+
+
+def _read_analysis_notes(analyses_dir: Path | None) -> list[dict[str, Any]]:
+    if analyses_dir is None or not analyses_dir.exists():
         return []
 
+    resolved_analyses_dir = analyses_dir.resolve()
+    vault_root = _find_obsidian_vault_root(resolved_analyses_dir)
     notes: list[dict[str, Any]] = []
-    for path in sorted(analyses_dir.glob("*.md")):
+    for path in sorted(resolved_analyses_dir.glob("*.md")):
+        if vault_root is None:
+            metadata = {
+                "analysisPath": None,
+                "analysisVault": None,
+            }
+        else:
+            metadata = {
+                "analysisPath": path.resolve().relative_to(vault_root).as_posix(),
+                "analysisVault": vault_root.name,
+            }
         notes.append(
             {
                 "path": str(path),
                 "frontmatter": _read_frontmatter(path),
                 "body": path.read_text(encoding="utf-8"),
+                "analysis_path": metadata["analysisPath"],
+                "analysis_vault": metadata["analysisVault"],
             }
         )
     return notes
-
-
-def _required_columns(df: pd.DataFrame) -> None:
-    missing = [column for column in REQUIRED_EXCEL_COLUMNS if column not in df.columns]
-    if missing:
-        raise ValueError(f"Missing required Excel columns: {', '.join(missing)}")
 
 
 def _legacy_tag_targets(tag: str) -> tuple[str, str, str] | None:
@@ -162,9 +222,166 @@ def _resolved_operational_anchor(tag: str) -> tuple[str, str, str] | None:
 
 
 def _read_shipment_rows(excel_path: Path) -> list[dict[str, Any]]:
-    df = pd.read_excel(excel_path)
-    _required_columns(df)
-    return df.to_dict("records")
+    rows = _read_excel_rows(excel_path)
+    columns = {column for row in rows for column in row.keys()}
+    missing = [column for column in REQUIRED_EXCEL_COLUMNS if column not in columns]
+    if missing:
+        raise ValueError(f"Missing required Excel columns: {', '.join(missing)}")
+    return rows
+
+
+def _read_excel_rows(excel_path: Path, sheet_name: str | None = None) -> list[dict[str, Any]]:
+    workbook = load_workbook(excel_path, read_only=True, data_only=True)
+    worksheet = workbook[sheet_name] if sheet_name is not None else workbook.active
+    rows = worksheet.iter_rows(values_only=True)
+    try:
+        headers = list(next(rows))
+    except StopIteration:
+        return []
+
+    records: list[dict[str, Any]] = []
+    for row in rows:
+        record: dict[str, Any] = {}
+        for index, header in enumerate(headers):
+            if header is None:
+                continue
+            record[str(header)] = row[index] if index < len(row) else None
+        if any(value is not None for value in record.values()):
+            records.append(record)
+    return records
+
+
+def _read_jpt_sheets(path: Path) -> dict[str, list[dict[str, Any]]]:
+    workbook = load_workbook(path, read_only=True, data_only=True)
+    missing_sheets = [sheet for sheet in REQUIRED_JPT_SHEETS if sheet not in workbook.sheetnames]
+    if missing_sheets:
+        raise ValueError(f"Missing required JPT sheets: {', '.join(missing_sheets)}")
+    return {sheet: _read_excel_rows(path, sheet) for sheet in REQUIRED_JPT_SHEETS}
+
+
+_ROUTE_FIELDS = (
+    ("MOSB", "mosb"),
+    ("AGI", "agi"),
+    ("DAS", "das"),
+    ("MIR", "mir"),
+    ("SHU", "shu"),
+)
+
+
+def _clean_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        if value.hour == 0 and value.minute == 0 and value.second == 0 and value.microsecond == 0:
+            return value.date().isoformat()
+        return value.isoformat(timespec="seconds")
+    if isinstance(value, date):
+        return value.isoformat()
+
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "nat"}:
+        return None
+    return text
+
+
+def _shipment_id(shipment_no: str) -> str:
+    return f"https://hvdc.logistics/resource/shipment/{shipment_no}"
+
+
+def _normalize_sources(sources: dict[str, Any]) -> NormalizedSources:
+    shipments: list[CanonicalShipment] = []
+    cases: list[CanonicalCase] = []
+    route_events: list[CanonicalEvent] = []
+    document_refs: list[dict[str, Any]] = []
+    status_snapshots: list[dict[str, Any]] = []
+    charge_candidates: list[dict[str, Any]] = []
+
+    for row in sources.get("shipment_rows", []):
+        shipment_no = _clean_text(row.get("SCT SHIP NO."))
+        if not shipment_no:
+            continue
+
+        shipment_id = _shipment_id(shipment_no)
+        shipments.append(
+            CanonicalShipment(
+                id=shipment_id,
+                shipment_no=shipment_no,
+                vendor_name=_clean_text(row.get("VENDOR")),
+            )
+        )
+
+        for location_field, location_slug in _ROUTE_FIELDS:
+            event_date = _clean_text(row.get(location_field))
+            if not event_date:
+                continue
+            route_events.append(
+                CanonicalEvent(
+                    id=(
+                        "https://hvdc.logistics/resource/arrival/"
+                        f"{shipment_no}/{location_slug}/{event_date}"
+                    ),
+                    event_type="ArrivalEvent",
+                    subject_id=shipment_id,
+                    location_id=f"https://hvdc.logistics/resource/site/{location_slug}",
+                    event_date=event_date,
+                )
+            )
+
+        commercial_invoice = _clean_text(row.get("COMMERCIAL INVOICE No."))
+        if commercial_invoice:
+            document_refs.append(
+                {
+                    "id": f"https://hvdc.logistics/resource/doc/ci/{commercial_invoice}",
+                    "shipment_id": shipment_id,
+                    "document_type": "COMMERCIAL_INVOICE",
+                    "document_ref": commercial_invoice,
+                }
+            )
+
+        status_snapshots.append(
+            {
+                "id": f"https://hvdc.logistics/resource/status/{shipment_no}/current",
+                "shipment_id": shipment_id,
+                "status": "loaded",
+            }
+        )
+
+    for row in sources.get("warehouse_rows", []):
+        shipment_no = _clean_text(row.get("SCT SHIP NO."))
+        case_no = _clean_text(row.get("Case No."))
+        if not shipment_no or not case_no:
+            continue
+
+        cases.append(
+            CanonicalCase(
+                id=f"https://hvdc.logistics/resource/case/{shipment_no}/{case_no}",
+                shipment_id=_shipment_id(shipment_no),
+                case_no=case_no,
+            )
+        )
+
+    for row in sources.get("inland_cost_rows", []):
+        invoice_no = _clean_text(row.get("Invoice No"))
+        shipment_no = _clean_text(row.get("Shipment No"))
+        if not invoice_no or not shipment_no:
+            continue
+
+        charge_candidates.append(
+            {
+                "invoice_no": invoice_no,
+                "shipment_no": shipment_no,
+                "row": row,
+            }
+        )
+
+    return NormalizedSources(
+        shipments=shipments,
+        cases=cases,
+        route_events=route_events,
+        document_refs=document_refs,
+        status_snapshots=status_snapshots,
+        charge_candidates=charge_candidates,
+    )
 
 
 def _load_sources_bundle(
@@ -181,22 +398,20 @@ def _load_sources_bundle(
         inland_cost_path,
     )
     if all(path.exists() for path in source_paths):
-        return load_graph_sources(
-            excel_path,
-            warehouse_status_path,
-            jpt_reconciled_path,
-            inland_cost_path,
-            analyses_dir,
+        return LoadedGraphSources(
+            shipment_rows=_read_shipment_rows(excel_path),
+            warehouse_rows=_read_excel_rows(warehouse_status_path),
+            jpt_sheets=_read_jpt_sheets(jpt_reconciled_path),
+            inland_cost_rows=_read_excel_rows(inland_cost_path),
+            analysis_notes=_read_analysis_notes(analyses_dir),
         )
 
     shipment_rows = _read_shipment_rows(excel_path)
     warehouse_rows = (
-        pd.read_excel(warehouse_status_path).to_dict("records")
-        if warehouse_status_path.exists()
-        else []
+        _read_excel_rows(warehouse_status_path) if warehouse_status_path.exists() else []
     )
     inland_cost_rows = (
-        pd.read_excel(inland_cost_path).to_dict("records") if inland_cost_path.exists() else []
+        _read_excel_rows(inland_cost_path) if inland_cost_path.exists() else []
     )
     return LoadedGraphSources(
         shipment_rows=shipment_rows,
@@ -205,6 +420,16 @@ def _load_sources_bundle(
         inland_cost_rows=inland_cost_rows,
         analysis_notes=_read_analysis_notes(analyses_dir),
     )
+
+
+def _resolve_analyses_dir(wiki_dir: Path | None) -> tuple[Path | None, bool]:
+    if wiki_dir is not None:
+        return wiki_dir, False
+    if PRIMARY_ANALYSES_DIR.exists():
+        return PRIMARY_ANALYSES_DIR, False
+    if DEFAULT_WIKI_DIR.exists():
+        return DEFAULT_WIKI_DIR, True
+    return None, False
 
 
 def _build_legacy_shipment_projection(
@@ -386,6 +611,8 @@ def _build_issue_projection(
                 "label": title,
                 "type": "LogisticsIssue",
                 "rdf-schema#label": title,
+                "analysisPath": note.get("analysis_path"),
+                "analysisVault": note.get("analysis_vault"),
             }
         }
 
@@ -435,9 +662,10 @@ def _build_issue_projection(
 
 def _notes_to_canonical_lessons(
     notes: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], list[str]]:
+) -> tuple[list[dict[str, Any]], list[str], dict[str, dict[str, str | None]]]:
     lessons: list[dict[str, Any]] = []
     unmapped: list[str] = []
+    metadata_by_lesson_id: dict[str, dict[str, str | None]] = {}
 
     for note in notes:
         frontmatter = note.get("frontmatter")
@@ -477,6 +705,8 @@ def _notes_to_canonical_lessons(
             "id": node_uri("lesson", slug),
             "label": title,
             "type": "IncidentLesson",
+            "analysisPath": note.get("analysis_path"),
+            "analysisVault": note.get("analysis_vault"),
         }
         if "/shipment/" in anchor_id:
             lesson_record["shipment_id"] = anchor_id
@@ -487,8 +717,12 @@ def _notes_to_canonical_lessons(
         else:
             lesson_record["location_id"] = anchor_id
         lessons.append(lesson_record)
+        metadata_by_lesson_id[lesson_record["id"]] = {
+            "analysisPath": note.get("analysis_path"),
+            "analysisVault": note.get("analysis_vault"),
+        }
 
-    return lessons, unmapped
+    return lessons, unmapped, metadata_by_lesson_id
 
 
 def _emit_ttl(graph: Graph, ttl_path: Path) -> None:
@@ -585,7 +819,7 @@ def _merge_edges(*payload_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def export_dashboard_graph_data(
     excel_path: Path = DEFAULT_EXCEL_PATH,
-    wiki_dir: Path = DEFAULT_WIKI_DIR,
+    wiki_dir: Path | None = None,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     ttl_path: Path | None = DEFAULT_TTL_PATH,
     warehouse_status_path: Path | None = None,
@@ -597,15 +831,16 @@ def export_dashboard_graph_data(
     warehouse_status_path = warehouse_status_path or base_dir / DEFAULT_WAREHOUSE_STATUS_PATH.name
     jpt_reconciled_path = jpt_reconciled_path or base_dir / DEFAULT_JPT_RECONCILED_PATH.name
     inland_cost_path = inland_cost_path or base_dir / DEFAULT_INLAND_COST_PATH.name
+    resolved_wiki_dir, fallback_used = _resolve_analyses_dir(wiki_dir)
 
     sources = _load_sources_bundle(
         excel_path=excel_path,
         warehouse_status_path=warehouse_status_path,
         jpt_reconciled_path=jpt_reconciled_path,
         inland_cost_path=inland_cost_path,
-        analyses_dir=wiki_dir,
+        analyses_dir=resolved_wiki_dir,
     )
-    normalized = normalize_sources(
+    normalized = _normalize_sources(
         {
             "shipment_rows": sources.shipment_rows,
             "warehouse_rows": sources.warehouse_rows,
@@ -615,7 +850,9 @@ def export_dashboard_graph_data(
         }
     )
     knowledge = build_knowledge_objects(sources.analysis_notes)
-    canonical_lessons, unmapped_lessons = _notes_to_canonical_lessons(sources.analysis_notes)
+    canonical_lessons, unmapped_lessons, lesson_metadata_by_id = _notes_to_canonical_lessons(
+        sources.analysis_notes
+    )
     compatibility_mappings = build_compatibility_mappings()
     dashboard_lessons = [
         {
@@ -625,6 +862,8 @@ def export_dashboard_graph_data(
             "location_id": _legacy_dashboard_id(_safe_uri(lesson.get("location_id"))),
             "carrier_id": _legacy_dashboard_id(_safe_uri(lesson.get("carrier_id"))),
             "pattern_id": _legacy_dashboard_id(_safe_uri(lesson.get("pattern_id"))),
+            "analysisPath": lesson.get("analysisPath"),
+            "analysisVault": lesson.get("analysisVault"),
         }
         for lesson in canonical_lessons
     ]
@@ -686,6 +925,11 @@ def export_dashboard_graph_data(
     )
 
     nodes = _merge_payloads(projected_nodes, legacy_nodes, issue_nodes)
+    for node in nodes:
+        node_data = node.get("data", {})
+        metadata = lesson_metadata_by_id.get(str(node_data.get("id")))
+        if metadata:
+            node_data.update({key: value for key, value in metadata.items() if value is not None})
     edges = _merge_edges(projected_edges, legacy_edges, issue_edges)
     _emit_json(nodes, edges, output_dir)
 
@@ -703,6 +947,10 @@ def export_dashboard_graph_data(
         "dropped_rows": dropped_rows,
         "loaded_shipments": len(sources.shipment_rows),
         "loaded_notes": len(sources.analysis_notes),
+        "selected_analyses_dir": (
+            str(resolved_wiki_dir.resolve()) if resolved_wiki_dir is not None else None
+        ),
+        "analyses_dir_fallback_used": fallback_used,
     }
     resolution_audit = {
         "unresolved_attribution": unresolved_attribution,
@@ -730,4 +978,4 @@ def export_dashboard_graph_data(
 
 
 if __name__ == "__main__":
-    export_dashboard_graph_data()
+    export_dashboard_graph_data(ttl_path=None)

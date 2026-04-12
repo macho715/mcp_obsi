@@ -141,18 +141,22 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 
 #### 3. KG Visualization Dashboard (`kg-dashboard`)
 - **Phase 1 In-Memory Browser App:** React(Vite) + Cytoscape.js 기반의 고성능 시각화 대시보드
-- **데이터 export (`scripts/build_dashboard_graph_data.py`):** Excel + wiki 분석 노트에서 TTL과 프론트엔드용 JSON(`nodes.json`, `edges.json`)을 함께 생성
+- **데이터 export (`scripts/build_dashboard_graph_data.py`):** Excel + wiki 분석 노트에서 TTL과 프론트엔드용 JSON(`nodes.json`, `edges.json`)을 함께 생성한다. 현재는 `C:\Users\jichu\Downloads\valut\wiki\analyses`를 우선 사용하고, 없으면 `vault/wiki/analyses`로 떨어진다. 이때 `selected_analyses_dir`, `analyses_dir_fallback_used`, `analysisPath`, `analysisVault` 메타데이터를 함께 내보내며, 잘못된 YAML frontmatter도 중단 없이 건너뛴다. CLI 실행은 `export_dashboard_graph_data(ttl_path=None)` 기본 경로로 동작한다.
 - **Legacy 변환 (`scripts/ttl_to_json.py`):** 기존 TTL 파일만 다시 JSON으로 렌더링해야 할 때 쓰는 보조 경로
 - **주요 UX/UI 기능:**
   - **Color Coding:** 엔티티 타입별 명시적 색상 (예: `LogisticsIssue`=Red, `Site/Warehouse`=Green)
   - **4가지 View Mode 지원 (동적 렌더링):**
     - **요약 뷰 (Summary View):** 연결성(Degree)이 200 이상(`HUB_THRESHOLD`)인 노드를 허브로 취급하여 크게 표시하고, 이슈와 핵심 인프라 위주로 그래프를 축소하여 전체 관계 표시
-    - **이슈 중심 뷰 (Issues View):** LogisticsIssue 노드와 그에 연결된 핵심 엣지만 남겨 문제 흐름에 집중
+    - **이슈 중심 뷰 (Issues View):** LogisticsIssue 노드와 그에 연결된 핵심 엣지만 남겨 문제 흐름에 집중하고, issue-context lesson은 summary/issues에 남긴다.
     - **검색 뷰 (Search View):** 검색어 매칭 노드 및 가까운 이웃만 동심원(Concentric) 레이아웃으로 표시해 맥락 제공 (지연 검색 `deferredSearch` 적용)
-    - **선택 노드 뷰 (Ego View):** 특정 노드 클릭 시 주변 1~2 Hop만 BFS 레이아웃으로 전개하여 허브 노드의 상세 탐색 지원
+    - **선택 노드 뷰 (Ego View):** 특정 노드 클릭 시 주변 1~2 Hop만 BFS 레이아웃으로 전개하여 허브 노드의 상세 탐색 지원하고, direct lesson은 ego에 유지한다.
   - **허브(Hub) 시각적 강조:** 연결이 많은 허브 노드(`degree >= hubThreshold`)는 노드 크기 확대 및 굵은 폰트를 적용하여 한눈에 식별 가능하도록 개선
-  - **사이드바 및 통합 인스펙터:** 좌측 사이드바(`GraphSidebar`)에서 메트릭스(가시 노드/엣지, 허브/이슈 카운트)와 허브 서머리를 제공하며, 우측 패널(`NodeInspector`)에서 개별 노드의 상세 정보 및 원본 Obsidian 마크다운 노트를 여는 URI 다이렉트 링크 지원
+  - **사이드바 및 통합 인스펙터:** 좌측 사이드바(`GraphSidebar`)에서 메트릭스(가시 노드/엣지, 허브/이슈 카운트)와 허브 서머리를 제공하며, 우측 패널(`NodeInspector`)에서 exported metadata를 바탕으로 issue note와 lesson note를 여는 encoded Obsidian 링크를 지원한다.
 - **트러블슈팅:** 거대 그래프 렌더링 시 발생하는 `react-cytoscapejs` 호환성 문제를 해결하기 위해 React Strict Mode(`main.tsx`) 해제 적용
+
+- **`app/services/graph_projection_builder.py`:** dashboard projection에서 lesson metadata를 보존하여, 노드 인스펙터와 뷰 분기에서 이슈-레슨 맥락이 끊기지 않도록 한다.
+- **`kg-dashboard/src/utils/graph-model.ts`:** issue-context lessons는 summary/issues에 유지하고, direct lessons는 ego에 유지하도록 graph model과 테스트를 맞췄다.
+- **`kg-dashboard/src/components/NodeInspector.tsx`:** issue 및 lesson 노트를 exported metadata와 encoded Obsidian link로 연다. 잘못 이스케이프된 경로가 있더라도 링크가 깨지지 않도록 인코딩을 적용한다.
 
 #### 4. Vault 관리 유틸리티
 - **`scripts/consolidate_vaults.py`:** 분산된 다수의 테스트용 Vault 폴더(`vault`, `vault-test`, `vault-test2` 등)를 수정 시간(mtime) 기준으로 최신 파일을 식별하여 단일 타겟 디렉토리(`C:\Users\jichu\Downloads\valut`)로 병합하는 자동화 스크립트
@@ -211,6 +215,23 @@ Obsidian-backed shared-memory MCP server with a FastAPI/FastMCP runtime, Markdow
 - current-session `mcp_local_tool_smoke.py` recheck passed against production `/chatgpt-mcp/` and `/claude-mcp/`, confirming the same read-only surface from the current session
 - current-session `verify_specialist_mcp_write.py` against production `/chatgpt-mcp-write/` and `/claude-mcp-write/` passed after redeploy, with both routes exposing the 13-tool wiki-native write surface
 - current-session round script completed the ChatGPT and Claude specialist write steps, so both write routes were rechecked in the same production session
+
+### 2026-04-12 KG dashboard graph visibility update
+
+- `app/services/graph_projection_builder.py` now preserves lesson metadata in the dashboard projection, so lesson-level context survives the export path instead of being dropped during projection.
+- `scripts/build_dashboard_graph_data.py` now prefers `C:\Users\jichu\Downloads\valut\wiki\analyses`, falls back to `vault/wiki/analyses`, tolerates malformed YAML frontmatter, emits `selected_analyses_dir` and `analyses_dir_fallback_used`, exports `analysisPath` and `analysisVault`, and the CLI `__main__` path calls `export_dashboard_graph_data(ttl_path=None)`.
+- `kg-dashboard/src/utils/graph-model.ts` and its tests now keep issue-context lessons in `summary/issues` and direct lessons in `ego`.
+- `kg-dashboard/src/components/NodeInspector.tsx` now opens issue and lesson notes using exported metadata and encoded Obsidian links.
+- Verification completed in this session:
+  - `.venv\Scripts\python.exe -m pytest tests/test_dashboard_graph_export.py -q` -> 5 passed
+  - `.venv\Scripts\python.exe scripts/build_dashboard_graph_data.py` -> exit 0 after the CLI default adjustment
+  - `cd kg-dashboard; npm test` -> 18 passed
+  - `cd kg-dashboard; npm run lint` -> pass
+  - `cd kg-dashboard; npm run build` -> pass
+  - browser preview `http://127.0.0.1:4175/` -> HTTP 200
+  - `runtime/audits/hvdc_ttl_source_audit.json` -> `loaded_notes = 115`, `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`, `analyses_dir_fallback_used = false`
+  - exported node metadata counts -> issue nodes `113` with metadata, lesson nodes `102` with metadata
+  - current workspace result: the kg-dashboard graph now keeps lesson context visible in the right places, and the export path is using the intended analysis vault directory.
 
 ### 2026-04-08 production specialist route recheck
 

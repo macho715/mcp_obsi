@@ -703,6 +703,9 @@ Karpathy의 LLM Wiki 아키텍처([Gist](https://gist.github.com/karpathy/442a6b
 
 이 섹션은 6개 주요 물류 WhatsApp 채널(Abu Dhabi, DSV, Project Lightning, Jopetwil 71, MIR, SHU)의 대화 로그를 기반으로 한 지식 추출 및 시각화 아키텍처를 상세히 정의한다. 기존 시스템 아키텍처와 결합하여 원본 메시지가 지식 그래프(Knowledge Graph)로 변환되고 최종적으로 React 기반 대시보드에 렌더링되는 전체 파이프라인의 구체적인 구현 내역을 포함한다.
 
+> 2026-04-12 current code note:
+> 아래 섹션의 원래 2026-04-09 설명은 보존한다. 다만 현재 canonical dashboard export 경로는 `scripts/build_dashboard_graph_data.py`이며, `scripts/build_knowledge_graph.py`와 `scripts/ttl_to_json.py`는 legacy wrapper / 보조 경로로 남아 있다.
+
 ### 통합 데이터 파이프라인 (WhatsApp → Dashboard) 상세
 
 이 파이프라인은 정규식과 LLM 병렬 에이전트를 혼합하여 효율적으로 데이터를 추출하고, 온톨로지(RDF)를 거쳐 브라우저 친화적인 JSON으로 시각화하는 과정으로 이루어진다.
@@ -722,14 +725,14 @@ flowchart TD
     end
 
     subgraph 3. Knowledge Graph Build
-        Excel[HVDC STATUS.xlsx<br/>Base Logistics Data]
-        BuildScript[scripts/build_knowledge_graph.py<br/>RDF/TTL Builder]
-        TTL[vault/knowledge_graph.ttl<br/>RDF Triples]
+        Excel[4 HVDC Workbooks<br/>Shipment · Warehouse · JPT · Cost]
+        BuildScript[scripts/build_dashboard_graph_data.py<br/>Canonical Graph / JSON / Audit Export]
+        TTL[vault/knowledge_graph.ttl<br/>Optional RDF Triples]
     end
 
     subgraph 4. Web Visualization
-        JSONScript[scripts/ttl_to_json.py<br/>TTL to JSON Converter]
-        JSON[nodes.json & edges.json<br/>Static Assets]
+        JSONScript[scripts/ttl_to_json.py<br/>Legacy TTL to JSON Helper]
+        JSON[nodes.json & edges.json<br/>Static Assets + Note Metadata]
         React[kg-dashboard React App<br/>Cytoscape.js]
     end
 
@@ -762,24 +765,42 @@ flowchart TD
    - 여러 작업 환경(`vault`, `vault-test` 등)에 분산된 마크다운 데이터들을 스캔한다.
    - 파일 수정 시간(`mtime`)을 비교하여 최신 버전의 파일을 대상 디렉토리(`C:\Users\jichu\Downloads\valut`)로 통합 병합한다.
 
-3. **지식 그래프 구축 (`build_knowledge_graph.py`)**:
-   - **기본 물류 데이터 통합**: `HVDC STATUS.xlsx`에서 배송(Shipment), 발주(Order), 공급업체(Vendor), 선박/항공편(Vessel), 허브(Hub/MOSB), 창고(Warehouse), 현장(Site) 정보를 추출해 노드와 엣지(`hasOrder`, `storedAt`, `deliveredTo` 등)를 RDF 그래프(Graph)로 구성한다.
-   - **이슈 데이터 매핑**: 병렬 Subagent가 작성한 `vault/wiki/analyses/*.md` 파일을 스캔하고 YAML Frontmatter의 `slug`, `title`, `tags`를 파싱하여 `LogisticsIssue` 노드를 생성한다.
-   - **태그 기반 릴레이션**: 파싱된 태그를 기반으로 이슈가 발생한 장소나 관련 자산을 추론하여 연결한다. (예: `shu` → Site/SHU, `jpt71` → Vessel/JPT71, `mosb` → Hub/MOSB).
-   - 완성된 그래프는 `vault/knowledge_graph.ttl` 파일로 직렬화(Serialize)된다.
+3. **지식 그래프 구축 (`build_dashboard_graph_data.py`)**:
+   - **기본 물류 데이터 통합**: `HVDC STATUS.xlsx`, `HVDC WAREHOUSE STATUS.xlsx`, `JPT-reconciled_v6.0.xlsx`, `HVDC Logistics cost(inland,domestic).xlsx`를 읽어 shipment, case, route event, cost attribution 후보를 구성한다.
+   - **분석 문서 선택 규칙**: 현재 canonical exporter는 `C:\Users\jichu\Downloads\valut\wiki\analyses`를 먼저 읽고, 없을 때만 repo-local `vault/wiki/analyses`를 fallback으로 사용한다.
+   - **이슈/레슨 데이터 매핑**: analyses markdown를 읽어 `LogisticsIssue`와 `IncidentLesson`을 만들고, `analysisPath`, `analysisVault` metadata를 노드에 함께 실어 보낸다.
+   - **태그 기반 릴레이션**: 파싱된 태그를 기반으로 issue/lesson anchor를 shipment, location, carrier, pattern으로 해석하고 `relatedToLesson`, `occursAt` 관계를 생성한다.
+   - **감사 로그 출력**: source/resolution/projection/mapping audit을 `runtime/audits/hvdc_ttl_*.json`에 기록한다.
+   - **TTL 출력 경계**: 함수 호출로 `ttl_path`를 명시하면 TTL도 쓸 수 있다. 현재 CLI 기본 실행은 JSON + audit 재생성에 집중하도록 `ttl_path=None`으로 동작한다.
 
-4. **JSON 변환 (`ttl_to_json.py`)**:
-   - 브라우저 클라이언트가 RDF/TTL을 직접 읽는 오버헤드를 줄이기 위해, `rdflib`을 이용해 TTL 파일을 파싱한다.
-   - 노드 배열(`nodes.json`)과 엣지 배열(`edges.json`)의 두 가지 정적 에셋 파일로 변환하여 대시보드가 서빙할 수 있도록 저장한다.
+4. **Legacy JSON / TTL 경로 (`build_knowledge_graph.py`, `ttl_to_json.py`)**:
+   - `scripts/build_knowledge_graph.py`와 `scripts/ttl_to_json.py`는 호환용 wrapper / 보조 경로로 남아 있다.
+   - 현재 dashboard 데이터 갱신의 기준 진입점은 `scripts/build_dashboard_graph_data.py`다.
 
-5. **대시보드 렌더링 아키텍처 및 UI/UX (`kg-dashboard/src/App.tsx` & `GraphView.tsx`)**:
+5. **대시보드 렌더링 아키텍처 및 UI/UX (`kg-dashboard/src/App.tsx`, `GraphView.tsx`, `NodeInspector.tsx`)**:
    - **엔진**: `react-cytoscapejs` 라이브러리를 사용하여 네트워크 그래프를 고성능으로 렌더링한다. (초기 계획안의 Cosmograph 대신 채택)
    - **그래프 인덱싱 및 최적화 (`buildGraphIndex`)**: 전체 노드와 엣지를 O(1) 조회가 가능하도록 `nodeById`, `degreeById` 인덱스를 사전 구축하여 렌더링 성능을 확보한다.
    - **다이나믹 스타일링**: 노드 타입별 컬러 코딩을 적용하고(`LogisticsIssue`는 빨간색, `Shipment`는 파란색 등), 줌 아웃 시 노드 라벨 텍스트가 겹치는 Hairball 현상을 막기 위해 `min-zoomed-font-size` 속성을 적용해 확대 시에만 라벨이 보이도록 최적화했다. 선택된 노드는 애니메이션(`cy.animate`)을 통해 화면 중앙으로 포커스된다.
    - **4가지 View Modes (뷰 모드)**:
-     - **Summary (요약 뷰)**: 기본 모드. 하위 노드를 숨기고 이슈와 핵심 인프라(허브) 위주로 보여주며, `getCollapsedCountLabel`을 통해 생략된 선박/화물 개수(Shipment, Vessel, Vendor 등)를 요약 라벨로 제공한다. (concentric 레이아웃)
-     - **Issues (이슈 중심 뷰)**: `LogisticsIssue` 노드 및 그와 직접 연결된 핵심 인프라만 남겨 문제 흐름을 좁혀 시각화한다.
+     - **Summary (요약 뷰)**: 기본 모드. 하위 노드를 숨기고 이슈와 핵심 인프라(허브) 위주로 보여주며, issue-context infra anchor에 붙은 lesson만 유지한다. `getCollapsedCountLabel`을 통해 생략된 선박/화물 개수(Shipment, Vessel, Vendor 등)를 요약 라벨로 제공한다. (concentric 레이아웃)
+     - **Issues (이슈 중심 뷰)**: `LogisticsIssue`, 이슈와 직접 연결된 핵심 인프라 anchor, 그리고 그 anchor에 붙은 lesson만 남겨 문제 흐름을 좁혀 시각화한다.
      - **Search (검색 뷰)**: `useDeferredValue`를 활용해 검색어(`searchTerm`) 입력 시 렌더링 지연을 방지하는 지연 검색(Deferred Search)을 구현했다. `buildSearchView`를 통해 검색된 노드와 주변 맥락(1-depth 이웃)만 필터링하여 보여준다.
-     - **Ego (선택 노드 뷰)**: 노드를 선택했을 때 활성화되며, 해당 노드 주변 1~2 hop의 이웃만 남겨 허브를 명확히 읽을 수 있도록 한다. (`breadthfirst` 레이아웃 적용)
+     - **Ego (선택 노드 뷰)**: 노드를 선택했을 때 활성화되며, 해당 노드 주변 1~2 hop의 이웃만 남겨 허브를 명확히 읽을 수 있도록 한다. 선택 노드에 직접 연결된 lesson은 유지하되, 무관한 lesson은 확장하지 않는다. (`breadthfirst` 레이아웃 적용)
    - **동적 메트릭 도출 (`deriveMetrics`)**: 현재 뷰(visibleGraph)에 맞춰 표시/숨김 상태의 노드 및 엣지 개수, 핫스팟(이슈 및 허브 개수) 지표를 실시간 연산하여 대시보드 상단 Stat Grid에 제공한다.
-   - **Obsidian 딥링크 연동**: `LogisticsIssue` 노드를 클릭하면 노드 세부 정보 패널이 나타나며, `obsidian://open?vault=mcp_obsidian&file=vault/wiki/analyses/...` 프로토콜을 사용해 원본 마크다운 위키 파일을 직접 열어볼 수 있는 강력한 드릴다운(Drill-down) 연결을 제공한다.
+   - **Obsidian 딥링크 연동**: `LogisticsIssue`와 `IncidentLesson` 노드는 exporter가 제공한 `analysisVault`, `analysisPath` metadata를 사용해 원본 마크다운 위키 파일을 직접 연다. 현재 구현은 URL 인코딩까지 포함해 공백/특수문자가 있는 외부 vault 경로도 처리한다.
+
+### 2026-04-12 current implementation addendum
+
+- current session verification 기준 source audit:
+  - `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`
+  - `analyses_dir_fallback_used = false`
+  - `loaded_notes = 115`
+- current exported node metadata counts:
+  - `LogisticsIssue` nodes `113`, metadata 포함 `113`
+  - `IncidentLesson` nodes `102`, metadata 포함 `102`
+- current dashboard verification:
+  - Python contract `5 passed`
+  - dashboard tests `18 passed`
+  - lint / build pass
+  - preview `http://127.0.0.1:4175/` HTTP `200`
+  - Playwright snapshot에서 Summary visible nodes `227`, Issues visible nodes `216`

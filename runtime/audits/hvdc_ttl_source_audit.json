@@ -1,5 +1,7 @@
 {
   "dropped_rows": [],
   "loaded_shipments": 893,
-  "loaded_notes": 13
+  "loaded_notes": 115,
+  "selected_analyses_dir": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses",
+  "analyses_dir_fallback_used": false
 }

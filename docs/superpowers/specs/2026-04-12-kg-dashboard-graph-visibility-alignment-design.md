@@ -4,7 +4,7 @@ type: "design-spec"
 version: "1.0"
 date: "2026-04-12"
 author: "Codex brainstorming session"
-status: "review-requested"
+status: "implemented-and-verified"
 related_documents:
   - "kg-dashboard/plan-2026-04-12-graph-visibility-alignment.md"
 source_files:
@@ -278,3 +278,62 @@ After implementation:
 6. Issue and lesson nodes can open their linked analysis notes from the
    inspector.
 7. No change is required to `kg-dashboard/src/types/graph.ts` in this round.
+
+## Implementation Update (2026-04-12)
+
+The implementation is now present in the current workspace and the dashboard
+contract is verified end to end.
+
+### Actual files involved
+
+- `scripts/build_dashboard_graph_data.py`
+  - exporter entrypoint and audit writer
+  - `ttl_path=None` now remains the default CLI path
+  - malformed YAML frontmatter no longer aborts analysis note parsing
+  - external analyses selection now drives the export path
+- `kg-dashboard/src/utils/graph-model.ts`
+  - projection and visibility logic for summary, issues, and ego views
+  - analysis metadata is preserved through the projection layer
+  - issue-context lesson slicing is implemented here
+- `kg-dashboard/src/components/NodeInspector.tsx`
+  - metadata-based Obsidian link construction for issue and lesson nodes
+- `tests/test_dashboard_graph_export.py`
+  - exporter contract coverage for source selection, metadata, and audits
+- `kg-dashboard/src/utils/graph-model.test.ts`
+  - slice visibility regression coverage
+- `kg-dashboard/src/components/NodeInspector.test.tsx`
+  - metadata link regression coverage
+
+### Accepted implementation notes
+
+- The exporter CLI now defaults to `ttl_path=None`, which keeps the dashboard
+  export path aligned with the current workspace contract.
+- Analysis note parsing is resilient to malformed YAML frontmatter, so a bad
+  note no longer crashes the export pass.
+- The projection layer preserves `analysisPath` and `analysisVault` so the UI
+  can open the correct Obsidian note without reconstructing that context.
+- Issue-context lesson slicing is implemented and verified. Summary and issues
+  views now keep the relevant lesson nodes for visible issue anchors instead of
+  exposing every lesson node.
+- `NodeInspector` now uses exported metadata for Obsidian links. This was
+  verified for both issue nodes and lesson nodes.
+
+### Verification evidence
+
+- Python contract test run: `5 passed`
+- Dashboard test run: `18 passed`
+- Lint/build: passed
+- Browser preview: `http://127.0.0.1:4175` loaded successfully
+- Playwright observation: switching from Summary to Issues reduced visible node
+  count from `227` to `216`
+- Source audit observation: external analyses path was selected and
+  `loaded_notes = 115`
+- Exported metadata counts:
+  - `113` issue nodes with metadata
+  - `102` lesson nodes with metadata
+
+### Resulting state
+
+The dashboard data now reflects the external analyses corpus, the graph model
+shows only the intended lesson context in the main slices, and the inspector
+opens the correct linked note for both issue and lesson nodes.

@@ -6,6 +6,37 @@
 
 Obsidian MCP 로컬 패키지(`mcp_obsidian`)의 workspace, code, docs, setup 흐름 변경을 기록한다.
 
+## 2026-04-12 — KG dashboard graph visibility docs sync
+
+### Changed
+
+- `README.md`
+  - kg-dashboard graph export, dashboard projection, NodeInspector, and wiki analysis sections를 현재 workspace 상태에 맞게 갱신했다.
+  - `scripts/build_dashboard_graph_data.py`의 분석 경로 우선순위, fallback 표시, metadata export, malformed frontmatter tolerance, CLI default 호출 방식을 문서에 반영했다.
+  - `app/services/graph_projection_builder.py`와 `kg-dashboard/src/utils/graph-model.ts`의 lesson metadata 보존 동작을 README에 연결해 설명했다.
+- `changelog.md`
+  - 이번 docs sync 기록을 상단에 추가했다.
+
+### Verification
+
+- targeted doc refresh review
+  - `README.md`
+  - `changelog.md`
+- current-session evidence used
+  - `.venv\Scripts\python.exe -m pytest tests/test_dashboard_graph_export.py -q`
+  - `.venv\Scripts\python.exe scripts/build_dashboard_graph_data.py`
+  - `cd kg-dashboard; npm test`
+  - `cd kg-dashboard; npm run lint`
+  - `cd kg-dashboard; npm run build`
+  - browser preview `http://127.0.0.1:4175/`
+  - `runtime/audits/hvdc_ttl_source_audit.json`
+
+### Notes
+
+- 이번 항목은 문서 갱신이다. 코드 동작 자체를 바꾸지 않았다.
+- current workspace state 기준으로 kg-dashboard export와 NodeInspector가 lesson metadata를 보존하고 링크로 여는 흐름을 README에 반영했다.
+- verified counts와 path fallback 결과를 함께 적어, 이후 문서가 현재 상태에서 벗어나지 않도록 했다.
+
 ## 2026-04-11 — Root docs sync for confirmed production PASS state
 
 ### Changed

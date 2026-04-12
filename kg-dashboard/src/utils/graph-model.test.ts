@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildEgoView,
+  buildIssueView,
   buildSearchView,
   buildSummaryView,
   computeDegrees,
@@ -118,6 +119,35 @@ describe('graph-model helpers', () => {
     ]);
   });
 
+  it('summary keeps issue-context lesson and hides unrelated lesson', () => {
+    const nodes = [
+      node('issue/a', 'Alpha request', 'LogisticsIssue'),
+      node('hub/1', 'MOSB', 'Hub'),
+      node('hub/2', 'Unused hub', 'Hub'),
+      node('lesson/1', 'Lesson for MOSB', 'IncidentLesson'),
+      node('lesson/2', 'Unrelated lesson', 'IncidentLesson'),
+    ];
+    const edges = [
+      edge('issue/a', 'hub/1', 'affects'),
+      edge('hub/1', 'lesson/1', 'relatedToLesson'),
+      edge('hub/2', 'lesson/2', 'relatedToLesson'),
+    ];
+
+    const summary = buildSummaryView(nodes, edges);
+
+    expect(summary.nodes.map((item) => item.data.id).sort()).toEqual([
+      'hub/1',
+      'hub/2',
+      'issue/a',
+      'lesson/1',
+    ]);
+    expect(summary.nodes.map((item) => item.data.id)).not.toContain('lesson/2');
+    expect(summary.edges.map(edgeKey).sort()).toEqual([
+      'hub/1|lesson/1|relatedToLesson',
+      'issue/a|hub/1|affects',
+    ]);
+  });
+
   it('attaches collapsed counts to site and warehouse infra nodes as well', () => {
     const nodes = [
       node('issue/a', 'Alpha request', 'LogisticsIssue'),
@@ -148,6 +178,31 @@ describe('graph-model helpers', () => {
       vessel: 1,
       vendor: 1,
     });
+  });
+
+  it('issues keeps issue-context lesson and hides unrelated lesson', () => {
+    const nodes = [
+      node('issue/a', 'Alpha request', 'LogisticsIssue'),
+      node('hub/1', 'MOSB', 'Hub'),
+      node('hub/2', 'Unused hub', 'Hub'),
+      node('lesson/1', 'Lesson for MOSB', 'IncidentLesson'),
+      node('lesson/2', 'Unrelated lesson', 'IncidentLesson'),
+    ];
+    const edges = [
+      edge('issue/a', 'hub/1', 'affects'),
+      edge('hub/1', 'lesson/1', 'relatedToLesson'),
+      edge('hub/2', 'lesson/2', 'relatedToLesson'),
+    ];
+
+    const issues = buildIssueView(nodes, edges);
+
+    expect(issues.nodes.map((item) => item.data.id).sort()).toEqual(['hub/1', 'issue/a', 'lesson/1']);
+    expect(issues.nodes.map((item) => item.data.id)).not.toContain('lesson/2');
+    expect(issues.nodes.map((item) => item.data.id)).not.toContain('hub/2');
+    expect(issues.edges.map(edgeKey).sort()).toEqual([
+      'hub/1|lesson/1|relatedToLesson',
+      'issue/a|hub/1|affects',
+    ]);
   });
 
   it('builds a limited ego view around an issue-focused hub graph', () => {
@@ -186,6 +241,34 @@ describe('graph-model helpers', () => {
       'hub/1|leaf/4|leaf-4',
       'hub/1|leaf/5|leaf-5',
       'hub/1|leaf/6|leaf-6',
+    ]);
+  });
+
+  it('ego keeps directly attached lesson for selected node and hides unrelated lesson', () => {
+    const nodes = [
+      node('issue/a', 'Alpha request', 'LogisticsIssue'),
+      node('hub/1', 'MOSB', 'Hub'),
+      node('hub/2', 'Unused hub', 'Hub'),
+      node('lesson/1', 'Direct lesson', 'IncidentLesson'),
+      node('lesson/2', 'Unrelated lesson', 'IncidentLesson'),
+    ];
+    const edges = [
+      edge('issue/a', 'hub/1', 'focus'),
+      edge('hub/1', 'lesson/1', 'relatedToLesson'),
+      edge('hub/2', 'lesson/2', 'relatedToLesson'),
+    ];
+
+    const ego = buildEgoView(nodes, edges, 'hub/1', 10);
+
+    expect(ego.nodes.map((item) => item.data.id).sort()).toEqual([
+      'hub/1',
+      'issue/a',
+      'lesson/1',
+    ]);
+    expect(ego.nodes.map((item) => item.data.id)).not.toContain('lesson/2');
+    expect(ego.edges.map(edgeKey).sort()).toEqual([
+      'hub/1|lesson/1|relatedToLesson',
+      'issue/a|hub/1|focus',
     ]);
   });
 

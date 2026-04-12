@@ -66,7 +66,8 @@ This section classifies all paths in the repository by their character and role.
 | `local-rag/` | `companion-runtime-reference` | Workspace-local companion retrieval/generation copy for verification only; not repo-owned runtime code |
 | `myagent-copilot-kit/standalone-package/` | `companion-runtime-reference` | Workspace-local companion app copy for verification only; not repo-owned runtime code |
 | `kg-dashboard/` | `subproject` | Vite + React app for Knowledge Graph visualization |
-| `scripts/build_knowledge_graph.py` | `runtime-support` | Script to build the Knowledge Graph from KB data |
+| `scripts/build_dashboard_graph_data.py` | `runtime-support` | Canonical dashboard export entrypoint for graph data and audit generation |
+| `scripts/build_knowledge_graph.py` | `runtime-support` | Legacy wrapper that delegates to the canonical dashboard export path |
 | `vault/` | `generated/runtime-data` | Local Obsidian vault — actual memory storage |
 | `vault/knowledge_graph.ttl` | `generated/runtime-data` | Turtle (TTL) output of the generated knowledge graph |
 | `vault/wiki/` | `kb-canonical` | Compiled wiki overlay / KB canonical surface with `sources/`, `concepts/`, `entities/`, `analyses/` |
@@ -94,7 +95,8 @@ This section classifies all paths in the repository by their character and role.
 | `local-rag/` | `companion-runtime-reference` | 현재 작업 트리에 존재하는 local retrieval/generation 검증용 사본. 이 repo가 소유하는 runtime code로 보지 않음 |
 | `myagent-copilot-kit/standalone-package/` | `companion-runtime-reference` | 현재 작업 트리에 존재하는 standalone app 검증용 사본. 이 repo가 소유하는 runtime code로 보지 않음 |
 | `kg-dashboard/` | `subproject` | Knowledge Graph 시각화를 위한 Vite + React 앱 |
-| `scripts/build_knowledge_graph.py` | `runtime-support` | KB 데이터로부터 지식 그래프를 빌드하는 스크립트 |
+| `scripts/build_dashboard_graph_data.py` | `runtime-support` | 그래프 데이터와 audit를 생성하는 canonical dashboard export 진입점 |
+| `scripts/build_knowledge_graph.py` | `runtime-support` | canonical dashboard export를 호출하는 legacy wrapper |
 | `Dockerfile`, `.dockerignore` | `deployment-runtime` | Railway hosted preview 컨테이너 정의 |
 | `vault/` | `generated/runtime-data` | 로컬 Obsidian vault. 실제 메모 저장소 |
 | `vault/knowledge_graph.ttl` | `generated/runtime-data` | 생성된 지식 그래프의 Turtle (TTL) 출력 결과물 |
@@ -140,8 +142,8 @@ Active work targets the root-level `app/`, `tests/`, `.cursor/`, `docs/`, `examp
 | Installation/run | `scripts/` | Windows bootstrap, local start, specialist start, verification round, sync helpers |
 | WhatsApp Parsing | `scripts/parse_whatsapp_logistics.py` | Batch processing chat logs into `vault/raw/articles/` |
 | Knowledge Graph UI | `kg-dashboard/` | Vite + React components and styling |
-| Knowledge Graph Build | `scripts/build_knowledge_graph.py` | Graph extraction logic |
-| TTL to JSON Conversion | `scripts/ttl_to_json.py` | Converts TTL to JSON for frontend visualization |
+| Knowledge Graph Build | `scripts/build_dashboard_graph_data.py` | Canonical graph extraction, JSON export, and audit generation |
+| Legacy graph wrappers | `scripts/build_knowledge_graph.py`, `scripts/ttl_to_json.py` | Compatibility wrappers around the canonical export path |
 | KG SPARQL Tests | `scripts/test_kg_queries.py` | SPARQL validations on generated Knowledge Graph |
 | Vault Consolidation | `scripts/consolidate_vaults.py` | Merges multiple test vaults |
 | KB canonical writes | `vault/wiki/` | Direct file writes, not via MCP tools |
@@ -171,8 +173,8 @@ Active work targets the root-level `app/`, `tests/`, `.cursor/`, `docs/`, `examp
 | Ollama KB adapter | `scripts/ollama_kb.py` | 3개 KB 스킬 공용 Ollama 호출 모듈 |
 | WhatsApp Parsing | `scripts/parse_whatsapp_logistics.py` | WhatsApp 대화 로그를 일괄 추출하여 `vault/raw/articles/`로 저장 |
 | Knowledge Graph UI | `kg-dashboard/` | Vite + React 컴포넌트 및 스타일링 |
-| Knowledge Graph Build | `scripts/build_knowledge_graph.py` | 그래프 추출 로직 |
-| TTL to JSON Conversion | `scripts/ttl_to_json.py` | 지식 그래프를 프론트엔드용 JSON으로 변환 |
+| Knowledge Graph Build | `scripts/build_dashboard_graph_data.py` | canonical 그래프 추출, JSON export, audit 생성 |
+| Legacy graph wrappers | `scripts/build_knowledge_graph.py`, `scripts/ttl_to_json.py` | canonical export를 감싸는 호환 wrapper |
 | KG SPARQL Tests | `scripts/test_kg_queries.py` | 생성된 지식 그래프에 대한 SPARQL 쿼리 검증 |
 | Vault Consolidation | `scripts/consolidate_vaults.py` | 여러 테스트/소스 vault 병합 |
 | companion runtime boundary | `Spec.md`, `README.md`, `SYSTEM_ARCHITECTURE.md`, `docs/superpowers/specs/2026-04-08-local-rag-cache-and-guard-design.md` | sibling `local-rag`, `standalone-package`는 이 저장소 밖에서 운영. 여기서는 guarded readiness, local route 기본 모델, MCP bridge fact만 추적 |
@@ -505,18 +507,19 @@ A comprehensive pipeline has been added to extract logistics events from WhatsAp
 | `whatsapp groupchat/` | `immutable-source` | Raw WhatsApp chat log exports (`.txt` files). |
 | `scripts/parse_whatsapp_logistics.py` | `runtime-support` | Extracts time-bound logistics events from WhatsApp logs and outputs markdown to `vault/raw/articles/`. |
 | `vault/raw/articles/*.md` | `immutable-source` | Raw event block archives mapped from WhatsApp chunks. |
-| `scripts/build_knowledge_graph.py` | `runtime-support` | Reads `Logi ontol core doc/HVDC STATUS.xlsx` and `vault/wiki/analyses/*.md` to generate `vault/knowledge_graph.ttl`. |
+| `scripts/build_dashboard_graph_data.py` | `runtime-support` | Canonical exporter. Reads the four HVDC workbooks plus analyses notes, writes dashboard JSON and audit outputs, and optionally emits TTL when requested explicitly. |
+| `scripts/build_knowledge_graph.py` | `runtime-support` | Legacy wrapper that forwards to the canonical exporter. |
 | `vault/knowledge_graph.ttl` | `generated/runtime-data` | Output Turtle (TTL) file representing the generated Knowledge Graph (ontology). |
 | `scripts/test_kg_queries.py` | `runtime-support` | Executes SPARQL validations against the generated `knowledge_graph.ttl`. |
-| `scripts/ttl_to_json.py` | `runtime-support` | Converts `knowledge_graph.ttl` into `nodes.json` and `edges.json`. |
+| `scripts/ttl_to_json.py` | `runtime-support` | Legacy wrapper used only when an existing TTL must be rendered again as JSON. |
 | `scripts/consolidate_vaults.py` | `runtime-support` | Merges multiple test/source vaults into the canonical target directory. |
 | `kg-dashboard/` | `subproject` | Vite + React app for Knowledge Graph visualization. |
-| `kg-dashboard/public/data/` | `generated/runtime-data` | Target destination for `nodes.json` and `edges.json` used by the dashboard. |
+| `kg-dashboard/public/data/` | `generated/runtime-data` | Target destination for `nodes.json` and `edges.json` used by the dashboard. Current export also carries `analysisPath` and `analysisVault` metadata for issue/lesson drilldown. |
 | `kg-dashboard/src/components/GraphView.tsx` | `runtime` | React Cytoscape graph surface for search-first navigation, ego view focus, and summary-driven selection. |
 | `kg-dashboard/src/components/GraphSidebar.tsx` | `runtime` | React sidebar for summary cards, hidden-card counts, and hub/site/warehouse filtering. |
-| `kg-dashboard/src/components/NodeInspector.tsx` | `runtime` | React inspector for selected node details and issue-note links. |
+| `kg-dashboard/src/components/NodeInspector.tsx` | `runtime` | React inspector for selected node details and metadata-driven issue/lesson Obsidian note links. |
 | `kg-dashboard/src/types/graph.ts` | `shared-contract` | TypeScript definitions for the graph data structures. |
-| `kg-dashboard/src/utils/graph-model.ts` | `runtime-support` | Graph data modeling, summary counts, and derived view state. |
+| `kg-dashboard/src/utils/graph-model.ts` | `runtime-support` | Graph data modeling, summary counts, and derived view state including issue-context lesson visibility in `summary`/`issues` and direct lesson retention in `ego`. |
 
 ### Dashboard 디렉토리 구조 (Dashboard Directory Structure)
 
@@ -537,10 +540,30 @@ kg-dashboard/src/
 
 - **`whatsapp groupchat/`**: Directory for the original text exports of the chat. Immutable source.
 - **`vault/raw/articles/`**: Processed and chunked chat logs as markdown.
-- **`vault/wiki/analyses/`**: Deep-dive analysis and structured log outputs, read by the KG builder.
-- **`vault/knowledge_graph.ttl`**: The RDF graph schema and instance data, generated automatically.
-- **`kg-dashboard/public/data/`**: Static JSON representations (`nodes.json`, `edges.json`) for the React frontend, generated by `ttl_to_json.py`.
+- **`vault/wiki/analyses/`**: Repo-local analyses fallback path. Current canonical exporter prefers `C:\Users\jichu\Downloads\valut\wiki\analyses` when present.
+- **`vault/knowledge_graph.ttl`**: Optional RDF graph schema and instance data. Current `scripts/build_dashboard_graph_data.py` CLI defaults to JSON/audit regeneration without TTL emission unless `ttl_path` is passed explicitly.
+- **`kg-dashboard/public/data/`**: Static JSON representations (`nodes.json`, `edges.json`) for the React frontend, generated by `scripts/build_dashboard_graph_data.py`.
 - **`kg-dashboard/src/`**: Application logic for the visualization layer, running locally.
+
+### 2026-04-12 Dashboard Visibility Alignment Addendum
+
+이 섹션은 기존 layout 설명을 지우지 않고, 현재 코드 기준의 dashboard export / visibility 변화만 덧붙인다.
+
+- canonical dashboard export는 `scripts/build_dashboard_graph_data.py`가 맡는다.
+- 현재 CLI 기본 실행은 `ttl_path=None`으로 동작해 JSON + audit 재생성에 집중한다.
+- analyses source 선택 순서는 아래와 같다.
+  1. `C:\Users\jichu\Downloads\valut\wiki\analyses`
+  2. `vault/wiki/analyses`
+- source audit은 `runtime/audits/hvdc_ttl_source_audit.json`에 실제 사용 경로를 남긴다.
+- 현재 session 검증 기준 source audit 값:
+  - `selected_analyses_dir = C:\Users\jichu\Downloads\valut\wiki\analyses`
+  - `analyses_dir_fallback_used = false`
+  - `loaded_notes = 115`
+- dashboard JSON의 `LogisticsIssue` 및 `IncidentLesson` 노드는 `analysisPath`, `analysisVault`를 포함한다.
+- `NodeInspector.tsx`는 이 metadata를 사용해 issue/lesson 노드에서 올바른 Obsidian vault/file 링크를 연다.
+- `graph-model.ts`는 모든 lesson을 기본 화면에 풀지 않는다.
+  - `summary` / `issues`: issue-context infra anchor에 붙은 lesson만 유지
+  - `ego`: 선택 노드에 직접 연결된 lesson만 유지
 
 ### WhatsApp Pipeline & Knowledge Graph Diagram
 

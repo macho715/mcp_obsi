@@ -9,6 +9,7 @@
 
 이 문서는 "새 TTL/JSON 산출물은 갱신되었는데 대시보드에서 기존 그래프와 거의 같아 보이는 문제"만 다룬다.
 기존 `kg-dashboard/plan.md`와 `kg-dashboard/plan-2026-04-12-ui-rule-alignment.md`는 유지한다.
+실제 구현은 현재 워크스페이스에서 완료되었다. 아래 Phase 1/2는 원래 계획 기준을 유지하고, 맨 아래 `Execution Update (2026-04-12)`는 현재 구현 기준을 기록한다.
 
 ---
 
@@ -158,3 +159,46 @@ graph TD
 - **검증 누락 리스크**
   - exporter만 바꾸고 UI filter를 그대로 두면 다시 "바뀐 게 안 보인다" 상태가 남는다.
   - 완화: Python exporter contract와 TypeScript graph slice test를 분리해서 검증한다.
+
+---
+
+## Execution Update (2026-04-12)
+
+### 3.1 Completed scope
+
+| Area | Planned state | Implemented state |
+|------|---------------|-------------------|
+| Analysis source selection | external analyses path should be preferred, repo-local only as fallback | `C:\Users\jichu\Downloads\valut\wiki\analyses` is selected first; fallback was not used |
+| Source audit | record actual source choice and counts | audit emits source fields, including `loaded_notes = 115` and `analyses_dir_fallback_used = false` |
+| Node export | expose lesson and issue metadata for downstream links | `analysisPath` and `analysisVault` are emitted on issue and lesson nodes |
+| Lesson visibility | show issue-context lessons in summary/issues and direct lessons in ego | the graph slices now follow that split |
+| Inspector links | resolve Obsidian links from exported metadata | NodeInspector now uses metadata-driven encoded Obsidian links |
+| Export CLI behavior | regenerate JSON/audits deterministically | `__main__` defaults to JSON/audit regeneration without TTL emission; explicit TTL output remains available from the function |
+
+### 3.2 Actual changed files
+
+- `scripts/build_dashboard_graph_data.py`
+- `tests/test_dashboard_graph_export.py`
+- `kg-dashboard/src/utils/graph-model.ts`
+- `kg-dashboard/src/utils/graph-model.test.ts`
+- `kg-dashboard/src/components/NodeInspector.tsx`
+- `runtime/audits/hvdc_ttl_source_audit.json`
+- `runtime/audits/hvdc_ttl_mapping_audit.json`
+- `kg-dashboard/public/data/nodes.json`
+- `kg-dashboard/public/data/edges.json`
+
+### 3.3 Verification results
+
+- `.venv\Scripts\python.exe -m pytest tests/test_dashboard_graph_export.py -q` -> `5 passed`
+- `.venv\Scripts\python.exe scripts/build_dashboard_graph_data.py` -> pass
+- `cd kg-dashboard; npm test` -> `18 passed`
+- `cd kg-dashboard; npm run lint` -> pass
+- `cd kg-dashboard; npm run build` -> pass
+- Browser preview at `http://127.0.0.1:4175/` returned HTTP 200. Issues view showed 216 visible nodes; Summary view showed 227 visible nodes.
+
+### 3.4 Accepted implementation notes / deviations
+
+- The workspace path spelling is `valut`, not `vault`; the plan now records the actual selected analysis root.
+- The export CLI now skips TTL emission by default in `__main__` by passing `ttl_path=None`.
+- The exporter still supports explicit TTL output when the function is called with a TTL path.
+- The browser counts show Summary retains a slightly larger visible set than Issues, which is consistent with the slice split recorded above.
