@@ -76,6 +76,16 @@ describe('kg-dashboard UI rule alignment', () => {
         onRemovePinnedNode={() => {}}
         onRemoveHiddenNode={() => {}}
         onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
       />,
     );
 
@@ -138,6 +148,16 @@ describe('kg-dashboard UI rule alignment', () => {
         onRemovePinnedNode={() => {}}
         onRemoveHiddenNode={() => {}}
         onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
       />,
     );
     const inspectorMarkup = renderToStaticMarkup(

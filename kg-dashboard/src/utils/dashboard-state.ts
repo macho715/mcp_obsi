@@ -1,6 +1,12 @@
 import type { GraphCompanionView, GraphSearchField, GraphViewMode } from '../types/graph';
 
-export interface DashboardUrlState {
+export interface GraphManualViewState {
+  pinnedNodeIds: string[];
+  hiddenNodeIds: string[];
+  expandedNodeIds: string[];
+}
+
+export interface DashboardViewState extends GraphManualViewState {
   query: string;
   searchField: GraphSearchField;
   classFilter: string;
@@ -10,6 +16,11 @@ export interface DashboardUrlState {
   companionView: GraphCompanionView;
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
+}
+
+export interface DashboardUrlState extends DashboardViewState {
+  compareLeftId: string | null;
+  compareRightId: string | null;
 }
 
 const VIEW_MODES: GraphViewMode[] = ['summary', 'issues', 'search', 'ego'];
@@ -26,7 +37,35 @@ export const DEFAULT_DASHBOARD_URL_STATE: DashboardUrlState = {
   companionView: 'graph',
   selectedNodeId: null,
   selectedEdgeId: null,
+  pinnedNodeIds: [],
+  hiddenNodeIds: [],
+  expandedNodeIds: [],
+  compareLeftId: null,
+  compareRightId: null,
 };
+
+function parseNodeIdList(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function serializeNodeIdList(ids: string[]): string | null {
+  if (!ids.length) {
+    return null;
+  }
+
+  return Array.from(new Set(ids)).sort((left, right) => left.localeCompare(right)).join(',');
+}
 
 export function parseDashboardUrlState(search: string): DashboardUrlState {
   const params = new URLSearchParams(search);
@@ -50,6 +89,11 @@ export function parseDashboardUrlState(search: string): DashboardUrlState {
       : DEFAULT_DASHBOARD_URL_STATE.companionView,
     selectedNodeId: params.get('node'),
     selectedEdgeId: params.get('edge'),
+    pinnedNodeIds: parseNodeIdList(params.get('pin')),
+    hiddenNodeIds: parseNodeIdList(params.get('hide')),
+    expandedNodeIds: parseNodeIdList(params.get('expand')),
+    compareLeftId: params.get('compareLeft'),
+    compareRightId: params.get('compareRight'),
   };
 }
 
@@ -82,6 +126,29 @@ export function buildDashboardUrlSearch(state: DashboardUrlState): string {
   }
   if (state.selectedEdgeId) {
     params.set('edge', state.selectedEdgeId);
+  }
+
+  const pinned = serializeNodeIdList(state.pinnedNodeIds);
+  if (pinned) {
+    params.set('pin', pinned);
+  }
+
+  const hidden = serializeNodeIdList(state.hiddenNodeIds);
+  if (hidden) {
+    params.set('hide', hidden);
+  }
+
+  const expanded = serializeNodeIdList(state.expandedNodeIds);
+  if (expanded) {
+    params.set('expand', expanded);
+  }
+
+  if (state.compareLeftId) {
+    params.set('compareLeft', state.compareLeftId);
+  }
+
+  if (state.compareRightId) {
+    params.set('compareRight', state.compareRightId);
   }
 
   const query = params.toString();

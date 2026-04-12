@@ -19,17 +19,20 @@ import type {
   GraphEdge,
   GraphNode,
   GraphQueryState,
+  GraphSlice,
   OntologyQueryPresetId,
-  SavedGraphQuery,
   GraphViewMode,
   ProvenanceChain,
+  SavedGraphQuery,
   VisibilityReason,
 } from './types/graph';
 import {
   DEFAULT_DASHBOARD_URL_STATE,
   buildDashboardUrlSearch,
   parseDashboardUrlState,
+  type DashboardViewState,
 } from './utils/dashboard-state';
+import { buildCompareUnionSlice, buildGraphCompareDiff } from './utils/graph-compare';
 import {
   buildSchemaSummaryRows,
   buildTableRows,
@@ -52,6 +55,7 @@ import {
 
 const HUB_THRESHOLD = 200;
 const SAVED_QUERY_STORAGE_KEY = 'kg-dashboard:saved-queries';
+const SAVED_VIEWS_STORAGE_KEY = 'kg-dashboard/saved-investigation-views/v1';
 const GraphView = lazy(() => import('./components/GraphView'));
 const ONTOLOGY_QUERY_PRESETS: Array<{
   id: OntologyQueryPresetId;
@@ -79,6 +83,14 @@ const ONTOLOGY_QUERY_PRESETS: Array<{
     query: { classFilter: 'Vendor', propertyFilter: 'suppliedBy', relationTypeFilter: '' },
   },
 ];
+
+interface SavedInvestigationView {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  viewState: DashboardViewState;
+}
 
 const VIEW_COPY: Record<GraphViewMode, { title: string; description: string }> = {
   summary: {
@@ -123,9 +135,18 @@ function App() {
     relationTypeFilter: initialUrlState.relationTypeFilter,
   });
   const [savedQueries, setSavedQueries] = useState<SavedGraphQuery[]>([]);
-  const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
-  const [hiddenNodeIds, setHiddenNodeIds] = useState<string[]>([]);
-  const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>([]);
+  const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>(initialUrlState.pinnedNodeIds);
+  const [hiddenNodeIds, setHiddenNodeIds] = useState<string[]>(initialUrlState.hiddenNodeIds);
+  const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>(
+    initialUrlState.expandedNodeIds,
+  );
+  const [savedViews, setSavedViews] = useState<SavedInvestigationView[]>([]);
+  const [compareLeftId, setCompareLeftId] = useState<string | null>(
+    initialUrlState.compareLeftId,
+  );
+  const [compareRightId, setCompareRightId] = useState<string | null>(
+    initialUrlState.compareRightId,
+  );
 
   const deferredSearch = useDeferredValue(queryState.term);
 
@@ -155,6 +176,42 @@ function App() {
       window.localStorage.setItem(SAVED_QUERY_STORAGE_KEY, JSON.stringify(next));
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as SavedInvestigationView[];
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+      setSavedViews(
+        parsed.filter(
+          (item) =>
+            item &&
+            typeof item.id === 'string' &&
+            typeof item.name === 'string' &&
+            item.viewState != null,
+        ),
+      );
+    } catch {
+      setSavedViews([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
+  }, [savedViews]);
 
   useEffect(() => {
     let active = true;
@@ -206,6 +263,37 @@ function App() {
     };
   }, []);
 
+  const activeViewState = useMemo<DashboardViewState>(
+    () => ({
+      query: queryState.term,
+      searchField: queryState.searchField,
+      classFilter: queryState.classFilter,
+      propertyFilter: queryState.propertyFilter,
+      relationTypeFilter: queryState.relationTypeFilter,
+      viewMode,
+      companionView,
+      selectedNodeId,
+      selectedEdgeId,
+      pinnedNodeIds,
+      hiddenNodeIds,
+      expandedNodeIds,
+    }),
+    [
+      companionView,
+      expandedNodeIds,
+      hiddenNodeIds,
+      pinnedNodeIds,
+      queryState.classFilter,
+      queryState.propertyFilter,
+      queryState.relationTypeFilter,
+      queryState.searchField,
+      queryState.term,
+      selectedEdgeId,
+      selectedNodeId,
+      viewMode,
+    ],
+  );
+
   const index = useMemo(() => buildGraphIndex(allNodes, allEdges), [allNodes, allEdges]);
   const searchMatches = useMemo(
     () => findSearchMatches(allNodes, deferredSearch, queryState.searchField, 6),
@@ -227,84 +315,39 @@ function App() {
         .sort((left, right) => left.localeCompare(right)),
     [allEdges],
   );
-
-  const baseVisibleGraph = useMemo(() => {
-    if (!allNodes.length) {
-      return { nodes: [], edges: [] };
+  const activeSlice = useMemo(
+    () => buildSliceForState(allNodes, allEdges, activeViewState),
+    [activeViewState, allEdges, allNodes],
+  );
+  const leftCompareView = useMemo(
+    () => savedViews.find((item) => item.id === compareLeftId) ?? null,
+    [compareLeftId, savedViews],
+  );
+  const rightCompareView = useMemo(
+    () => savedViews.find((item) => item.id === compareRightId) ?? null,
+    [compareRightId, savedViews],
+  );
+  const compareEnabled = Boolean(
+    leftCompareView && rightCompareView && leftCompareView.id !== rightCompareView.id,
+  );
+  const compareState = useMemo(() => {
+    if (!compareEnabled || !leftCompareView || !rightCompareView) {
+      return null;
     }
 
-    if (selectedNodeId && viewMode === 'ego') {
-      return buildEgoView(allNodes, allEdges, selectedNodeId);
-    }
-
-    if (deferredSearch.trim()) {
-      return buildSearchView(allNodes, allEdges, deferredSearch, {
-        hubThreshold: HUB_THRESHOLD,
-        searchField: queryState.searchField,
-      });
-    }
-
-    switch (viewMode) {
-      case 'issues':
-        return buildIssueView(allNodes, allEdges);
-      case 'ego':
-        return buildSummaryView(allNodes, allEdges);
-      case 'search':
-        return { nodes: [], edges: [] };
-      case 'summary':
-      default:
-        return buildSummaryView(allNodes, allEdges);
-    }
-  }, [allEdges, allNodes, deferredSearch, queryState.searchField, selectedNodeId, viewMode]);
-
-  const filteredVisibleGraph = useMemo(() => {
-    const classFilter = queryState.classFilter.trim();
-    const propertyFilter = queryState.propertyFilter.trim();
-    const relationTypeFilter = queryState.relationTypeFilter.trim();
-    if (!classFilter && !propertyFilter && !relationTypeFilter) {
-      return baseVisibleGraph;
-    }
-
-    const nodeById = new Map(baseVisibleGraph.nodes.map((node) => [node.data.id, node]));
-    const filteredEdges = baseVisibleGraph.edges.filter((edge) => {
-      const sourceNode = nodeById.get(edge.data.source);
-      const targetNode = nodeById.get(edge.data.target);
-      const edgeProperty = edge.data.label ?? '';
-      const edgeRelationType = String(edge.data.relationType ?? edge.data.label ?? '');
-
-      const classMatch =
-        !classFilter || sourceNode?.data.type === classFilter || targetNode?.data.type === classFilter;
-      const propertyMatch = !propertyFilter || edgeProperty === propertyFilter;
-      const relationTypeMatch = !relationTypeFilter || edgeRelationType === relationTypeFilter;
-
-      return classMatch && propertyMatch && relationTypeMatch;
-    });
-
-    if (filteredEdges.length === 0) {
-      return { nodes: [], edges: [] };
-    }
-
-    const includedNodeIds = new Set<string>();
-    filteredEdges.forEach((edge) => {
-      includedNodeIds.add(edge.data.source);
-      includedNodeIds.add(edge.data.target);
-    });
+    const leftSlice = buildSliceForState(allNodes, allEdges, leftCompareView.viewState);
+    const rightSlice = buildSliceForState(allNodes, allEdges, rightCompareView.viewState);
 
     return {
-      nodes: baseVisibleGraph.nodes.filter((node) => includedNodeIds.has(node.data.id)),
-      edges: filteredEdges,
+      unionSlice: buildCompareUnionSlice(leftSlice, rightSlice),
+      diff: buildGraphCompareDiff(leftSlice, rightSlice),
+      leftName: leftCompareView.name,
+      rightName: rightCompareView.name,
     };
-  }, [baseVisibleGraph, queryState.classFilter, queryState.propertyFilter, queryState.relationTypeFilter]);
+  }, [allEdges, allNodes, compareEnabled, leftCompareView, rightCompareView]);
 
-  const visibleGraph = useMemo(
-    () =>
-      applyManualGraphState(allNodes, allEdges, filteredVisibleGraph, {
-        pinnedNodeIds: new Set(pinnedNodeIds),
-        hiddenNodeIds: new Set(hiddenNodeIds),
-        expandedNodeIds: new Set(expandedNodeIds),
-      }),
-    [allEdges, allNodes, expandedNodeIds, filteredVisibleGraph, hiddenNodeIds, pinnedNodeIds],
-  );
+  const visibleGraph = compareState?.unionSlice ?? activeSlice;
+  const compareDiff = compareState?.diff ?? null;
 
   const selectedNode = selectedNodeId ? index.nodeById.get(selectedNodeId) ?? null : null;
   const selectedNodeLabel = selectedNode ? getNodeLabel(selectedNode) : undefined;
@@ -321,13 +364,14 @@ function App() {
   );
   const selectedVisibilityReasons: VisibilityReason[] = useMemo(() => {
     const reasons: VisibilityReason[] = [];
-    if (selectedNodeId && searchTerm.trim()) {
+    const query = queryState.term.trim();
+    if (selectedNodeId && query) {
       const matched = searchMatches.some((item) => item.node.data.id === selectedNodeId);
       reasons.push({
         code: matched ? 'filter-match' : 'view-slice',
         label: matched ? 'Filter match' : 'Search slice context',
         detail: matched
-          ? `Search term "${searchTerm.trim()}" matched this node${searchField === 'all' ? '' : ` in ${searchField.toUpperCase()}`}.`
+          ? `Search term "${query}" matched this node${queryState.searchField === 'all' ? '' : ` in ${queryState.searchField.toUpperCase()}`}.`
           : 'This node is visible as search-neighbor context around matched results.',
       });
     } else {
@@ -376,9 +420,9 @@ function App() {
     expandedNodeIds,
     hiddenNodeIds,
     pinnedNodeIds,
-    searchField,
+    queryState.searchField,
+    queryState.term,
     searchMatches,
-    searchTerm,
     selectedEdge,
     selectedEdgeId,
     selectedNodeId,
@@ -457,29 +501,14 @@ function App() {
     }
 
     const search = buildDashboardUrlSearch({
-      query: queryState.term,
-      searchField: queryState.searchField,
-      classFilter: queryState.classFilter,
-      propertyFilter: queryState.propertyFilter,
-      relationTypeFilter: queryState.relationTypeFilter,
+      ...activeViewState,
       viewMode: effectiveViewMode,
-      companionView,
-      selectedNodeId,
-      selectedEdgeId,
+      compareLeftId,
+      compareRightId,
     });
 
     window.history.replaceState({}, '', `${window.location.pathname}${search}`);
-  }, [
-    companionView,
-    effectiveViewMode,
-    queryState.classFilter,
-    queryState.propertyFilter,
-    queryState.relationTypeFilter,
-    queryState.searchField,
-    queryState.term,
-    selectedEdgeId,
-    selectedNodeId,
-  ]);
+  }, [activeViewState, compareLeftId, compareRightId, effectiveViewMode]);
 
   useEffect(() => {
     if (selectedNodeId && !index.nodeById.has(selectedNodeId)) {
@@ -492,6 +521,16 @@ function App() {
       setSelectedEdgeId(null);
     }
   }, [selectedEdgeId, visibleGraph.edges]);
+
+  useEffect(() => {
+    if (compareLeftId && !savedViews.some((item) => item.id === compareLeftId)) {
+      setCompareLeftId(null);
+    }
+
+    if (compareRightId && !savedViews.some((item) => item.id === compareRightId)) {
+      setCompareRightId(null);
+    }
+  }, [compareLeftId, compareRightId, savedViews]);
 
   const handleSearchTermChange = (value: string) => {
     setQueryState((current) => ({ ...current, term: value }));
@@ -642,6 +681,86 @@ function App() {
     setExpandedNodeIds([]);
   };
 
+  const handleCopyCurrentStateLink = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}${buildDashboardUrlSearch({
+      ...activeViewState,
+      viewMode: effectiveViewMode,
+      compareLeftId,
+      compareRightId,
+    })}`;
+
+    if (window.navigator?.clipboard?.writeText) {
+      await window.navigator.clipboard.writeText(shareUrl);
+      return;
+    }
+
+    window.prompt('Copy this investigation URL', shareUrl);
+  };
+
+  const handleSaveCurrentView = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const name = window.prompt('Saved view name', `View ${savedViews.length + 1}`)?.trim();
+    if (!name) {
+      return;
+    }
+
+    const description = window.prompt('Saved view description', '')?.trim() ?? '';
+    const createdAt = new Date().toISOString();
+    const nextViewState: DashboardViewState = {
+      ...activeViewState,
+      viewMode: effectiveViewMode,
+    };
+
+    const next: SavedInvestigationView = {
+      id: `view-${createdAt}-${Math.random().toString(16).slice(2, 8)}`,
+      name,
+      description,
+      createdAt,
+      viewState: nextViewState,
+    };
+
+    setSavedViews((current) => [next, ...current].slice(0, 30));
+    if (!compareLeftId) {
+      setCompareLeftId(next.id);
+    } else if (!compareRightId) {
+      setCompareRightId(next.id);
+    }
+  };
+
+  const handleLoadSavedView = (viewId: string) => {
+    const target = savedViews.find((item) => item.id === viewId);
+    if (!target) {
+      return;
+    }
+
+    const state = target.viewState;
+    setQueryState({
+      term: state.query,
+      searchField: state.searchField,
+      classFilter: state.classFilter,
+      propertyFilter: state.propertyFilter,
+      relationTypeFilter: state.relationTypeFilter,
+    });
+    setViewMode(state.viewMode);
+    setCompanionView(state.companionView);
+    setSelectedNodeId(state.selectedNodeId);
+    setSelectedEdgeId(state.selectedEdgeId);
+    setPinnedNodeIds(state.pinnedNodeIds);
+    setHiddenNodeIds(state.hiddenNodeIds);
+    setExpandedNodeIds(state.expandedNodeIds);
+  };
+
+  const handleDeleteSavedView = (viewId: string) => {
+    setSavedViews((current) => current.filter((item) => item.id !== viewId));
+  };
+
   return (
     <div className="dashboard-shell">
       <GraphSidebar
@@ -688,6 +807,16 @@ function App() {
         onRemovePinnedNode={(nodeId) => setPinnedNodeIds((current) => removeNodeId(current, nodeId))}
         onRemoveHiddenNode={(nodeId) => setHiddenNodeIds((current) => removeNodeId(current, nodeId))}
         onRemoveExpandedNode={(nodeId) => setExpandedNodeIds((current) => removeNodeId(current, nodeId))}
+        onCopyCurrentStateLink={() => void handleCopyCurrentStateLink()}
+        onSaveCurrentView={handleSaveCurrentView}
+        savedViews={savedViews}
+        onLoadSavedView={handleLoadSavedView}
+        onDeleteSavedView={handleDeleteSavedView}
+        compareLeftId={compareLeftId}
+        compareRightId={compareRightId}
+        onSetCompareLeft={setCompareLeftId}
+        onSetCompareRight={setCompareRightId}
+        compareEnabled={compareEnabled}
       />
 
       <main className="dashboard-main">
@@ -697,6 +826,12 @@ function App() {
             <h1>kg-dashboard</h1>
             <p className="dashboard-view-label">{VIEW_COPY[effectiveViewMode].title}</p>
             <p className="dashboard-description">{VIEW_COPY[effectiveViewMode].description}</p>
+            {compareState ? (
+              <p className="dashboard-description">
+                Compare mode · Added (green), Removed (red), Changed (amber) · {compareState.leftName} →{' '}
+                {compareState.rightName}
+              </p>
+            ) : null}
           </div>
           <dl className="dashboard-stat-grid">
             <div className="dashboard-stat">
@@ -766,6 +901,7 @@ function App() {
                   degreeById={index.degreeById}
                   onSelectNode={handleNodeSelect}
                   onSelectEdge={handleEdgeSelect}
+                  compareDiff={compareDiff}
                 />
               </Suspense>
             ) : companionView === 'table' ? (
@@ -804,6 +940,96 @@ function App() {
 }
 
 export default App;
+
+function buildSliceForState(
+  allNodes: GraphNode[],
+  allEdges: GraphEdge[],
+  state: DashboardViewState,
+): GraphSlice {
+  if (!allNodes.length) {
+    return { nodes: [], edges: [] };
+  }
+
+  const query = state.query.trim();
+  let baseSlice: GraphSlice;
+
+  if (state.selectedNodeId && state.viewMode === 'ego') {
+    baseSlice = buildEgoView(allNodes, allEdges, state.selectedNodeId);
+  } else if (query) {
+    baseSlice = buildSearchView(allNodes, allEdges, query, {
+      hubThreshold: HUB_THRESHOLD,
+      searchField: state.searchField,
+    });
+  } else {
+    switch (state.viewMode) {
+      case 'issues':
+        baseSlice = buildIssueView(allNodes, allEdges);
+        break;
+      case 'search':
+        baseSlice = { nodes: [], edges: [] };
+        break;
+      case 'ego':
+      case 'summary':
+      default:
+        baseSlice = buildSummaryView(allNodes, allEdges);
+        break;
+    }
+  }
+
+  const filteredSlice = filterSliceByState(baseSlice, state);
+
+  return applyManualGraphState(allNodes, allEdges, filteredSlice, {
+    pinnedNodeIds: new Set(state.pinnedNodeIds),
+    hiddenNodeIds: new Set(state.hiddenNodeIds),
+    expandedNodeIds: new Set(state.expandedNodeIds),
+  });
+}
+
+function filterSliceByState(
+  slice: GraphSlice,
+  state: Pick<DashboardViewState, 'classFilter' | 'propertyFilter' | 'relationTypeFilter'>,
+): GraphSlice {
+  const classFilter = state.classFilter.trim();
+  const propertyFilter = state.propertyFilter.trim();
+  const relationTypeFilter = state.relationTypeFilter.trim();
+
+  if (!classFilter && !propertyFilter && !relationTypeFilter) {
+    return slice;
+  }
+
+  const nodeById = new Map(slice.nodes.map((node) => [node.data.id, node]));
+  const filteredEdges = slice.edges.filter((edge) => {
+    const sourceNode = nodeById.get(edge.data.source);
+    const targetNode = nodeById.get(edge.data.target);
+    const edgeProperty = edge.data.label ?? '';
+    const edgeRelationType = String(edge.data.relationType ?? edge.data.label ?? '');
+
+    const classMatch =
+      !classFilter ||
+      sourceNode?.data.type === classFilter ||
+      targetNode?.data.type === classFilter;
+    const propertyMatch = !propertyFilter || edgeProperty === propertyFilter;
+    const relationTypeMatch =
+      !relationTypeFilter || edgeRelationType === relationTypeFilter;
+
+    return classMatch && propertyMatch && relationTypeMatch;
+  });
+
+  if (filteredEdges.length === 0) {
+    return { nodes: [], edges: [] };
+  }
+
+  const includedNodeIds = new Set<string>();
+  filteredEdges.forEach((edge) => {
+    includedNodeIds.add(edge.data.source);
+    includedNodeIds.add(edge.data.target);
+  });
+
+  return {
+    nodes: slice.nodes.filter((node) => includedNodeIds.has(node.data.id)),
+    edges: filteredEdges,
+  };
+}
 
 function getInfraPriority(type: string): number {
   if (type === 'Hub') {
