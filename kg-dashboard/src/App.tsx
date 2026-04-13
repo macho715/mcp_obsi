@@ -8,6 +8,8 @@ import {
   useState,
 } from 'react';
 import './App.css';
+import { CompactPanelToggle } from './components/CompactPanelToggle';
+import { DashboardToolbar } from './components/DashboardToolbar';
 import { GraphCompanionTabs } from './components/GraphCompanionTabs';
 import { GraphDataTable } from './components/GraphDataTable';
 import { GraphSchemaSummary } from './components/GraphSchemaSummary';
@@ -52,6 +54,15 @@ import {
   getEdgeId,
   getNodeLabel,
 } from './utils/graph-model';
+
+export type CompactPanelTab = 'controls' | 'inspector';
+
+export function deriveCompactPanelTab(
+  selectedNodeId: string | null,
+  selectedEdgeId: string | null,
+): CompactPanelTab {
+  return selectedNodeId || selectedEdgeId ? 'inspector' : 'controls';
+}
 
 const HUB_THRESHOLD = 200;
 const SAVED_QUERY_STORAGE_KEY = 'kg-dashboard:saved-queries';
@@ -146,6 +157,9 @@ function App() {
   );
   const [compareRightId, setCompareRightId] = useState<string | null>(
     initialUrlState.compareRightId,
+  );
+  const [compactPanelTab, setCompactPanelTab] = useState<CompactPanelTab>(
+    deriveCompactPanelTab(initialUrlState.selectedNodeId, initialUrlState.selectedEdgeId),
   );
 
   const deferredSearch = useDeferredValue(queryState.term);
@@ -511,16 +525,20 @@ function App() {
   }, [activeViewState, compareLeftId, compareRightId, effectiveViewMode]);
 
   useEffect(() => {
-    if (selectedNodeId && !index.nodeById.has(selectedNodeId)) {
+    if (!loading && selectedNodeId && !index.nodeById.has(selectedNodeId)) {
       setSelectedNodeId(null);
     }
-  }, [index.nodeById, selectedNodeId]);
+  }, [index.nodeById, loading, selectedNodeId]);
 
   useEffect(() => {
-    if (selectedEdgeId && !visibleGraph.edges.some((edge) => getEdgeId(edge) === selectedEdgeId)) {
+    if (
+      !loading &&
+      selectedEdgeId &&
+      !visibleGraph.edges.some((edge) => getEdgeId(edge) === selectedEdgeId)
+    ) {
       setSelectedEdgeId(null);
     }
-  }, [selectedEdgeId, visibleGraph.edges]);
+  }, [loading, selectedEdgeId, visibleGraph.edges]);
 
   useEffect(() => {
     if (compareLeftId && !savedViews.some((item) => item.id === compareLeftId)) {
@@ -531,6 +549,10 @@ function App() {
       setCompareRightId(null);
     }
   }, [compareLeftId, compareRightId, savedViews]);
+
+  useEffect(() => {
+    setCompactPanelTab(deriveCompactPanelTab(selectedNodeId, selectedEdgeId));
+  }, [selectedEdgeId, selectedNodeId]);
 
   const handleSearchTermChange = (value: string) => {
     setQueryState((current) => ({ ...current, term: value }));
@@ -762,7 +784,7 @@ function App() {
   };
 
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-shell" data-compact-panel={compactPanelTab}>
       <GraphSidebar
         metrics={metrics}
         viewMode={effectiveViewMode}
@@ -820,40 +842,16 @@ function App() {
       />
 
       <main className="dashboard-main">
-        <header className="dashboard-topbar">
-          <div className="dashboard-topbar__copy">
-            <p className="dashboard-kicker">Knowledge graph tool</p>
-            <h1>kg-dashboard</h1>
-            <p className="dashboard-view-label">{VIEW_COPY[effectiveViewMode].title}</p>
-            <p className="dashboard-description">{VIEW_COPY[effectiveViewMode].description}</p>
-            {compareState ? (
-              <p className="dashboard-description">
-                Compare mode · Added (green), Removed (red), Changed (amber) · {compareState.leftName} →{' '}
-                {compareState.rightName}
-              </p>
-            ) : null}
-          </div>
-          <dl className="dashboard-stat-grid">
-            <div className="dashboard-stat">
-              <dt>Visible</dt>
-              <dd>
-                {metrics.visibleNodes} nodes / {metrics.visibleEdges} edges
-              </dd>
-            </div>
-            <div className="dashboard-stat">
-              <dt>Hidden</dt>
-              <dd>
-                {metrics.hiddenNodes} nodes / {metrics.hiddenEdges} edges
-              </dd>
-            </div>
-            <div className="dashboard-stat">
-              <dt>Hotspots</dt>
-              <dd>
-                {metrics.issueCount} issues / {metrics.hubCount} hubs
-              </dd>
-            </div>
-          </dl>
-        </header>
+        <DashboardToolbar
+          title="kg-dashboard"
+          viewLabel={VIEW_COPY[effectiveViewMode].title}
+          compareLabel={
+            compareState
+              ? `Compare · ${compareState.leftName} → ${compareState.rightName}`
+              : undefined
+          }
+          metrics={metrics}
+        />
 
         {loading ? (
           <section className="dashboard-stage">
@@ -925,6 +923,10 @@ function App() {
           </section>
         )}
       </main>
+
+      <div className="dashboard-compact-panel-slot">
+        <CompactPanelToggle activeTab={compactPanelTab} onChange={setCompactPanelTab} />
+      </div>
 
       <NodeInspector
         key={`${selectedNodeId ?? 'none'}:${selectedEdgeId ?? 'none'}`}

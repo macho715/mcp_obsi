@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type { GraphEdge, GraphNode, ProvenanceChain, VisibilityReason } from '../types/graph';
 import { getCollapsedCountSummary, getEdgeId } from '../utils/graph-model';
+import { CollapsibleSection } from './CollapsibleSection';
 
 export interface NodeInspectorProps {
   node: GraphNode | null;
@@ -148,6 +149,41 @@ export function NodeInspector({
     );
   }
 
+  const relatedContextSummary = node ? 'Node context' : edge ? 'Edge context' : 'No selection';
+  const relatedContextRows = node ? (
+    <>
+      <div className="field-list__row">
+        <span className="field-list__key">Selection kind</span>
+        <span className="field-list__value">Node</span>
+      </div>
+      <div className="field-list__row">
+        <span className="field-list__key">Node id</span>
+        <span className="field-list__value">{node.data.id}</span>
+      </div>
+      <div className="field-list__row">
+        <span className="field-list__key">Visible reason</span>
+        <span className="field-list__value">
+          {analysisPath ? 'Linked analysis note available' : 'Visible in current slice'}
+        </span>
+      </div>
+    </>
+  ) : edge ? (
+    <>
+      <div className="field-list__row">
+        <span className="field-list__key">Selection kind</span>
+        <span className="field-list__value">Edge</span>
+      </div>
+      <div className="field-list__row">
+        <span className="field-list__key">Source to target</span>
+        <span className="field-list__value">{`${edge.data.source} -> ${edge.data.target}`}</span>
+      </div>
+      <div className="field-list__row">
+        <span className="field-list__key">Visible reason</span>
+        <span className="field-list__value">Visible relation in current slice</span>
+      </div>
+    </>
+  ) : null;
+
   return (
     <aside className="panel inspector">
       <div className="panel-header">
@@ -254,18 +290,24 @@ export function NodeInspector({
               ))}
             </section>
 
-            {extraFields.length > 0 ? (
-              <section className="field-list" aria-label="Node metadata">
-                {extraFields.map(([key, value]) => (
-                  <div className="field-list__row" key={key}>
-                    <span className="field-list__key">{key}</span>
-                    <span className="field-list__value">{formatValue(value)}</span>
-                  </div>
-                ))}
-              </section>
-            ) : (
-              <p className="empty-copy">This node has no extra metadata beyond the standard graph fields.</p>
-            )}
+            <CollapsibleSection
+              sectionId="inspector-node-metadata"
+              title="Node metadata"
+              summary={extraFields.length > 0 ? `${extraFields.length} fields` : 'No extra fields'}
+            >
+              {extraFields.length > 0 ? (
+                <section className="field-list" aria-label="Node metadata">
+                  {extraFields.map(([key, value]) => (
+                    <div className="field-list__row" key={key}>
+                      <span className="field-list__key">{key}</span>
+                      <span className="field-list__value">{formatValue(value)}</span>
+                    </div>
+                  ))}
+                </section>
+              ) : (
+                <p className="empty-copy">This node has no extra metadata beyond the standard graph fields.</p>
+              )}
+            </CollapsibleSection>
           </>
         ) : (
           <p className="empty-copy">No node is selected. Choose a node to inspect node-level details.</p>
@@ -335,43 +377,17 @@ export function NodeInspector({
         )
       ) : null}
 
-      {activeTab === 'related' ? (
-        <section className="field-list" aria-label="Related context">
-          {node ? (
-            <>
-              <div className="field-list__row">
-                <span className="field-list__key">Selection kind</span>
-                <span className="field-list__value">Node</span>
-              </div>
-              <div className="field-list__row">
-                <span className="field-list__key">Node id</span>
-                <span className="field-list__value">{node.data.id}</span>
-              </div>
-              <div className="field-list__row">
-                <span className="field-list__key">Visible reason</span>
-                <span className="field-list__value">
-                  {analysisPath ? 'Linked analysis note available' : 'Visible in current slice'}
-                </span>
-              </div>
-            </>
-          ) : edge ? (
-            <>
-              <div className="field-list__row">
-                <span className="field-list__key">Selection kind</span>
-                <span className="field-list__value">Edge</span>
-              </div>
-              <div className="field-list__row">
-                <span className="field-list__key">Source to target</span>
-                <span className="field-list__value">{`${edge.data.source} -> ${edge.data.target}`}</span>
-              </div>
-              <div className="field-list__row">
-                <span className="field-list__key">Visible reason</span>
-                <span className="field-list__value">Visible relation in current slice</span>
-              </div>
-            </>
-          ) : null}
-        </section>
-      ) : null}
+      <div hidden={activeTab !== 'related'}>
+        <CollapsibleSection
+          sectionId="inspector-related-context"
+          title="Related context"
+          summary={relatedContextSummary}
+        >
+          <section className="field-list" aria-label="Related context">
+            {relatedContextRows}
+          </section>
+        </CollapsibleSection>
+      </div>
     </aside>
   );
 }
