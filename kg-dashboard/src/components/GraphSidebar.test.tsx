@@ -158,4 +158,202 @@ describe('GraphSidebar search controls', () => {
     expect(markup).toContain('HVDC-001');
     expect(markup).toContain('Shipment A');
   });
+
+  it('keeps search and view mode ahead of collapsed secondary sections', () => {
+    const markup = renderToStaticMarkup(
+      <GraphSidebar
+        metrics={metrics}
+        searchTerm=""
+        searchField="all"
+        searchMatches={[]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
+        hubSummaries={[{ id: 'hub/mosb', label: 'MOSB', type: 'Hub', shipment: 3, vessel: 1, vendor: 1 }]}
+        viewMode="summary"
+        onSearchTermChange={() => {}}
+        onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
+        onSelectSearchMatch={() => {}}
+        onViewModeChange={() => {}}
+        hubThreshold={200}
+        canClearSelection={false}
+        onClearSelection={() => {}}
+        clearSelectionLabel="Clear"
+        canPinSelection={false}
+        canHideSelection={false}
+        canExpandSelection={false}
+        onPinSelection={() => {}}
+        onHideSelection={() => {}}
+        onExpandSelection={() => {}}
+        onResetManualState={() => {}}
+        pinnedNodes={[]}
+        hiddenNodes={[]}
+        expandedNodes={[]}
+        onRemovePinnedNode={() => {}}
+        onRemoveHiddenNode={() => {}}
+        onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
+      />,
+    );
+
+    expect(markup.indexOf('Find a node')).toBeLessThan(markup.indexOf('Choose the slice'));
+    expect(markup.indexOf('Choose the slice')).toBeLessThan(markup.indexOf('Class + relation filters'));
+    expect(markup).toMatch(
+      /<section class="panel"><div class="panel-header"><div><div class="section-label">Selection<\/div><h2 class="section-title">Current focus<\/h2>/,
+    );
+
+    const sectionIds = Array.from(markup.matchAll(/data-section-id="([^"]+)"/g)).map(
+      (match) => match[1],
+    );
+
+    expect(sectionIds).toEqual([
+      'ontology-query',
+      'investigation-view',
+      'infra-summary',
+      'metrics',
+    ]);
+
+    for (const sectionId of sectionIds) {
+      expect(markup).toContain(
+        `<details class="collapsible-section" data-section-id="${sectionId}">`,
+      );
+    }
+  });
+
+  it('omits infra summary outside summary mode or without hub summaries', () => {
+    const issuesMarkup = renderToStaticMarkup(
+      <GraphSidebar
+        metrics={metrics}
+        searchTerm=""
+        searchField="all"
+        searchMatches={[]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
+        hubSummaries={[{ id: 'hub/mosb', label: 'MOSB', type: 'Hub', shipment: 3, vessel: 1, vendor: 1 }]}
+        viewMode="issues"
+        onSearchTermChange={() => {}}
+        onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
+        onSelectSearchMatch={() => {}}
+        onViewModeChange={() => {}}
+        hubThreshold={200}
+        canClearSelection={false}
+        onClearSelection={() => {}}
+        clearSelectionLabel="Clear"
+        canPinSelection={false}
+        canHideSelection={false}
+        canExpandSelection={false}
+        onPinSelection={() => {}}
+        onHideSelection={() => {}}
+        onExpandSelection={() => {}}
+        onResetManualState={() => {}}
+        pinnedNodes={[]}
+        hiddenNodes={[]}
+        expandedNodes={[]}
+        onRemovePinnedNode={() => {}}
+        onRemoveHiddenNode={() => {}}
+        onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
+      />,
+    );
+
+    const emptySummaryMarkup = renderToStaticMarkup(
+      <GraphSidebar
+        metrics={metrics}
+        searchTerm=""
+        searchField="all"
+        searchMatches={[]}
+        classFilter=""
+        propertyFilter=""
+        relationTypeFilter=""
+        classOptions={['Hub', 'Shipment']}
+        propertyOptions={['occursAt']}
+        relationTypeOptions={['occursAt']}
+        ontologyPresets={[{ id: 'all', label: 'All ontology' }]}
+        savedQueries={[]}
+        hubSummaries={[]}
+        viewMode="summary"
+        onSearchTermChange={() => {}}
+        onSearchFieldChange={() => {}}
+        onClassFilterChange={() => {}}
+        onPropertyFilterChange={() => {}}
+        onRelationTypeFilterChange={() => {}}
+        onApplyOntologyPreset={() => {}}
+        onSaveCurrentQuery={() => {}}
+        onApplySavedQuery={() => {}}
+        onSelectSearchMatch={() => {}}
+        onViewModeChange={() => {}}
+        hubThreshold={200}
+        canClearSelection={false}
+        onClearSelection={() => {}}
+        clearSelectionLabel="Clear"
+        canPinSelection={false}
+        canHideSelection={false}
+        canExpandSelection={false}
+        onPinSelection={() => {}}
+        onHideSelection={() => {}}
+        onExpandSelection={() => {}}
+        onResetManualState={() => {}}
+        pinnedNodes={[]}
+        hiddenNodes={[]}
+        expandedNodes={[]}
+        onRemovePinnedNode={() => {}}
+        onRemoveHiddenNode={() => {}}
+        onRemoveExpandedNode={() => {}}
+        onCopyCurrentStateLink={() => {}}
+        onSaveCurrentView={() => {}}
+        savedViews={[]}
+        onLoadSavedView={() => {}}
+        onDeleteSavedView={() => {}}
+        compareLeftId={null}
+        compareRightId={null}
+        onSetCompareLeft={() => {}}
+        onSetCompareRight={() => {}}
+        compareEnabled={false}
+      />,
+    );
+
+    expect(issuesMarkup).not.toMatch(/data-section-id="infra-summary"/);
+    expect(emptySummaryMarkup).not.toMatch(/data-section-id="infra-summary"/);
+  });
 });

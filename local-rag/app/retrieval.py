@@ -1,115 +1,232 @@
 from __future__ import annotations
 
 import json
-import math
+import logging
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
-_DEFAULT_DOCS_DIR = r"C:\Users\jichu\Downloads\valut\wiki"
-_DEFAULT_CACHE_PATH = ".cache/retrieval-cache.json"
-_MAX_RESULTS = 5
-_SCORE_THRESHOLD = 0.1
+logger = logging.getLogger("local_rag.retrieval")
 
-_runtime_cache: dict[str, Any] | None = None
+DEFAULT_DOCS_DIR = Path(r"C:\Users\jichu\Downloads\valut\wiki")
+DEFAULT_CACHE_PATH = Path(__file__).resolve().parent.parent / ".cache" / "retrieval-cache.json"
 
 
-def _docs_dir() -> Path:
-    return Path(os.getenv("LOCAL_RAG_DOCS_DIR", _DEFAULT_DOCS_DIR)).resolve()
+def resolve_cache_path() -> Path:
+    configured = os.getenv("LOCAL_RAG_CACHE_PATH", "").strip()
+    if configured:
+        return Path(configured)
+    return DEFAULT_CACHE_PATH
 
 
-def _cache_path() -> Path:
-    return Path(os.getenv("LOCAL_RAG_CACHE_PATH", _DEFAULT_CACHE_PATH)).resolve()
-
-
-def _scan_files(root: Path) -> list[Path]:
-    if not root.is_dir():
-        return []
-    return sorted(
-        path
-        for path in root.rglob("*")
-        if path.is_file() and path.suffix.lower() in {".md", ".txt"}
-    )
-
-
-def _tokenize(text: str) -> list[str]:
-    return list(set(re.findall(r"[가-힣\w]{2,}", text.lower())))
-
-
-def _score_text(query_words: set[str], text_words: list[str] | set[str]) -> float:
-    if not query_words:
-        return 0.0
-    text_set = set(text_words) if not isinstance(text_words, set) else text_words
-    matched = len(query_words & text_set)
-    return matched / math.sqrt(len(text_words)) if text_words else 0.0
-
-
-def _extract_snippet(text: str, query_words: set[str], context_chars: int = 200) -> str:
-    text_lower = text.lower()
-    best_pos = -1
-    best_hit = 0
-    for index in range(len(text)):
-        window = text_lower[index : index + context_chars]
-        hits = sum(1 for word in query_words if word in window)
-        if hits > best_hit:
-            best_hit = hits
-            best_pos = index
-    if best_pos == -1:
-        return text[:context_chars].strip()
-    start = max(0, best_pos - 30)
-    end = min(len(text), best_pos + context_chars)
-    snippet = text[start:end].strip()
-    if start > 0:
-        snippet = "…" + snippet
-    if end < len(text):
-        snippet = snippet + "…"
-    return snippet
-
-
-def _load_file_text(path: Path) -> str:
+def resolve_query_cache_ttl_sec() -> float:
+    raw = os.getenv("LOCAL_RAG_QUERY_CACHE_TTL_SEC", "45").strip()
     try:
-        return path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError):
-        return ""
+        return max(0.0, float(raw))
+    except ValueError:
+        return 45.0
 
 
-def _read_sidecar() -> dict[str, Any]:
-    path = _cache_path()
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError):
-        return {}
+def resolve_docs_dir() -> Path:
+    configured = os.getenv("LOCAL_RAG_DOCS_DIR", "").strip()
+    if configured:
+        return Path(configured)
+    return DEFAULT_DOCS_DIR
 
 
-def _write_sidecar(cache: dict[str, Any]) -> None:
-    path = _cache_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_name(f"{path.name}.tmp")
-    try:
-        temp_path.write_text(
-            json.dumps(cache, ensure_ascii=False, separators=(",", ":")),
-            encoding="utf-8",
-        )
-        os.replace(temp_path, path)
-    except OSError:
+def _query_terms(query: str) -> list[str]:
+    terms = [term.lower() for term in re.findall(r"[A-Za-z0-9가-힣]+", query)]
+    return [term for term in terms if len(term) >= 2]
+
+
+def _snippet(text: str, terms: list[str], limit: int = 220) -> str:
+    lowered = text.lower()
+    for term in terms:
+        index = lowered.find(term)
+        if index >= 0:
+            start = max(0, index - 80)
+            end = min(len(text), index + limit)
+            return " ".join(text[start:end].split())
+    return " ".join(text[:limit].split())
+
+
+def _normalize_search_text(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+class RetrievalCache:
+    def __init__(self, docs_dir: Path, sidecar_path: Path) -> None:
+        self.docs_dir = docs_dir
+        self.sidecar_path = sidecar_path
+        self._loaded = False
+        self._version = 0
+        self._entries: dict[str, dict[str, Any]] = {}
+        self._query_cache: dict[str, dict[str, Any]] = {}
+
+    def _load_sidecar(self) -> None:
+        if self._loaded:
+            return
+        self._loaded = True
+        if not self.sidecar_path.exists():
+            return
         try:
-            temp_path.unlink(missing_ok=True)
+            payload = json.loads(self.sidecar_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return
+        if not isinstance(payload, dict):
+            return
+        sidecar_docs_dir = payload.get("docs_dir")
+        if not isinstance(sidecar_docs_dir, str) or sidecar_docs_dir != str(self.docs_dir):
+            return
+        entries = payload.get("entries", [])
+        if not isinstance(entries, list):
+            return
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            rel = entry.get("relative_path")
+            if isinstance(rel, str) and rel.strip():
+                self._entries[rel] = entry
+
+    def _save_sidecar(self) -> None:
+        payload = {
+            "version": self._version,
+            "docs_dir": str(self.docs_dir),
+            "entries": list(self._entries.values()),
+        }
+        try:
+            self.sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+            self.sidecar_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
         except OSError:
-            pass
+            return
+
+    def refresh(self) -> int:
+        self._load_sidecar()
+        if not self.docs_dir.exists():
+            self._entries = {}
+            self._query_cache = {}
+            self._version += 1
+            return 0
+
+        changed = False
+        current_paths: set[str] = set()
+        for path in self.docs_dir.rglob("*.md"):
+            if path.name in {"index.md", "log.md"}:
+                continue
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            relative_path = path.relative_to(self.docs_dir).as_posix()
+            current_paths.add(relative_path)
+            cached = self._entries.get(relative_path)
+            mtime_ns = int(stat.st_mtime_ns)
+            size = int(stat.st_size)
+            if cached and cached.get("mtime_ns") == mtime_ns and cached.get("size") == size:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                if relative_path in self._entries:
+                    del self._entries[relative_path]
+                    changed = True
+                continue
+            self._entries[relative_path] = {
+                "relative_path": relative_path,
+                "file": path.name,
+                "mtime_ns": mtime_ns,
+                "size": size,
+                "search_text": _normalize_search_text(text),
+                "snippet_seed": " ".join(text.split()),
+            }
+            changed = True
+
+        deleted_paths = [relative_path for relative_path in self._entries if relative_path not in current_paths]
+        for relative_path in deleted_paths:
+            del self._entries[relative_path]
+            changed = True
+
+        if changed:
+            self._version += 1
+            self._query_cache = {}
+            self._save_sidecar()
+
+        return len(self._entries)
+
+    def search(self, query: str, limit: int = 3) -> list[dict[str, Any]]:
+        self.refresh()
+        terms = _query_terms(query)
+        if not terms:
+            return []
+
+        cache_key = " ".join(terms)
+        cached = self._query_cache.get(cache_key)
+        now = time.time()
+        if (
+            cached
+            and isinstance(cached.get("expires_at"), (int, float))
+            and cached.get("version") == self._version
+            and float(cached["expires_at"]) >= now
+        ):
+            cached_result = cached.get("results", [])[:limit]
+            logger.info(
+                "[RETRIEVAL] cache=HIT terms=%s results=%d",
+                cache_key,
+                len(cached_result),
+            )
+            return list(cached_result)
+
+        logger.info("[RETRIEVAL] cache=MISS terms=%s", cache_key)
+
+        matches: list[dict[str, Any]] = []
+        for entry in self._entries.values():
+            search_text = entry.get("search_text", "")
+            if not isinstance(search_text, str):
+                continue
+            score = sum(search_text.count(term) for term in terms)
+            if score <= 0:
+                continue
+            snippet_seed = entry.get("snippet_seed", "")
+            matches.append(
+                {
+                    "file": entry.get("file", entry.get("relative_path", "")),
+                    "score": float(score),
+                    "source_path": entry.get("relative_path", ""),
+                    "snippet": _snippet(
+                        snippet_seed if isinstance(snippet_seed, str) else "", terms
+                    ),
+                }
+            )
+
+        matches.sort(key=lambda item: item["score"], reverse=True)
+        results = matches
+        self._query_cache[cache_key] = {
+            "version": self._version,
+            "expires_at": now + resolve_query_cache_ttl_sec(),
+            "results": results,
+        }
+        return results[:limit]
 
 
-def _build_entry(path: Path, docs_root: Path) -> dict[str, Any]:
-    stat = path.stat()
-    text = _load_file_text(path)
-    relative_path = path.relative_to(docs_root).as_posix()
-    return {
-        "relative_path": relative_path,
-        "mtime_ns": stat.st_mtime_ns,
-        "size": stat.st_size,
-        "text": text,
-        "words": _tokenize(text),
-    }
+_runtime_cache: RetrievalCache | None = None
+
+
+def get_retrieval_cache() -> RetrievalCache:
+    global _runtime_cache
+    docs_dir = resolve_docs_dir()
+    cache_path = resolve_cache_path()
+    if (
+        _runtime_cache is None
+        or _runtime_cache.docs_dir != docs_dir
+        or _runtime_cache.sidecar_path != cache_path
+    ):
+        _runtime_cache = RetrievalCache(docs_dir=docs_dir, sidecar_path=cache_path)
+    return _runtime_cache
 
 
 def clear_runtime_cache() -> None:
@@ -117,90 +234,9 @@ def clear_runtime_cache() -> None:
     _runtime_cache = None
 
 
-def get_retrieval_cache() -> dict[str, Any]:
-    global _runtime_cache
-
-    docs_root = _docs_dir()
-    runtime_cache = _runtime_cache
-    if runtime_cache is None or runtime_cache.get("docs_dir") != str(docs_root):
-        sidecar = _read_sidecar()
-        if sidecar.get("docs_dir") == str(docs_root):
-            runtime_cache = {
-                "docs_dir": str(docs_root),
-                "files": dict(sidecar.get("files", {})),
-            }
-        else:
-            runtime_cache = {"docs_dir": str(docs_root), "files": {}}
-
-    current_files = _scan_files(docs_root)
-    previous_files = runtime_cache.get("files", {})
-    next_files: dict[str, dict[str, Any]] = {}
-    changed = False
-
-    for path in current_files:
-        relative_path = path.relative_to(docs_root).as_posix()
-        stat = path.stat()
-        previous = previous_files.get(relative_path)
-        if (
-            previous
-            and previous.get("mtime_ns") == stat.st_mtime_ns
-            and previous.get("size") == stat.st_size
-        ):
-            next_files[relative_path] = previous
-            continue
-
-        next_files[relative_path] = _build_entry(path, docs_root)
-        changed = True
-
-    if set(previous_files) != set(next_files):
-        changed = True
-
-    runtime_cache = {"docs_dir": str(docs_root), "files": next_files}
-    _runtime_cache = runtime_cache
-    if changed:
-        _write_sidecar(runtime_cache)
-    return runtime_cache
+def search_documents(query: str, limit: int = 3) -> list[dict[str, Any]]:
+    return get_retrieval_cache().search(query=query, limit=limit)
 
 
 def count_documents() -> int:
-    return len(_scan_files(_docs_dir()))
-
-
-def search_documents(
-    query: str,
-    limit: int = _MAX_RESULTS,
-    *,
-    top_k: int | None = None,
-) -> list[dict[str, Any]]:
-    effective_limit = max(1, top_k if top_k is not None else limit)
-    normalized_query = query.strip()
-    if not normalized_query:
-        return []
-
-    query_words = set(_tokenize(normalized_query))
-    if not query_words:
-        return []
-
-    cache = get_retrieval_cache()
-    scored: list[tuple[float, dict[str, Any]]] = []
-    for relative_path, entry in cache.get("files", {}).items():
-        text_words = list(entry.get("words", []))
-        score = _score_text(query_words, text_words)
-        if score < _SCORE_THRESHOLD:
-            continue
-        text = str(entry.get("text", ""))
-        scored.append(
-            (
-                score,
-                {
-                    "file": relative_path,
-                    "score": round(score, 4),
-                    "doc_type": Path(relative_path).suffix.lstrip("."),
-                    "source_path": relative_path,
-                    "snippet": _extract_snippet(text, query_words),
-                },
-            )
-        )
-
-    scored.sort(key=lambda item: (item[0], item[1]["file"]), reverse=True)
-    return [item for _, item in scored[:effective_limit]]
+    return get_retrieval_cache().refresh()
