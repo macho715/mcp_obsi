@@ -1,0 +1,10 @@
+---
+description: Python quality defaults for this repo.
+alwaysApply: true
+---
+- Target Python 3.11+ and keep 3.13 compatibility.
+- Prefer explicit Pydantic models and narrow modules.
+- Default checks: `pytest -q`, `ruff check .`, `ruff format --check .`.
+- If a command is not confirmed by repo evidence or a completed run, mark it `manual` instead of inventing a green check.
+- Report pass, fail, or manual. Do not claim green when unverified.
+- Follow the `AGENTS.md` output contract: summarize what changed; list files touched and commands run; state pass, fail, or manual verification; note assumptions and risks.

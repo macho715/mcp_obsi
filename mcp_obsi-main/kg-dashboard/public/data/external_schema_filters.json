@@ -1,0 +1,87 @@
+[
+  {
+    "id": "https://hvdc-project.ae/ontology#PortNodeShape::https://hvdc-project.ae/ontology#hasDocument",
+    "label": "hasDocument",
+    "property_uri": "https://hvdc-project.ae/ontology#hasDocument",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#PortNodeShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#PortNodeShape::https://hvdc-project.ae/ontology#customsCode",
+    "label": "customsCode",
+    "property_uri": "https://hvdc-project.ae/ontology#customsCode",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#PortNodeShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#MOSBCapacityShape::https://hvdc-project.ae/ontology#storageCapacity_sqm",
+    "label": "storageCapacity_sqm",
+    "property_uri": "https://hvdc-project.ae/ontology#storageCapacity_sqm",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#MOSBCapacityShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#PreservationShape::https://hvdc-project.ae/ontology#preservationTemp_min",
+    "label": "preservationTemp_min",
+    "property_uri": "https://hvdc-project.ae/ontology#preservationTemp_min",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#PreservationShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#PreservationShape::https://hvdc-project.ae/ontology#preservationTemp_max",
+    "label": "preservationTemp_max",
+    "property_uri": "https://hvdc-project.ae/ontology#preservationTemp_max",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#PreservationShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#PreservationShape::https://hvdc-project.ae/ontology#preservationRH_max",
+    "label": "preservationRH_max",
+    "property_uri": "https://hvdc-project.ae/ontology#preservationRH_max",
+    "input_type": "text",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#PreservationShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#ShipmentRouteShape::https://hvdc-project.ae/ontology#hasRouteType",
+    "label": "hasRouteType",
+    "property_uri": "https://hvdc-project.ae/ontology#hasRouteType",
+    "input_type": "select",
+    "options": [
+      "DIRECT",
+      "WH_ONLY",
+      "MOSB_DIRECT",
+      "WH_MOSB",
+      "MIXED"
+    ],
+    "source_shape": "https://hvdc-project.ae/ontology#ShipmentRouteShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#ShipmentRouteShape::https://hvdc-project.ae/ontology#wh_handling_cnt",
+    "label": "wh_handling_cnt",
+    "property_uri": "https://hvdc-project.ae/ontology#wh_handling_cnt",
+    "input_type": "number",
+    "options": [],
+    "source_shape": "https://hvdc-project.ae/ontology#ShipmentRouteShape"
+  },
+  {
+    "id": "https://hvdc-project.ae/ontology#WarehouseStageShape::https://hvdc-project.ae/ontology#wh_stage",
+    "label": "wh_stage",
+    "property_uri": "https://hvdc-project.ae/ontology#wh_stage",
+    "input_type": "select",
+    "options": [
+      "FC-RCV",
+      "FC-PUT",
+      "FC-STR",
+      "FC-PCK",
+      "FC-STG",
+      "FC-DSP"
+    ],
+    "source_shape": "https://hvdc-project.ae/ontology#WarehouseStageShape"
+  }
+]

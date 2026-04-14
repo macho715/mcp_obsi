@@ -1,0 +1,28 @@
+{
+  "checks": [
+    {
+      "command": "python -m py_compile scripts/build_knowledge_graph.py scripts/ttl_to_json.py",
+      "result": "pass"
+    },
+    {
+      "command": ".venv\\\\Scripts\\\\python.exe -m pytest tests/test_legacy_export_wrappers.py -q",
+      "result": "pass"
+    },
+    {
+      "command": ".venv\\\\Scripts\\\\python.exe scripts/build_dashboard_graph_data.py",
+      "result": "pass"
+    },
+    {
+      "command": ".venv\\\\Scripts\\\\python.exe -m pytest tests/test_dashboard_graph_export.py tests/test_ttl_to_json.py -q",
+      "result": "pass"
+    },
+    {
+      "command": ".venv\\\\Scripts\\\\python.exe -m ruff check scripts/build_knowledge_graph.py scripts/ttl_to_json.py scripts/build_dashboard_graph_data.py tests/test_legacy_export_wrappers.py tests/test_dashboard_graph_export.py tests/test_ttl_to_json.py",
+      "result": "pass"
+    },
+    {
+      "command": ".venv\\\\Scripts\\\\python.exe -m ruff format --check scripts/build_knowledge_graph.py scripts/ttl_to_json.py scripts/build_dashboard_graph_data.py tests/test_legacy_export_wrappers.py tests/test_dashboard_graph_export.py tests/test_ttl_to_json.py",
+      "result": "pass"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "python .cursor/hooks/shell_guard.py",
+        "timeout": 5
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "python .cursor/hooks/shell_log.py",
+        "timeout": 5
+      }
+    ]
+  }
+}

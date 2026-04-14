@@ -1,0 +1,545 @@
+{
+  "scan_root": "C:\\Users\\SAMSUNG\\Downloads\\mcp_obsi-main",
+  "repo_root": "C:\\Users\\SAMSUNG\\Downloads\\mcp_obsi-main",
+  "sources": [
+    {
+      "scope": "user",
+      "path": "C:\\Users\\SAMSUNG\\.agents\\skills",
+      "exists": true
+    },
+    {
+      "scope": "compat-user",
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills",
+      "exists": true
+    },
+    {
+      "scope": "admin",
+      "path": "\\etc\\codex\\skills",
+      "exists": false
+    }
+  ],
+  "skills": [
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\agent-system-designer",
+      "folder_name": "agent-system-designer",
+      "name": "agent-system-designer",
+      "description": "Design agent execution systems that separate skills, subagents, orchestration, and heartbeat or status reporting. Use when building a multi-step agent workflow, packaging a reusable skill system, or defining execution roles and validation flow. Do not use to mix policy text into skills, merge all roles into one file, or skip verification.",
+      "scripts": [],
+      "references": [
+        "references\\agent-skill-guide.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\agents-factory",
+      "folder_name": "agents-factory",
+      "name": "agents-factory",
+      "description": "Generate AGENTS.md-centered repository guidance files from repository evidence and an input card. Use when a repo needs AGENTS.md, CLAUDE.md, GEMINI.md, or a repeatable SKILL.md workflow skeleton. Do not use when commands, paths, versions, or CI rules cannot be confirmed from the repository.",
+      "scripts": [],
+      "references": [
+        "references\\agents-factory-guide.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\analysis-verifier",
+      "folder_name": "analysis-verifier",
+      "name": "analysis-verifier",
+      "description": "Validate a draft analysis, workflow design, or multi-agent output against explicit acceptance criteria. Use after a draft claims completion and you need PASS/FAIL separation, gap detection, and a minimal patch list. When paired with `orchestrate-analysis` or `pipeline-coordinator`, run as an independent verifier agent rather than letting the coordinator self-certify.",
+      "scripts": [],
+      "references": [
+        "references\\default-checklist.md",
+        "references\\generic-checklist.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\code-tdd-go",
+      "folder_name": "code-tdd-go",
+      "name": "code-tdd-go",
+      "description": "Execute approved coding tasks with a strict RED -> GREEN -> REFACTOR loop, Python-first quality gates, and 2x GitHub cross-check before final reporting. Use when a verified task boundary exists and Codex should implement or fix code safely. Do not use without an approved task or validation commands.",
+      "scripts": [],
+      "references": [
+        "references\\tdd-guide.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\cursor-pack-builder",
+      "folder_name": "cursor-pack-builder",
+      "name": "cursor-pack-builder",
+      "description": "Build or refresh a full Cursor project pack from a topic or repository scope. Use when .cursor/rules, .cursor/commands, .cursor/agents, .cursor/skills, hooks, CI, and plan files must be generated together. Do not use for product feature implementation or when edits fall outside the allowlist.",
+      "scripts": [],
+      "references": [
+        "references\\cursor-setting-guide.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop",
+      "folder_name": "design-upgrade-loop",
+      "name": "design-upgrade-loop",
+      "description": "Review design-heavy content such as webpages, dashboards, and document-style screens. Use when you want Codex to web-search current references, propose at least 3 transferable design elements, patch concrete files or sections, and verify the upgrade with a scored review loop.",
+      "scripts": [
+        "scripts\\validate_design_scorecard.py"
+      ],
+      "references": [
+        "references\\source-routing.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\doc",
+      "folder_name": "doc",
+      "name": "doc",
+      "description": "Use when the task involves reading, creating, or editing `.docx` documents, especially when formatting or layout fidelity matters; prefer `python-docx` plus the bundled `scripts/render_docx.py` for visual checks.",
+      "scripts": [
+        "scripts\\render_docx.py"
+      ],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\excel-professional-formatting",
+      "folder_name": "excel-professional-formatting",
+      "name": "excel-professional-formatting",
+      "description": "Apply a safe Excel formatting pass to workbook copies without changing workbook logic. Use when the request is about styling, readability, accessibility, print layout, or report polish and workbook behavior must stay intact. Start through the `excel-xlsm-contract-ops` risk gate first, then run a sidecar-first workflow, escalate to `excel-vba` for any structure-sensitive change, and use explicit parallel lanes only when the user asks for delegated or parallel execution.",
+      "scripts": [],
+      "references": [
+        "references\\excel_professional_formatting_운영체크리스트_20260401.md",
+        "references\\operational-checklist.md",
+        "references\\parallel-agent-workflow.md",
+        "references\\promotion-and-rollback.md",
+        "references\\sidecar-formatting-pass.md",
+        "references\\validation-checklist.md",
+        "references\\엑셀_안전한_formatting_pass_표준안_및_sidecar_승격절차_20260330.md"
+      ],
+      "examples": [
+        "examples\\request.example.md"
+      ]
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\excel-vba",
+      "folder_name": "excel-vba",
+      "name": "excel-vba",
+      "description": "Design, generate, review, and QA Excel automation with VBA as the default implementation and Python only when it constructs workbook assets for VBA-linked sheets or files. Use when turning manual Excel work into repeatable automation, writing or fixing .xlsm or .xlsb macros, building workbook or worksheet event code, checking Python-generated workbook structures against VBA, or coordinating explicit parallel work across manager, guardrail, implementation, and QA lanes. Always run through the `excel-xlsm-contract-ops` risk gate first so contract-sensitive workbook work is classified and validated before code ships.",
+      "scripts": [
+        "scripts\\build-reopen-smoketest.ps1"
+      ],
+      "references": [
+        "references\\conflict-checklist.md",
+        "references\\default-templates.md",
+        "references\\formatting-handoff.md",
+        "references\\handoff-operational-checklist.md",
+        "references\\official-docs.md",
+        "references\\output-contract.md",
+        "references\\parallel-agent-workflow.md",
+        "references\\process-map.md",
+        "references\\python-review-workflow.md",
+        "references\\qa-and-operations.md",
+        "references\\request-levels.md",
+        "references\\role-core.md",
+        "references\\vba-review-workflow.md",
+        "references\\windows-com-and-unicode.md"
+      ],
+      "examples": [
+        "examples\\image\\request.example\\1775232573023.png",
+        "examples\\image\\request.example\\1775232576249.png",
+        "examples\\image\\request.example\\1775232577773.png",
+        "examples\\request.example.md"
+      ]
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\excel-xlsm-contract-ops",
+      "folder_name": "excel-xlsm-contract-ops",
+      "name": "excel-xlsm-contract-ops",
+      "description": "Guard high-risk Excel contract work involving existing `.xlsm` files, Python and VBA mixed mutation, COM automation, VBA reinjection, workbook-qualified `Application.Run`, non-ASCII paths or captions, and live workbook state with a serial single-writer workflow. Use this as the mandatory first risk-gate stage whenever `excel-vba` or `excel-professional-formatting` is used on a workbook.",
+      "scripts": [
+        "scripts\\run_excel_xlsm_contract_ops_validation.ps1"
+      ],
+      "references": [
+        "references\\decision-tree.md",
+        "references\\output-contract.md"
+      ],
+      "examples": [
+        "examples\\request.example.md"
+      ]
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\execution-doc-attachment-audit",
+      "folder_name": "execution-doc-attachment-audit",
+      "name": "execution-doc-attachment-audit",
+      "description": "Audit folders that contain Korean execution approval DOCX files with '집행의 건' in the name, extract attachment lists from the Word document, verify the referenced files exist in the same folder, inspect matched PDF and spreadsheet files, and enforce the OFCO Jopetwil 71 required document set.",
+      "scripts": [
+        "scripts\\__pycache__\\audit_execution_doc_attachments.cpython-311.pyc",
+        "scripts\\audit_execution_doc_attachments.py"
+      ],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\google-sheets-drm-safe-xlsx-upload",
+      "folder_name": "google-sheets-drm-safe-xlsx-upload",
+      "name": "google-sheets-drm-safe-xlsx-upload",
+      "description": "Use when uploading an Excel workbook to Google Sheets fails, corrupts long text, strips line breaks, or mishandles literal Excel escape strings such as _x000D_, especially when company DRM or direct Drive upload breaks conversion.",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-careful",
+      "folder_name": "mstack-careful",
+      "name": "mstack-careful",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-dispatch",
+      "folder_name": "mstack-dispatch",
+      "name": "mstack-dispatch",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-investigate",
+      "folder_name": "mstack-investigate",
+      "name": "mstack-investigate",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-pipeline",
+      "folder_name": "mstack-pipeline",
+      "name": "mstack-pipeline",
+      "description": ">",
+      "scripts": [],
+      "references": [
+        "references\\core-pipeline-integration.md",
+        "references\\usage-examples.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-plan",
+      "folder_name": "mstack-plan",
+      "name": "mstack-plan",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-qa",
+      "folder_name": "mstack-qa",
+      "name": "mstack-qa",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-retro",
+      "folder_name": "mstack-retro",
+      "name": "mstack-retro",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-review",
+      "folder_name": "mstack-review",
+      "name": "mstack-review",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\mstack-ship",
+      "folder_name": "mstack-ship",
+      "name": "mstack-ship",
+      "description": ">",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\orchestrate-analysis",
+      "folder_name": "orchestrate-analysis",
+      "name": "orchestrate-analysis",
+      "description": "Break a complex task into a planner plus 2-4 specialist workstreams and produce the analysis artifacts for a multi-agent pipeline. Use when the user asks for multi-perspective analysis, system design, strategy options, or decision support that must be structured, checkable, reproducible, and processed by real independent agents in parallel. When this skill is paired with `pipeline-coordinator`, it owns merged analysis artifacts, not the final merge.",
+      "scripts": [],
+      "references": [
+        "references\\output-contract.md",
+        "references\\pipeline-contract.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\pagewise-translation-patch",
+      "folder_name": "pagewise-translation-patch",
+      "name": "pagewise-translation-patch",
+      "description": "Refine Korean business and approval documents into a natural standard internal style without changing facts, numbers, dates, proper nouns, contracts, conditions, tables, or structure. Use for whole-document cleanup, patch lists, side-by-side comparison, or pagewise wording fixes.",
+      "scripts": [],
+      "references": [
+        "references\\examples.md",
+        "references\\output-contract.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\pdf",
+      "folder_name": "pdf",
+      "name": "pdf",
+      "description": "Use when tasks involve reading, creating, or reviewing PDF files where rendering and layout matter; prefer visual checks by rendering pages (Poppler) and use Python tools such as `reportlab`, `pdfplumber`, and `pypdf` for generation and extraction.",
+      "scripts": [],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\pipeline-coordinator",
+      "folder_name": "pipeline-coordinator",
+      "name": "pipeline-coordinator",
+      "description": "Coordinate a fixed 4-agent topology with one coordinator plus independent `orchestrate-analysis`, `scenario-scorer`, and `analysis-verifier` agents. Use when the user wants a standard parallel pipeline with explicit ownership, artifact handoffs, final merge, and topology disclosure instead of letting one skill coordinate everything.",
+      "scripts": [],
+      "references": [
+        "references\\external-docs.md",
+        "references\\four-agent-contract.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\plan-studio",
+      "folder_name": "plan-studio",
+      "name": "plan-studio",
+      "description": "Draft or patch Plan documents for new or revised projects. Use when purpose, scope, constraints, phases, tasks, risks, review criteria, and deliverables must be structured without inventing new concepts. Do not use to write implementation code, detailed architecture, or execution logs.",
+      "scripts": [],
+      "references": [
+        "references\\plan-guidance.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\playwright",
+      "folder_name": "playwright",
+      "name": "playwright",
+      "description": "Use when the task requires automating a real browser from the terminal (navigation, form filling, snapshots, screenshots, data extraction, UI-flow debugging) via `playwright-cli` or the bundled wrapper script.",
+      "scripts": [
+        "scripts\\playwright_cli.sh"
+      ],
+      "references": [
+        "references\\cli.md",
+        "references\\workflows.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\project-doc-orchestrator",
+      "folder_name": "project-doc-orchestrator",
+      "name": "project-doc-orchestrator",
+      "description": "Inspect a real repository and generate or refresh a managed project docs bundle from actual files. Use when users ask to create, rebuild, or update `docs/project-docs` documentation such as `README.md`, `PLAN.md`, `LAYOUT.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, or `GUIDE.md`, and also during ongoing work on the current project in the same session when the repo changes and the docs need to be refreshed in parallel from real scripts, manifests, layout, commands, and current state rather than guesses. Requires subagent support for its intended parallel workflow.",
+      "scripts": [
+        "scripts\\__pycache__\\doc_orchestrator_lib.cpython-311.pyc",
+        "scripts\\__pycache__\\patch_docs.cpython-311.pyc",
+        "scripts\\__pycache__\\project_snapshot.cpython-311.pyc",
+        "scripts\\__pycache__\\scaffold_docs.cpython-311.pyc",
+        "scripts\\doc_orchestrator_lib.py",
+        "scripts\\patch_docs.py",
+        "scripts\\project_snapshot.py",
+        "scripts\\scaffold_docs.py"
+      ],
+      "references": [
+        "references\\evidence-rule.md",
+        "references\\file-contract.md",
+        "references\\mermaid-guidelines.md",
+        "references\\workflow.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\scenario-scorer",
+      "folder_name": "scenario-scorer",
+      "name": "scenario-scorer",
+      "description": "Rank 3 or more options with explicit criteria and deterministic weights. Use when strategies, scenarios, or implementation options must be scored reproducibly instead of chosen by narrative preference. When paired with `orchestrate-analysis` or `pipeline-coordinator`, run as an independent scoring agent in the pipeline rather than as an inline narrative step.",
+      "scripts": [
+        "scripts\\score_options.py"
+      ],
+      "references": [
+        "references\\weighting-guide.md"
+      ],
+      "examples": [
+        "examples\\input.example.json",
+        "examples\\output.example.json"
+      ]
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\screenshot",
+      "folder_name": "screenshot",
+      "name": "screenshot",
+      "description": "Use when the user explicitly asks for a desktop or system screenshot (full screen, specific app or window, or a pixel region), or when tool-specific capture capabilities are unavailable and an OS-level capture is needed.",
+      "scripts": [
+        "scripts\\ensure_macos_permissions.sh",
+        "scripts\\macos_display_info.swift",
+        "scripts\\macos_permissions.swift",
+        "scripts\\macos_window_info.swift",
+        "scripts\\take_screenshot.ps1",
+        "scripts\\take_screenshot.py"
+      ],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\sea-transit-go-nogo",
+      "folder_name": "sea-transit-go-nogo",
+      "name": "sea-transit-go-nogo",
+      "description": "Parse marine weather PDFs (2-day/7-day trends, offshore forecast, sea state) and evaluate sea-transit Go/No-Go using a deterministic 3-gate method: threshold check, squall/peak-wave conservative buffer, and continuous weather-window check. Use when asked to judge sailing feasibility from PDF wave height in ft (combined sea+swell treated as Hs assumption), wind in kt, squall caveat handling, and report generation (.md + .json).",
+      "scripts": [
+        "scripts\\__pycache__\\pdf_parser.cpython-311.pyc",
+        "scripts\\__pycache__\\report_render.cpython-311.pyc",
+        "scripts\\__pycache__\\sea_transit_from_pdf.cpython-311.pyc",
+        "scripts\\__pycache__\\sea_transit_logic.cpython-311.pyc",
+        "scripts\\pdf_parser.py",
+        "scripts\\report_render.py",
+        "scripts\\requirements.txt",
+        "scripts\\sea_transit_from_pdf.py",
+        "scripts\\sea_transit_logic.py"
+      ],
+      "references": [
+        "references\\REPORT_SCHEMA.md",
+        "references\\SOURCES.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\skill-update",
+      "folder_name": "skill-update",
+      "name": "skill-update",
+      "description": "Update or create Codex skills with a parallel-first workflow. Use when you need to benchmark a skill against the latest official docs, detect related existing skills and processes, reuse compatible assets, and produce validated skill patches or a new skill package.",
+      "scripts": [
+        "scripts\\build_update_plan.py",
+        "scripts\\scan_skill_graph.py",
+        "scripts\\validate_outputs.py"
+      ],
+      "references": [
+        "references\\official-benchmark-2026.md"
+      ],
+      "examples": [
+        "examples\\request.example.json"
+      ]
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\spec-studio",
+      "folder_name": "spec-studio",
+      "name": "spec-studio",
+      "description": "Create, refine, or review contract-style Spec.md documents from an approved Plan or equivalent brief. Use when requirements, user scenarios, assumptions, dependencies, and measurable success criteria must be explicit. Do not use to guess missing facts, hide ambiguity, or write implementation code.",
+      "scripts": [],
+      "references": [
+        "references\\spec-project-instructions.md",
+        "references\\spec-research.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\spreadsheet",
+      "folder_name": "spreadsheet",
+      "name": "spreadsheet",
+      "description": "Use when tasks involve creating, editing, analyzing, or formatting spreadsheets (`.xlsx`, `.csv`, `.tsv`) using Python (`openpyxl`, `pandas`), especially when formulas, references, and formatting need to be preserved and verified.",
+      "scripts": [],
+      "references": [
+        "references\\examples\\openpyxl\\create_basic_spreadsheet.py",
+        "references\\examples\\openpyxl\\create_spreadsheet_with_styling.py",
+        "references\\examples\\openpyxl\\read_existing_spreadsheet.py",
+        "references\\examples\\openpyxl\\styling_spreadsheet.py"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\studio-sequence",
+      "folder_name": "studio-sequence",
+      "name": "studio-sequence",
+      "description": "Orchestrate document-first project bootstrapping from a brief into approved Plan, Spec.md, and Task.md documents. Use when starting a new project, converting a kickoff brief into an execution-ready document set, or coordinating handoff between plan-studio, spec-studio, and task-studio. Do not use for implementation code or when only one document type is requested.",
+      "scripts": [],
+      "references": [
+        "references\\pipeline.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\task-studio",
+      "folder_name": "task-studio",
+      "name": "task-studio",
+      "description": "Create, refine, or review Task.md execution documents from an approved Spec.md. Use when work must be decomposed into executable steps with AC, DoD, evidence, and security/privacy constraints. Do not use for implementation code, architecture essays, or approval of ambiguous work.",
+      "scripts": [],
+      "references": [
+        "references\\task-project-instructions.md",
+        "references\\task-research.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\uiux-studio",
+      "folder_name": "uiux-studio",
+      "name": "uiux-studio",
+      "description": "Design or review UI/UX artifacts and agentic UX flows with accessibility, approval, progress, result, and retry or rollback paths. Use when UX guidance, prototype structure, or handoff artifacts are needed. Do not use to expose private materials or irreversible flows without approval.",
+      "scripts": [],
+      "references": [
+        "references\\uiux-guide.md"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\vercel-deploy",
+      "folder_name": "vercel-deploy",
+      "name": "vercel-deploy",
+      "description": "Deploy applications and websites to Vercel. Use when the user requests deployment actions like \"deploy my app\", \"deploy and give me the link\", \"push this live\", or \"create a preview deployment\".",
+      "scripts": [
+        "scripts\\deploy.sh"
+      ],
+      "references": [],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\word-lint",
+      "folder_name": "word-lint",
+      "name": "word-lint",
+      "description": "Validate Word `.docx` files against a paragraph-style whitelist, heading continuity, and direct-formatting bans. Produce deterministic JSON and Markdown reports with evidence from `python-docx` plus targeted OOXML reads.",
+      "scripts": [
+        "scripts\\__pycache__\\word_lint.cpython-311.pyc",
+        "scripts\\word_lint.py"
+      ],
+      "references": [
+        "references\\hybrid-architecture.md",
+        "references\\operating-policy.md",
+        "references\\style-policy.json"
+      ],
+      "examples": []
+    },
+    {
+      "path": "C:\\Users\\SAMSUNG\\.codex\\skills\\word-style",
+      "folder_name": "word-style",
+      "name": "word-style",
+      "description": "Refine Korean business and approval documents into a natural standard internal style without changing facts, numbers, dates, proper nouns, contracts, conditions, tables, or structure. Use for whole-document cleanup, patch lists, side-by-side comparison, or body-only cleanup.",
+      "scripts": [],
+      "references": [
+        "references\\examples.md",
+        "references\\output-contract.md"
+      ],
+      "examples": []
+    }
+  ],
+  "agents_md_files": [
+    "C:\\Users\\SAMSUNG\\.codex\\AGENTS.md",
+    "C:\\Users\\SAMSUNG\\Downloads\\mcp_obsi-main\\AGENTS.md"
+  ],
+  "summary": {
+    "skill_count": 40,
+    "scanned_source_count": 3
+  }
+}

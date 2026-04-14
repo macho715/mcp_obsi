@@ -1,0 +1,72 @@
+---
+description: KB storage routing and LLM runtime policy for obsidian-ingest, obsidian-query, and obsidian-lint skills.
+globs: ["vault/wiki/**", "vault/raw/**", ".cursor/skills/obsidian-*/**"]
+alwaysApply: false
+---
+
+## KB Storage Routing
+
+Three separate layers — do not mix their content:
+
+| Layer | Path | Write method | Mutable? |
+|---|---|---|---|
+| Immutable raw | `vault/raw/<type>/<slug>.md` | direct file write | **No** |
+| Raw archive | `vault/mcp_raw/<src>/<YYYY-MM-DD>/<id>.md` | `archive_raw` MCP tool | No |
+| Canonical KB | `vault/wiki/<category>/<slug>.md` | direct file write | Yes |
+| Memory pointers | `vault/memory/<YYYY>/<MM>/<MEM-ID>.md` | `save_memory` MCP tool | Yes |
+
+### vault/raw/ subtrees (immutable source copies)
+
+- `vault/raw/articles/` — web articles and pasted text
+- `vault/raw/pdf/` — PDF documents
+- `vault/raw/notes/` — manual pre-ingest notes
+
+### vault/wiki/ subtrees (canonical KB)
+
+- `vault/wiki/sources/` — ingested source summaries
+- `vault/wiki/concepts/` — extracted concept definitions
+- `vault/wiki/entities/` — named entities (people, orgs, products, systems)
+- `vault/wiki/analyses/` — structured analyses and comparisons
+- `vault/wiki/index.md` — navigation hub; updated on every ingest
+- `vault/wiki/log.md` — one-line entry after every ingest or lint run
+
+### save_memory — pointer only
+
+After writing to `vault/wiki/`, call `save_memory` with a **pointer record**:
+
+```yaml
+title: "KB: <title>"
+content: |
+  <3-8 line summary>
+  See [[wiki/<category>/<slug>]] for full details.
+roles: ["fact"]          # or "summary" for lint/analysis pointers
+topics: [<tags>]
+tags: ["kb", "<category>"]
+raw_refs: [<mcp_id>]     # link to archive_raw id when available
+```
+
+**Never** write the full canonical wiki note body into `content`.
+
+## LLM Runtime Policy
+
+- Local LLM provider is fixed to **Ollama**.
+- Default endpoint is `http://localhost:11434`. Override with `OLLAMA_BASE_URL`.
+- Primary model is `gemma4:e4b` (9.6 GB, 128K context).
+- Lightweight tasks use `gemma4:e2b` (7.2 GB, 128K context).
+- All skills must call Ollama through `scripts/ollama_kb.py::generate()`. Do not scatter raw `requests.post` calls.
+- Default API style is Ollama native `/api/chat`. OpenAI-compatible mode is optional and secondary.
+- Timeout is 300 s (configurable via `OLLAMA_TIMEOUT`).
+- Shared Ollama request schema, model names, timeout, and error handling must remain identical across all skills — change only in `scripts/ollama_kb.py`.
+
+## Skill Model Assignments
+
+| Skill | Default model | Fallback |
+|---|---|---|
+| obsidian-ingest | `gemma4:e4b` | — |
+| obsidian-query | `gemma4:e4b` | — |
+| obsidian-lint | `gemma4:e2b` | `gemma4:e4b` (complex cases) |
+
+## Thinking Mode
+
+- Gemma 4 supports `<|think|>` token-based thinking. Control via system prompt only.
+- Do not include previous turn thoughts in history for multi-turn sessions.

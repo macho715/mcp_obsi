@@ -1,0 +1,18 @@
+---
+description: Cursor-only Obsidian vault curation workflow for mcp_obsidian.
+alwaysApply: true
+---
+
+- Treat `AGENTS.md` as the shared repository SSOT.
+- This repo is the control plane; the real Obsidian vault is the data plane.
+- Do not create `raw/`, `wiki/`, `wiki/concepts/`, or `wiki/topics/` in this repo.
+- Use the existing storage contracts only:
+  - raw archive: `mcp_raw/<source>/<YYYY-MM-DD>/<mcp_id>.md`
+  - memory: `memory/<YYYY>/<MM>/<MEMORY_ID>.md`
+  - daily: `10_Daily/<YYYY-MM-DD>.md`
+  - system: `90_System/`
+- One conversation becomes one raw note. One conversation may yield zero to many memory notes.
+- Use MCP tools first for memory operations: `archive_raw`, `save_memory`, `update_memory`, `search_memory`, `get_memory`, `list_recent_memories`.
+- Keep markdown-first persistence authoritative. SQLite is a derived accelerator only.
+- Never reintroduce folder-based semantic classification.
+- Before reporting completion, list files touched, commands run, verification status, and remaining assumptions or risks.

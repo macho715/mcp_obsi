@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-memory-plugin",
+  "name": "Obsidian Memory Plugin",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Hybrid memory layer for raw conversations and normalized AI memories.",
+  "author": "chaminkyu",
+  "isDesktopOnly": false
+}

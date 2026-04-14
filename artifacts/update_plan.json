@@ -1,0 +1,79 @@
+{
+  "mode": "update",
+  "target_skill": "design-upgrade-loop",
+  "target_skill_path": "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop",
+  "repo_root": "C:\\Users\\SAMSUNG\\Downloads\\mcp_obsi-main",
+  "intent": "Convert design-upgrade-loop from Codex-format to valid Cursor skill with correct frontmatter, Windows-safe script paths, and Cursor-native tool guidance.",
+  "internet_allowed": true,
+  "allow_destructive": false,
+  "parallel_execution": "PARALLEL_DEGRADED",
+  "benchmark_source": "artifacts/benchmark_notes.md",
+  "inventory_source": "artifacts/skill_inventory.json",
+
+  "gap_analysis": [
+    {
+      "id": "G1",
+      "severity": "BLOCKER",
+      "description": "SKILL.md missing YAML frontmatter (name, description required by Cursor)",
+      "patch": "Add frontmatter block at top of SKILL.md with name: design-upgrade-loop and description"
+    },
+    {
+      "id": "G2",
+      "severity": "WARNING",
+      "description": "Description in inventory and body text references 'Codex' not 'Cursor'",
+      "patch": "Replace 'Codex' with 'Cursor' in body where agent runtime is implied"
+    },
+    {
+      "id": "G3",
+      "severity": "WARNING",
+      "description": "Script invocation uses 'python3' bash style; Windows environment uses 'python'",
+      "patch": "Change 'python scripts/...' call in Step 6 to use 'python' on Windows"
+    },
+    {
+      "id": "G4",
+      "severity": "INFO",
+      "description": "Browser guidance does not mention cursor-ide-browser MCP (Cursor native)",
+      "patch": "Add cursor-ide-browser MCP as first-priority option in Browser and MCP guidance section"
+    },
+    {
+      "id": "G5",
+      "severity": "INFO",
+      "description": "agents/openai.yaml is a Codex-specific packaging artifact, not used by Cursor",
+      "patch": "Keep file (non-destructive), but do NOT reference it from SKILL.md; note in skill body that it is Codex-only"
+    },
+    {
+      "id": "G6",
+      "severity": "INFO",
+      "description": "source-routing.md dashboard references do not include 2026 sources (Tremor, Horizon UI)",
+      "patch": "Append 2026 dashboard reference section to references/source-routing.md"
+    }
+  ],
+
+  "files_to_patch": [
+    {
+      "file": "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\SKILL.md",
+      "changes": ["G1", "G2", "G3", "G4"]
+    },
+    {
+      "file": "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\references\\source-routing.md",
+      "changes": ["G6"]
+    }
+  ],
+
+  "files_to_leave_unchanged": [
+    "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\agents\\openai.yaml",
+    "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\scripts\\validate_design_scorecard.py",
+    "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\assets\\design-scorecard.template.json",
+    "C:\\Users\\SAMSUNG\\.codex\\skills\\design-upgrade-loop\\assets\\design-upgrade-report-template.md"
+  ],
+
+  "verification_criteria": {
+    "frontmatter_present": true,
+    "name_matches_folder": true,
+    "description_present": true,
+    "no_codex_runtime_references": true,
+    "windows_safe_scripts": true,
+    "cursor_browser_mcp_mentioned": true,
+    "2026_references_added": true
+  }
+}

@@ -1,0 +1,415 @@
+# Guideline_MIR_Logistics
+
+## 1) Executive Summary
+
+* `MIR..Logistics`는 Mirfa site 기준의 **delivery execution / unloading control / site receiving readiness / backload coordination** 채널입니다.
+* 초기에는 **HE box / Layer / Serpentine** 중심의 전용 delivery room이었으나, 2025-08-19 이후 **Mirfa 현장 전체 logistics control room**으로 확장되었습니다.
+* 반복 업무는 **daily delivery schedule, trailer arrival, unloading ongoing/completed, case no./pkg control, CICPA gate entry, DN/PL follow-up, transformer oil + empty tank return, indoor material handling, backload collection**입니다.
+* 반복 리스크는 **sequence mismatch, site unloading capacity 부족, forklift/crane 공유, CICPA gate hold, fog/rain delay, indoor warehouse full, customs serial number visibility 이슈**입니다.
+
+## 2) Group Profile
+
+| 항목       | 내용                                                                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 목적/범위    | Mirfa site 자재 반입·하역·보관·반송·현장 수령 readiness 통합 조정                                                                                              |
+| 초기 그룹명   | MIR..HE box delivery                                                                                                                         |
+| 현재 그룹명   | MIR..Logistics                                                                                                                               |
+| 확인된 활동기간 | 2025-08-04 ~ 2026-03-27                                                                                                                      |
+| 주요 운영 대상 | HE box, Hitachi materials, transformer oil, empty tank backload, panels, cable drums, indoor materials, EDG/OOG cargo, MOSB/DAS/AGI backload |
+| 운영 성격    | Site execution room + issue escalation + delivery control                                                                                    |
+
+### 주요 참여자(역할 추정)
+
+| 이름            | 역할 추정                                           |
+| ------------- | ----------------------------------------------- |
+| 상욱            | 총괄 지시 / 일정 통제                                   |
+| 국일 Kim        | 승인 / 계획 통제 / 창고·우선순위 조정                         |
+| Shariff       | 운영 리드 / 현장 에스컬레이션                               |
+| Eddel Jose    | Mirfa 현장 수령·하역 focal                            |
+| Jay DSV       | DSV 배차·로딩·트레일러 회전 focal                         |
+| Arvin         | DSV 문서·배차 follow-up                             |
+| DaN           | MOSB / BL / collection / gate pass coordination |
+| Hyunggwan Lee | 공사·기술 측 일정/우선순위 연계                              |
+
+가정: 정확한 메시지 수, Top10 참여자 순위, 평균 응답지연은 전체 txt 원본 기준 재산출 필요.
+
+## 3) Observed Patterns
+
+### 3.1 핵심 운영 패턴
+
+| No | Item                                   | Value | Risk                                           |
+| -- | -------------------------------------- | ----- | ---------------------------------------------- |
+| 1  | Daily delivery update                  | 매우 빈번 | plan 부재 시 unloading 준비 실패                      |
+| 2  | Trailer arrival / unloading report     | 매우 빈번 | 현장 수용능력 오판                                     |
+| 3  | Sequence / case no. control            | 매우 중요 | wrong material / wrong order                   |
+| 4  | DSV loading vs site receiving timing   | 매우 중요 | trailer standby / rotation cost                |
+| 5  | CICPA gate entry                       | 상시 중요 | gate hold / entry delay                        |
+| 6  | Crane / forklift / rigger availability | 상시 중요 | unloading stop                                 |
+| 7  | Transformer oil + empty tank backload  | 반복    | space / return coordination 누락                 |
+| 8  | Indoor warehouse capacity              | 중요    | DSV indoor hold 필요                             |
+| 9  | OOG / special cargo                    | 중요    | special permit / escort / heavy lift readiness |
+| 10 | Document & customs support             | 중요    | DN/PL/driver details/serial no. issue          |
+
+### 3.2 그룹 성격 변화
+
+* **2025-08-04 ~ 2025-08-18**
+  HE box / layer / serpentine delivery sequence 관리 중심.
+* **2025-08-19 이후**
+  Mirfa 전체 logistics room으로 확대.
+
+  * Hitachi material
+  * transformer oil / empty tank return
+  * panel / SAS power / SKM / SCT packages
+  * cable drum / subsea cable
+  * OOG / EDG / fuel tank / pump unit
+  * MOSB / DAS / AGI / DSV yard collection
+
+### 3.3 반복 Pain Point
+
+1. **DSV 로딩계획과 현장 unloading 현실 간 불일치**
+2. **트레일러 동시 도착 vs site one-by-one unloading 한계**
+3. **forklift/crane이 electrical / mechanical / architecture team과 공유되어 지연 발생**
+4. **CICPA gate entry hold 및 driver phone off**
+5. **wrong loading / mixed cargo / MIR-SHU segregation 오류**
+6. **transformer oil는 반입되지만 empty tank backload timing이 항상 맞지 않음**
+7. **indoor material 증가로 site warehouse full**
+8. **fog / rain / road restriction으로 ETA 흔들림**
+9. **Saudi temporary export용 serial number visibility 미확보**
+10. **DN / PL / driver details / pass 미리 공유되지 않아 현장 준비 차질**
+
+## 4) Pain Points & Risks
+
+| No | Risk                   | Trigger                                  | Impact                                | Control                              |
+| -- | ---------------------- | ---------------------------------------- | ------------------------------------- | ------------------------------------ |
+| 1  | Sequence mismatch      | schedule와 다른 material loading            | 현장 작업계획 붕괴                            | case no./item code 사전확인              |
+| 2  | Trailer rotation delay | unloading release 지연                     | standby cost / next loading 차질        | site realistic unloading capacity 공유 |
+| 3  | Gate hold              | CICPA shift/captain/entry timing         | entry delay                           | gate pre-alert + driver details 선공유  |
+| 4  | Equipment shortage     | crane/forklift shared use / breakdown    | unloading stop                        | D-1 resource booking                 |
+| 5  | Indoor full            | site storage shortage                    | DSV indoor hold / partial delivery 필요 | indoor/outdoor zoning                |
+| 6  | Weather delay          | fog / heavy rain / flooded laydown       | ETA slip / access stop                | weather alert + hold decision        |
+| 7  | Wrong segregation      | MIR / SHU mixed pallet                   | misdelivery / rework                  | pallet color / list 분리               |
+| 8  | Customs serial issue   | serial no. not visible                   | export clearance 실패 / duty risk       | pre-inspection window plan           |
+| 9  | OOG cargo handling     | EDG / cable drum / fuel tank / Wilo pump | safety / permit / escort risk         | separate heavy cargo alert           |
+| 10 | Document gap           | DN/PL/driver/CICPA pass 지연               | gate / unloading / sign-off 차질        | document checklist                   |
+
+## 5) Tailored Rules
+
+### 5.1 채널 목적
+
+이 그룹은 Mirfa site 기준 아래 5개만 다룹니다.
+
+1. Delivery plan
+2. Arrival / unloading status
+3. Gate / pass / driver / document coordination
+4. Storage / backload / indoor hold
+5. OOG / special cargo / customs-related exception
+
+### 5.2 태그 규칙
+
+첫 줄 태그 고정:
+`[URGENT][ACTION][FYI][ETA][COST][GATE][CRANE][MANIFEST][RISK]`
+
+MIR 전용 권장 조합:
+
+* trailer plan: `[ETA][ACTION]`
+* gate pass / CICPA: `[GATE][ETA]`
+* crane/forklift shortage: `[CRANE][RISK]`
+* indoor full / hold: `[RISK][ACTION]`
+* DN/PL/driver details: `[MANIFEST][ACTION]`
+* wrong loading / sequence error: `[URGENT][RISK]`
+
+### 5.3 첫줄 포맷
+
+반드시 아래 중 하나 사용:
+
+* `[MIR]/[ITEM]/[ETA]/[ACTION]`
+* `[MIR]/[TRAILER QTY]/[UNLOADING]/[STATUS]`
+* `[MIR]/[DOC]/[REF]/[REQUEST]`
+* `[MIR]/[WAREHOUSE]/[SPACE]/[DECISION]`
+
+예시:
+
+* `[MIR]/[HE-0512]/[ETA 08:30 GST]/[UNLOADING PLAN]`
+* `[MIR]/[5 TRAILERS]/[UNLOADING]/[ONGOING]`
+* `[MIR]/[CICPA PASS]/[DRIVER 84326]/[REQUEST]`
+* `[MIR]/[INDOOR MATERIAL]/[FULL]/[HOLD AT DSV]`
+
+### 5.4 Delivery Plan 규칙
+
+* **D-1 16:00**까지 다음날 delivery plan 공유.
+* plan에는 반드시 아래 포함:
+
+  * item / ref no. / case no.
+  * trailer qty
+  * trailer type(FB/LB/1t/3t)
+  * loading date/time
+  * delivery date/time
+  * driver details
+  * CICPA pass status
+  * unloading equipment readiness
+  * backload 여부
+* `loading today / delivery same day`인지 `PM loading / next AM delivery`인지 반드시 구분.
+* WhatsApp만으로 애매하면 반드시 **email + excel receiving status** 병행.
+
+### 5.5 Arrival / Unloading 보고 규칙
+
+도착 후 아래 4단계로 보고:
+
+1. `Arrived at gate / site`
+2. `Unloading ongoing`
+3. `Completed`
+4. `Trailer release / backload status`
+
+필수 항목:
+
+* time
+* trailer qty
+* item / pkg
+* pending balance
+* issue
+* next action
+
+예시:
+`Arrived 08:30 / 5 trailers / unloading ongoing / forklift with electrical team / resume 10:00`
+
+### 5.6 현실 용량 기준
+
+* 현장은 **one-by-one unloading**이 기본.
+* 동시 다발 트레일러 투입 시에도 `all release before lunch`를 기본 가정으로 잡지 않는다.
+* site는 unloading 현실을 우선하며, DSV는 trailer rotation risk를 사전 공유한다.
+* 불필요한 대기비용 방지를 위해, 현장 capability를 초과하는 배차는 금지.
+
+### 5.7 Gate / CICPA 규칙
+
+* CICPA gate 진입건은 전일 또는 당일 조기 시간에 아래 선공유:
+
+  * driver name
+  * vehicle no.
+  * valid CICPA pass
+  * cargo item
+  * ETA to gate
+  * unloading support readiness
+* gate outside hold 발생 시 즉시 `[GATE][RISK]`.
+* driver 연락두절 / switch off 발생 시 10분 내 DSV focal escalation.
+
+### 5.8 장비 규칙
+
+* crane / forklift / rigger / flagman 없으면 delivery proceed 금지.
+* electrical/mechanical/architecture team과 공유 중일 경우:
+
+  * 현재 사용팀
+  * 예상 반환시간
+  * unloading 재개시간
+    을 함께 게시.
+* breakdown / no operator / sick leave 발생 시 즉시 대체계획 공지.
+
+### 5.9 Transformer Oil / Empty Tank
+
+* transformer oil 반입 시 반드시:
+
+  * qty
+  * unloading status
+  * same trailer backload 여부
+  * empty tank balance
+    를 함께 공유.
+* same trailer backload가 안 되면 `empty tank backlog`로 별도 관리.
+* port standby / storage cost 이슈가 있으면 `[COST][RISK]`.
+
+### 5.10 Indoor / Warehouse 규칙
+
+* site indoor full 시 **Mirfa indoor materials는 DSV indoor warehouse hold**를 기본 옵션으로 둔다.
+* 예외:
+
+  * panel direct to site
+  * urgent installation item
+* outdoor 보관 시 필수:
+
+  * tarpaulin cover
+  * item suitability 확인
+  * rain/leak 사진
+* warehouse capacity alert는 아래 형식:
+
+  * indoor with A/C %
+  * indoor without A/C %
+  * access blockage risk
+  * accept / partial / hold 판단
+
+### 5.11 OOG / Heavy Cargo / Special Operation
+
+적용 대상:
+
+* cable drum
+* subsea cable
+* EDG cargo
+* fuel tank
+* aux. transformer
+* Wilo pump
+* pump unit / treatment unit
+* scissor lift
+* spare drums
+
+필수 사전공지:
+
+* crane / SPMT / riggers / escort
+* foundation / unloading area readiness
+* police escort / road permit / CICPA captain coordination
+* weather check
+* photo record plan
+
+### 5.12 Mixed Cargo / MIR-SHU 분리
+
+* MIR / SHU mixed load 금지 원칙.
+* unavoidable 시:
+
+  * pallet color code
+  * strap color
+  * quantity split
+  * first drop / second drop
+    를 명확히 표기.
+* `blue straps=MIR`, `yellow straps=SHU`와 같은 구분은 사진과 함께 공지.
+
+### 5.13 Customs / Serial Number / Export
+
+* Saudi temporary export 또는 border customs 대상 화물은 선적 전 확인:
+
+  * serial number visible 여부
+  * temporary window / engraving / taped tag / alternate marking
+  * customs acceptance risk
+* packing modification은 vendor / DSV / site가 합의한 후 시행.
+* `no guarantee temporary export` 조건이면 `[RISK][MANIFEST]`로 별도 공지.
+
+### 5.14 야간/악천후 규칙
+
+* fog / rain / flooding 발생 시 즉시 `[RISK][ETA]`.
+* Mirfa 현장 heavy rain 시:
+
+  * warehouse leak
+  * laydown flooding
+  * material wet risk
+  * covering status
+    를 1시간 내 공유.
+* off-day / limited subcontractor hours와 충돌 시 same-day delivery 강행 금지.
+
+## 6) KPI & Monitoring
+
+| KPI                                     |   Target |
+| --------------------------------------- | -------: |
+| D-1 16:00 delivery plan 제출율             | ≥ 95.00% |
+| arrival → unloading start status 공유율    |  100.00% |
+| unloading complete time 보고율             |  100.00% |
+| driver/CICPA pass 사전공유율                 | ≥ 98.00% |
+| wrong loading / wrong sequence          |    0.00건 |
+| indoor hold decision 지연                 |    0.00건 |
+| transformer oil empty tank backload 추적률 |  100.00% |
+| OOG special cargo pre-alert             |  100.00% |
+| weather/gate delay 1st response         |    ≤ 10분 |
+| DN/PL/driver details same-day 공유율       | ≥ 95.00% |
+
+## 7) MIR 전용 템플릿
+
+### A. Delivery Plan
+
+```markdown id="mir001"
+[ETA][ACTION] [MIR]/[ITEM]/[ETA]/[DELIVERY PLAN]
+
+- Ref No:
+- Item / Case No:
+- Trailer Qty / Type:
+- Loading Date-Time:
+- Delivery ETA:
+- Driver / Vehicle:
+- CICPA Pass:
+- Unloading Equipment:
+- Backload:
+- Owner:
+- Next Action:
+```
+
+### B. Arrival / Unloading Status
+
+```markdown id="mir002"
+[FYI][ETA] [MIR]/[TRAILER QTY]/[UNLOADING]/[STATUS]
+
+- Arrived at:
+- Location: Gate / Site / Laydown
+- Item:
+- Qty/PKG:
+- Unloading Start:
+- Unloading Complete:
+- Balance:
+- Issue:
+- Trailer Release:
+```
+
+### C. Storage / Hold
+
+```markdown id="mir003"
+[RISK][ACTION] [MIR]/[WAREHOUSE]/[SPACE]/[DECISION]
+
+- Indoor A/C:
+- Indoor non-A/C:
+- Access Risk:
+- Incoming Item:
+- Decision: Accept / Partial / Hold at DSV
+- Covering Required:
+- Required By:
+```
+
+### D. Gate / Driver Request
+
+```markdown id="mir004"
+[GATE][ACTION] [MIR]/[CICPA]/[DRIVER DETAILS]/[REQUEST]
+
+- Driver Name:
+- Vehicle No:
+- Vehicle Type:
+- Cargo:
+- ETA Gate:
+- CICPA Pass:
+- Contact No:
+- Need By:
+```
+
+### E. OOG / Special Cargo
+
+```markdown id="mir005"
+[CRANE][RISK][ETA] [MIR]/[OOG ITEM]/[SPECIAL OPERATION]/[PLAN]
+
+- Cargo:
+- Weight / Dimension:
+- Trailer Type:
+- Crane / SPMT / Riggers:
+- Escort / Permit:
+- Foundation / Laydown Readiness:
+- Weather:
+- Start Time:
+- Completion Target:
+```
+
+## 8) 운영 판정
+
+* 이 그룹의 핵심은 **Mirfa site receiving control room**입니다.
+* 단순 delivery 보고방이 아니라 아래 4가지를 동시에 관리합니다.
+
+  1. **배차·순서**
+  2. **현장 수용능력**
+  3. **gate / document**
+  4. **storage / backload**
+
+## 9) Change Log
+
+* v1.0: 제공 로그 기준 최초 초안
+* 반영 내용:
+
+  * 2025-08-19 그룹 기능 확대
+  * HE box 중심 → Mirfa 전체 logistics room 전환
+  * CICPA / DSV / unloading 현실 반영
+  * transformer oil + empty tank backload 패턴 반영
+  * indoor full / DSV indoor hold 원칙 반영
+  * OOG / cable drum / customs serial no. exception 반영
+
+AMBER:
+
+* 정량 통계(Top10 참여자, 피크 시간대, 평균 응답지연, 키워드 빈도)는 전체 txt 원본 기준 재산출 필요.
+
+원하시면 다음 답변에서 `SHU + MIR + DSV + Abu Dhabi Logistics`를 한 번에 묶는 **현장형 공통 Master Policy v2**로 정리하겠습니다.

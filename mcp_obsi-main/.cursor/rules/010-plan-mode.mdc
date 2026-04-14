@@ -1,0 +1,9 @@
+---
+description: Require plan-first behavior for security-sensitive and contract-sensitive changes.
+alwaysApply: true
+---
+- Use plan mode before changing auth middleware behavior; public endpoint shape (`/mcp`, `/healthz`); MCP tool names or JSON schemas; memory, status, or sensitivity enums; vault layout or file naming rules; compatibility wrapper response shapes; or any behavior that broadens automatic writes or weakens access control.
+- Use plan mode before changing markdown-first persistence flow, vault-path conventions, or markdown to SQLite synchronization behavior.
+- For complex work, separate plan, implementation, and verification.
+- Run the smallest relevant check first.
+- Do not claim completion when verification is still manual or unconfirmed.

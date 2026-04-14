@@ -1,0 +1,72 @@
+{
+  "unmapped_lessons": [
+    "guideline_abu_dhabi_logistics",
+    "guideline_hvdc_project_lightning",
+    "guideline_jopetwil_71_group",
+    "guideline_mir_logistics",
+    "guideline_shu_logistics",
+    "hvdc-logistics-ontology-guide",
+    "hvdc-logistics-ontology-guide-v2-round2-140323",
+    "llm_wiki_karpathy_analysis",
+    "logistics_issue_project_lightning_2024-09-24_7",
+    "logistics_issue_project_lightning_2024-09-25_9"
+  ],
+  "unresolved_compatibility_mappings": [],
+  "knowledge_counts": {
+    "guides": 6,
+    "rules": 2,
+    "lessons": 109,
+    "evidence": 109,
+    "patterns": 2
+  },
+  "external_ontology": {
+    "stage": "beta",
+    "enabled": true,
+    "endpoint": "https://dbpedia.org/sparql",
+    "loaded_classes": 200,
+    "loaded_properties": 400,
+    "sample_queries": [
+      {
+        "name": "List classes",
+        "query": "SELECT DISTINCT ?class WHERE { ?class a owl:Class } LIMIT 50"
+      },
+      {
+        "name": "List properties",
+        "query": "SELECT DISTINCT ?property WHERE { ?property a rdf:Property } LIMIT 50"
+      }
+    ],
+    "mapping_warnings": [
+      {
+        "domain_field": "coe",
+        "external_property_uri": "http://dbpedia.org/ontology/country",
+        "warning": "mapped property missing in external ontology schema"
+      },
+      {
+        "domain_field": "pol",
+        "external_property_uri": "http://dbpedia.org/ontology/departureAirport",
+        "warning": "mapped property missing in external ontology schema"
+      },
+      {
+        "domain_field": "pod",
+        "external_property_uri": "http://dbpedia.org/ontology/arrivalAirport",
+        "warning": "mapped property missing in external ontology schema"
+      },
+      {
+        "domain_field": "shipMode",
+        "external_property_uri": "http://dbpedia.org/ontology/meansOfTransportation",
+        "warning": "mapped property missing in external ontology schema"
+      },
+      {
+        "domain_field": "atd",
+        "external_property_uri": "http://dbpedia.org/ontology/departureDate",
+        "warning": "mapped property missing in external ontology schema"
+      },
+      {
+        "domain_field": "ata",
+        "external_property_uri": "http://dbpedia.org/ontology/arrivalDate",
+        "warning": "mapped property missing in external ontology schema"
+      }
+    ],
+    "error": null
+  }
+}

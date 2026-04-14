@@ -1,0 +1,11 @@
+---
+description: Security and privacy constraints for memory persistence and shell usage.
+alwaysApply: true
+---
+- Never hard-code secrets, live tokens, real vault paths, or private endpoint URLs.
+- Treat `/mcp` auth behavior and token flow as security-sensitive; keep `MCP_API_TOKEN` environment-driven.
+- Treat memory writes as privacy-sensitive.
+- Treat hook logs as privacy-sensitive and avoid persisting raw emails, transcript paths, tokens, or other local secrets when a redacted form is enough.
+- Mask or reject sensitive content rather than persisting it raw.
+- Avoid destructive shell commands unless explicitly required and verified.
+- Keep write behavior deliberate. Do not broaden automatic persistence without approval.

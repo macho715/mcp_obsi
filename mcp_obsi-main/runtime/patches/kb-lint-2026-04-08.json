@@ -1,0 +1,57 @@
+{
+  "generated": "2026-04-08",
+  "total_notes": 7,
+  "findings": [
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "missing_field:created",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "broken_wikilink:내부 링크",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "broken_wikilink:wiki/...",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses\\hvdc-logistics-ontology-guide.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\entities\\gemma-4-llm.md",
+      "issue": "orphan_page",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\analyses\\karpathy-llm-wiki-query-result.md",
+      "issue": "evidence_gap",
+      "auto_fix": false
+    },
+    {
+      "path": "C:\\Users\\jichu\\Downloads\\valut\\wiki\\claude.md",
+      "issue": "evidence_gap",
+      "auto_fix": false
+    }
+  ],
+  "duplicates": [
+    [
+      4,
+      5,
+      "Gemma 4 LLM 모델 개요와 사양/특징은 밀접하게 관련된 내용입니다."
+    ]
+  ],
+  "contradictions": [],
+  "stale_notes": [],
+  "quality_flags": [],
+  "auto_fixable": 0
+}

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "obsidian-memory-production": {
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:MCP_API_TOKEN}"
+      }
+    },
+    "obsidian-memory-local": {
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:MCP_API_TOKEN}"
+      }
+    }
+  }
+}

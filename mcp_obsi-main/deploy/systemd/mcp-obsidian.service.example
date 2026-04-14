@@ -1,0 +1,18 @@
+[Unit]
+Description=mcp_obsidian FastAPI + MCP server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/mcp_obsidian/app
+EnvironmentFile=/srv/mcp_obsidian/shared/.env
+ExecStart=/srv/mcp_obsidian/app/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=5
+StandardOutput=append:/srv/mcp_obsidian/logs/app.out.log
+StandardError=append:/srv/mcp_obsidian/logs/app.err.log
+
+[Install]
+WantedBy=multi-user.target

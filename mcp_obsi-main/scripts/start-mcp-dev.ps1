@@ -1,0 +1,15 @@
+$ErrorActionPreference = "Stop"
+Set-Location (Split-Path -Parent $PSScriptRoot)
+$root = Get-Location
+
+$activate = Join-Path $root ".venv\Scripts\Activate.ps1"
+if (Test-Path $activate) {
+    . $activate
+}
+
+# When set, point local MCP writes directly at the user's Obsidian vault.
+if ($env:OBSIDIAN_LOCAL_VAULT_PATH) {
+    $env:VAULT_PATH = $env:OBSIDIAN_LOCAL_VAULT_PATH
+}
+
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload

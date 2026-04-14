@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-obsidian"
+version = "0.1.0"
+description = "Obsidian-backed shared memory MCP server scaffold"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "PyYAML>=6.0",
+  "jsonschema>=4.23",
+  "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "httpx>=0.27",
+  "ruff>=0.6",
+  "coverage[toml]>=7.6",
+  "pre-commit>=3.8",
+  "rdflib>=7.0",
+  "pyshacl>=0.30",
+  "pandas>=2.2",
+  "openpyxl>=3.1",
+]
+mcp = [
+  "mcp[cli]>=1.0.0",
+]
+all = [
+  "mcp-obsidian[dev,mcp]",
+]
+
+[tool.setuptools]
+packages = ["app", "app.services", "app.utils"]
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-markers --maxfail=1"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+precision = 2
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["obsidian_mcp_delivery_20260328"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

@@ -1,0 +1,258 @@
+# Guideline_HVDC_Project_Lightning
+
+## 1) Executive Summary
+
+* `[HVDC] Project Lightning`는 단일 현장방이 아니라 **전체 프로그램 물류 통합 상황실**입니다. 주요 기능은 **선박 운항, site delivery, backload, OSDR/S-PMIS, container/CCU circulation, urgent escalation**입니다. 
+* 실제 로그에는 `JPT62 / JPT71 / Thuraya / Bushra / Razan / Taibah / Marwah / Wardeh / Yeam` 등 다수 선박의 **ETA/ETD·berth·loading/offloading** 관리가 집중됩니다. 
+* 따라서 이 그룹은 단순 공지방이 아니라 **program-level logistics control tower**로 운영해야 합니다. 
+
+## 2) Group Profile
+
+| 항목            | 내용                                        |
+| ------------- | ----------------------------------------- |
+| 그룹명           | [HVDC] Project Lightning                  |
+| 최초 생성 확인      | 2022-11-15                                |
+| 목적/범위         | 선박 스케줄·하역 계획·자재·장비·문서(OSDR/S-PMIS) 실시간 공조 |
+| 운영 성격         | Program-level coordination & escalation   |
+| 활동기간(프로파일 기준) | 2024-08-21 ~ 2025-07-31                   |
+| 트래픽           | High                                      |
+| 메시지 수         | 7,330                                     |
+| 언어 비율         | KR 14.00% / EN 86.00%                     |
+| 피크 시간대        | 07:00, 08:00, 17:00 GST                   |
+
+근거: 원본 txt 상 그룹 생성일과 다수 선박·현장 통합 대화가 확인되며, 기존 프로파일 문서가 수치 통계를 제공합니다.  
+
+### 주요 참여자(기존 프로파일 기준 Top)
+
+* Khemlal-SCT Logistics 1,324
+* Ramaju Das 1,272
+* 정상욱 982
+* Roy Kim 738
+* Haitham 644
+* Shariff 572
+* Bimal 450
+* Sajid H Khan 364
+* DaN 225
+* Nicole (SHU) 180 
+
+## 3) Observed Patterns
+
+### 3.1 핵심 운영 패턴
+
+| No | 패턴                            | 설명                                                              |
+| -- | ----------------------------- | --------------------------------------------------------------- |
+| 1  | Vessel SITREP                 | 매일 아침/오후 선박별 ETA·ETD·berth·route 공유                             |
+| 2  | Cross-site coordination       | AGI / DAS / MOSB / MIR / SHU 간 동시 조정                            |
+| 3  | RORO/LOLO control             | tide, berth, crane, operator, gate 조건에 따라 운영                    |
+| 4  | Delivery escalation           | site unloading status를 즉시 본 그룹으로 승격                             |
+| 5  | Backload control              | empty CCU / basket / OT / FR 회수 우선순위 관리                         |
+| 6  | OSDR/S-PMIS tracking          | damage, shortage, upload completion 추적                          |
+| 7  | Critical cargo prioritization | cable drum, wall panel, HCS, A-Frame, DG, transformer 등 우선순위 제어 |
+
+근거: 원본 로그에서 동일 패턴이 수백 차례 반복됩니다. 예를 들어 vessel status 묶음 공유, site unloading update, OSDR 업로드 요청, empty CCU 회수 지시가 모두 본 그룹에서 발생합니다. 
+
+### 3.2 반복 핵심 토픽
+
+* `offloading / thuraya / bushra / razan / wardeh / jopetwil / roro / anchorage / lct`가 상위 키워드입니다. 
+* 실제 로그에서도 `please update vessel status`, `offloading completed`, `backloading plan`, `manifest shared`, `OSDR uploaded`가 계속 반복됩니다. 
+
+### 3.3 운영상 특징
+
+* **아침 시작형 그룹**입니다. 07:00~08:00에 vessel status, day plan, site readiness가 집중됩니다. 
+* **현장 보고는 execution room에서 오고, 본 그룹은 승인·우선순위·에스컬레이션을 담당**합니다. MIR/SHU/DAS/AGI 현장팀이 각각 status를 올리고, Roy/Shariff/상욱/CHA가 방향을 정합니다. 
+
+## 4) Pain Points & Risks
+
+| No | Risk                         | Trigger                                  | Impact                      |
+| -- | ---------------------------- | ---------------------------------------- | --------------------------- |
+| 1  | Berth / anchorage congestion | harbor full, tide, other vessel priority | ETA slip, 1~2 day delay     |
+| 2  | Equipment shortage           | crane/forklift/trailer/operator 부족       | offloading 중단, standby cost |
+| 3  | Weather / tide risk          | high tide, high wind, fog                | RORO stop, sheltering       |
+| 4  | Mixed cargo / route change   | ALS/shipping 임의 route change             | site receiving plan 붕괴      |
+| 5  | CCU shortage                 | empty 회수 지연                              | stuffing 차질                 |
+| 6  | Document lag                 | manifest/PL/departure notice 지연          | site prep 실패                |
+| 7  | Damage handling weakness     | 사진 미확보, sketch 미작성                       | 책임소재 불명확                    |
+| 8  | Site readiness mismatch      | crane/operator/permit 미준비                | demurrage·rework            |
+| 9  | A-Frame / HCS handling risk  | LOP, spreader, webbing 미흡                | damage / reject             |
+| 10 | Multi-site priority conflict | AGI vs DAS vs MIR vs SHU                 | 긴급물자 누락                     |
+
+근거: 원본 채팅에서 `anchorage waiting`, `high tide`, `wind speed`, `equipment problem`, `please return empty CCU ASAP`, `manifest not shared`, `damage report`, `site not ready`가 반복됩니다. 
+
+## 5) Master Policy 적용 포인트
+
+공통 Master Policy는 그대로 적용하되, 이 그룹은 아래 4개를 추가 강화합니다. 
+
+1. **태그 강제**
+
+   * `[URGENT][ACTION][FYI][ETA][COST][GATE][CRANE][MANIFEST][RISK]`
+2. **시간 표기 강제**
+
+   * `YYYY-MM-DD`, `HH:MM GST`, 수치 2-dec
+3. **질문/요청 형식**
+
+   * 반드시 `담당 / 기한 / 다음 액션` 포함
+4. **민감정보**
+
+   * 전화번호·메일 등 PII는 외부 재전송 시 마스킹
+
+## 6) Tailored Rules
+
+### 6.1 채널 목적
+
+이 그룹은 아래 6종만 다룹니다.
+
+1. Vessel SITREP
+2. D-1 / day-of logistics plan
+3. Site exception escalation
+4. Backload / empty CCU control
+5. OSDR / S-PMIS / document tracking
+6. Program priority decision
+
+### 6.2 첫줄 포맷
+
+반드시 아래 형식 중 하나 사용:
+
+* `[HVDC]/[VESSEL]/[ETA]/[STATUS]`
+* `[HVDC]/[SITE]/[ITEM]/[ACTION]`
+* `[HVDC]/[DOC]/[REF]/[REQUEST]`
+* `[HVDC]/[RISK]/[SITE]/[DECISION]`
+
+예시:
+
+* `[HVDC]/[THURAYA]/[ETA 2025-01-16 08:00 GST]/[OFFLOADING STATUS]`
+* `[HVDC]/[DAS]/[HCS]/[URGENT BACKLOAD]`
+* `[HVDC]/[OSDR]/[SIM-0019]/[UPLOAD COMPLETE]`
+
+### 6.3 Vessel SITREP 규칙
+
+* **07:30 / 16:00** 고정 2회 보고.
+* 최소 항목:
+
+  * vessel
+  * current location
+  * ETA / ETD
+  * cargo
+  * berth / anchorage
+  * constraint(weather / tide / crane / operator / bunkering)
+  * next action
+* 대상 선박은 실제 운용선 기준 전부 포함:
+
+  * JPT71 / JPT62 / Thuraya / Bushra / Razan / Taibah / Marwah / Wardeh / Yeam 등. 
+
+### 6.4 D-1 Plan 규칙
+
+* **전일 16:00 이전** 다음날 plan 공유.
+* 반드시 포함:
+
+  * site
+  * vessel
+  * cargo type
+  * qty / trailer qty / lift qty
+  * equipment
+  * permit / gate / operator
+  * document status
+  * risk note
+
+### 6.5 Exception escalation 규칙
+
+아래는 site room에만 두지 말고 본 그룹으로 즉시 올립니다.
+
+* unloading stop
+* no operator
+* no crane / no forklift
+* tide stop
+* damage found
+* wrong manifest
+* no gate pass
+* indoor full
+* customs / DG / serial issue
+
+### 6.6 Backload / CCU 규칙
+
+* Empty CCU / basket / FR / OT 회수는 **site local issue가 아니라 program issue**로 취급.
+* site별 회수 현황을 하루 1회 이상 집계.
+* `return asap` 요청 시 반드시:
+
+  * current qty
+  * location
+  * ready status
+  * next vessel
+  * blocking reason
+    을 함께 적음.
+
+### 6.7 OSDR / S-PMIS 규칙
+
+* damage 발생 시 사진 우선.
+* 사진 불가 시 **sketch + time + cause + trailer/vessel + discovered at**로 즉시 대체 보고. 이 규칙은 실제 대화에서도 이미 요구된 방식입니다. 
+* site별 업로드 완료 후 그룹에 스탬프:
+
+  * `AGI complete`
+  * `DAS complete`
+  * `MIR complete`
+  * `SHU complete`
+
+### 6.8 Multi-site 우선순위 규칙
+
+* 본 그룹에서 우선순위를 정하고, 현장 execution room은 그 지시에 따라 움직임.
+* 따라서 `urgent` 지시는 반드시:
+
+  * 어느 site 우선인지
+  * 어느 cargo를 hold할지
+  * 어떤 vessel에 태울지
+    까지 명시.
+
+### 6.9 Weather / tide rule
+
+* weather / tide issue는 단순 참고가 아니라 **schedule constraint**로 본문 첫 줄에 노출.
+* `sheltering`, `high tide`, `wind stop`, `fog delay`는 `[RISK][ETA]`로 표기.
+* relative 표현 대신 가능한 절대시각 사용.
+
+### 6.10 Cargo handling rule
+
+* **A-Frame / HCS / wall panel / cable drum / DG / transformer / crane / manlift**는 일반 cargo와 분리 관리.
+* special cargo는 항상:
+
+  * method
+  * equipment
+  * operator
+  * permit
+  * recovery plan
+    포함.
+
+## 7) KPI & Monitoring
+
+| KPI                                           |   Target |
+| --------------------------------------------- | -------: |
+| 07:30 / 16:00 SITREP 준수율                      | ≥ 98.00% |
+| D-1 16:00 plan 제출율                            | ≥ 95.00% |
+| departure / arrival notification same-day 공유율 |  100.00% |
+| empty CCU 회수 계획 게시율                           |  100.00% |
+| site exception escalation 30분 내 게시율           | ≥ 95.00% |
+| OSDR 초안 same-day 제출율                          | ≥ 95.00% |
+| S-PMIS upload 완료 스탬프 누락                       |       0건 |
+| urgent cargo owner/ETA/next action 명시율        |  100.00% |
+
+근거: 기존 guideline 초안에서도 SITREP, D-1 계획, Empty CCU, OSDR, Webbing Sling KPI가 핵심으로 설정되어 있습니다. 
+
+## 8) Implementation Checklist
+
+* [ ] 07:30 / 16:00 SITREP 템플릿 고정
+* [ ] D-1 16:00 next-day plan 강제
+* [ ] site exception escalation 템플릿 배포
+* [ ] OSDR 사진 불가 시 sketch 대체규칙 공지
+* [ ] empty CCU / basket tracker 운영
+* [ ] vessel manifest / departure notification CC 범위 고정
+* [ ] AGI / DAS / MIR / SHU 완료 스탬프 형식 통일
+* [ ] special cargo 별도 태그 적용
+
+## 9) Change Log
+
+* **v1.1**: 이번 업로드 원본 txt 기준 재정리
+* 반영사항:
+
+  * 그룹 생성일 2022-11-15 반영 
+  * multi-vessel control tower 성격 강화 
+  * OSDR/S-PMIS/site escalation 역할 명문화 
+  * empty CCU / backload / manifest 통제 강화 
+
+

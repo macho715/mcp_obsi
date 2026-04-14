@@ -1,0 +1,391 @@
+# Guideline_DSV_Delivery
+
+**Version:** v1.1
+**Updated:** 2026-03-28 GST
+**Basis:** raw WhatsApp export + 기존 Guideline v1.0 + Master Policy   
+
+## 1) Executive Summary
+
+* `DSV Delivery`는 **stuffing + gate/NOC + Freeport/Al Masaood/MOSB yard↔jetty shuttle + site offloading + customs/doc exception**을 동시에 다루는 실행 통제방입니다. 원본 로그 시작부에서도 그룹 목적이 `DSV delivery room`, `stuffing and delivery plan`으로 직접 선언됩니다. 
+* 실제 운영 핵심은 **LB vs FB 선택, gate pass/NOC, crane·forklift timing, 2nd trip rotation, MSDS/BOE/DO/FANR, damaged box·dunnage·OSDR**입니다.  
+* 반복 손실 포인트는 **details late / no email at security / no gate pass / forklift late / offloading delay / trailer reuse 실패**입니다.  
+* 따라서 이 그룹은 단순 delivery 알림방이 아니라 **DSV execution control room**으로 운영해야 합니다. 
+
+## 2) Group Profile
+
+| 항목               | 내용                                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| 표준 그룹명           | DSV Delivery                                                                                       |
+| 목적/범위            | stuffing, yard operation, gate/NOC, Freeport·Al Masaood·MOSB delivery/offloading, customs/doc 예외관리 |
+| 운영 성격            | DSV execution control room                                                                         |
+| 그룹 생성 확인         | 2025-01-20                                                                                         |
+| Raw chat 확인 기간   | 2025-01-20 ~ 2025-08-28                                                                            |
+| Profile 통계 기준 기간 | 2025-01-20 ~ 2025-07-31                                                                            |
+| 트래픽              | High                                                                                               |
+| 메시지 수(Profile)   | 2,165                                                                                              |
+| 언어 비율(Profile)   | KR 24.50% / EN 75.50%                                                                              |
+| 피크 시간(Profile)   | 09:00, 11:00, 10:00 GST                                                                            |
+
+원본 txt는 2025-08-28까지 확인되므로, **운영 규칙은 raw chat 우선**, **정량 통계는 기존 profile 기준**으로 적용합니다.  
+
+### 주요 참여자(기존 프로파일 기준)
+
+| 이름            | 역할 추정                                          | 메시지 수 |
+| ------------- | ---------------------------------------------- | ----: |
+| Jay DSV       | DSV 배차·로딩·운송 총괄 focal                          |   927 |
+| 정상욱           | 총괄 지시 / 우선순위 통제                                |   402 |
+| kEn 🏄🏻🌊    | 현장 실행 / gate / offloading coordination         |   194 |
+| Dsv Minhaj    | customs / doc / BOE / FANR / port coordination |   150 |
+| Arvin         | email / gate pass / delivery follow-up         |   146 |
+| Roy Kim       | 승인 / escalation / site decision                |   120 |
+| Haitham       | inspection / lifting / site coordination       |    73 |
+| JUNG HYUN LEE | DSV management / warehouse follow-up           |    38 |
+| Shariff       | 운영 리드 / 예외 승인                                  |    36 |
+| CHA           | cross-check / schedule / support               |    23 |
+
+
+
+## 3) Observed Patterns
+
+### 3.1 핵심 운영 패턴
+
+| No | 패턴                        | 내용                                                                 |
+| -- | ------------------------- | ------------------------------------------------------------------ |
+| 1  | Stuffing & delivery plan  | container stuffing, SOC/OT/FB/LB, same-day or next-day delivery 조정 |
+| 2  | Gate / NOC / pass control | `no email`, `no gate pass`, `entry pass`, `exit pass`, `NOC` 이슈 반복 |
+| 3  | Yard↔jetty shuttle        | DSV yard, Freeport, MOSB, Al Masaood 간 반복 shuttle                  |
+| 4  | Trailer rotation control  | 2nd trip, same truck reuse, LB/FB availability, detention 우려       |
+| 5  | Site offloading readiness | forklift/crane/operator/lifting gear readiness 확인                  |
+| 6  | Document exception        | MSDS, BOE, DO, FANR, DG free time, customs mismatch 처리             |
+| 7  | Damage / packing issue    | damaged case, dunnage, open box, OSDR, repair/repacking            |
+| 8  | Cross-site delivery split | MOSB / MIR / SHU / DAS / AGI 분배와 우선순위 조정                           |
+
+근거: raw chat에서 `details not received yet for gate pass`, `there is no gate pass at the security`, `A Frame required LB`, `please arrange exit pass`, `MSDS`, `BOE`, `FANR`, `damaged`, `OSDR`가 반복됩니다.   
+
+### 3.2 반복 핵심 토픽
+
+기존 guideline/profile 기준 상위 키워드는 `loading`, `do`, `jay`, `offloading`, `inspection`, `lb`, `fb`, `morning`, `delivery`입니다. 요약표도 `stuffing & gate/NOC & yard↔jetty ops` 성격으로 정의합니다.  
+
+### 3.3 raw chat에서 직접 확인되는 특징
+
+* 그룹 출발점 자체가 **stuffing and delivery plan room**입니다. 
+* **A-Frame은 LB 우선**이며, FB 사용 시 permit/fine risk가 직접 논의됩니다. 
+* **빈차도 NOC/gate coordination 필요**하다는 패턴이 반복됩니다. 
+* **현장 forklift/crane delay**가 trailer rotation 실패의 가장 큰 원인입니다.  
+* **MSDS/BOE/DO/FANR/customs mismatch**는 단순 서류이슈가 아니라 출고 보류 원인으로 작동합니다. 
+* **damaged/open box/dunnage 미흡**은 즉시 return, repair, OSDR, repacking으로 연결됩니다.  
+
+## 4) Pain Points & Risks
+
+| No | Risk                     | Trigger                              | Impact                       | Control                        |
+| -- | ------------------------ | ------------------------------------ | ---------------------------- | ------------------------------ |
+| 1  | Gate pass / NOC 누락       | no email, no pass, security hold     | truck standby, missed slot   | D-1 pass pack + resend log     |
+| 2  | Trailer rotation failure | offloading late / no forklift        | 2nd trip 실패, detention       | site readiness cut-off         |
+| 3  | Wrong trailer selection  | A-Frame on FB / height issue         | fine / rework / cancellation | LB/FB matrix 사전확정              |
+| 4  | Equipment mismatch       | crane/forklift absent or late        | offloading stop              | T-60 재확인                       |
+| 5  | Document hold            | MSDS/BOE/DO/FANR/customs mismatch    | loading 보류                   | doc checklist 운영               |
+| 6  | Packing / dunnage defect | open box, poor dunnage, damage       | return / repack / OSDR       | pre-dispatch photo check       |
+| 7  | CICPA / permit limit     | head only 금지, route restriction      | transport re-plan            | vehicle/route compliance check |
+| 8  | Site timing mismatch     | lunch break, road ban, Ramadan hours | missed unloading window      | absolute-time planning         |
+| 9  | Mixed instruction        | email vs WhatsApp 상충                 | wrong delivery / wrong hold  | email SSOT                     |
+| 10 | Yard visibility 부족       | cargo location unclear               | wasted move / wrong pick-up  | weekly OY/WH photo + locator   |
+
+위 리스크는 기존 guideline v1.0의 문제정의와 raw chat 패턴이 일치합니다.  
+
+## 5) Tailored Rules
+
+### 5.1 채널 목적
+
+이 그룹은 아래 6개만 다룹니다.
+
+1. stuffing / stripping / yard operation
+2. delivery plan / trailer allocation
+3. gate pass / NOC / entry-exit issue
+4. site offloading readiness
+5. document / customs / DG exception
+6. damage / repacking / OSDR / return decision
+
+### 5.2 태그 규칙
+
+첫 줄 태그 고정:
+`[URGENT][ACTION][FYI][ETA][COST][GATE][CRANE][MANIFEST][RISK]`
+
+DSV Delivery 권장 조합:
+
+* delivery plan: `[ETA][ACTION]`
+* gate/security 문제: `[GATE][RISK]`
+* crane/forklift 지연: `[CRANE][RISK]`
+* BOE/DO/MSDS/FANR: `[MANIFEST][ACTION]`
+* damaged / repack / return: `[RISK][URGENT]`
+* detention / extra trip / cancellation: `[COST][RISK]`
+
+### 5.3 첫줄 포맷
+
+반드시 아래 중 하나 사용:
+
+* `[DSV]/[SITE]/[CARGO]/[DELIVERY PLAN]`
+* `[DSV]/[TRUCK NO]/[GATE]/[ISSUE]`
+* `[DSV]/[SITE]/[OFFLOADING]/[STATUS]`
+* `[DSV]/[REF]/[DOC]/[ISSUE]`
+* `[DSV]/[CASE NO]/[DAMAGE]/[ACTION]`
+
+예시:
+
+* `[DSV]/[AL MASAOOD]/[HE BOX]/[DELIVERY PLAN]`
+* `[DSV]/[TR#56725]/[FREEPORT GATE]/[NO EMAIL]`
+* `[DSV]/[MOSB]/[OFFLOADING]/[WAITING FOR FORKLIFT]`
+* `[DSV]/[SIM-0041]/[MSDS]/[EXPIRED]`
+* `[DSV]/[HE-0371]/[DAMAGE]/[OSDR+REPAIR]`
+
+### 5.4 Delivery Plan 규칙
+
+* **D-1 16:00**까지 다음날 delivery plan 공유.
+* 반드시 포함:
+
+  * ref no.
+  * item / case no.
+  * trailer qty
+  * trailer type(FB/LB/OT/23m LB/1t/3t)
+  * loading date/time
+  * delivery date/time
+  * site
+  * driver / vehicle
+  * gate pass / NOC / entry-exit pass
+  * unloading equipment
+  * doc status(MSDS/BOE/DO/FANR)
+  * owner / next action
+* `today loading / same day delivery`인지 `PM loading / next AM delivery`인지 반드시 분리.
+* 애매한 경우 **email이 SSOT**, WhatsApp은 실행 알림만 사용.
+
+### 5.5 Trailer Type 규칙
+
+* **A-Frame = LB 우선**
+* FB 사용 시:
+
+  * police permit
+  * highway fine risk
+  * route feasibility
+    를 먼저 확인.
+* HCS / long bundle / height cargo는 23m LB 포함 suitability check 필수.
+* `same truck reuse`가 필요한 경우 1st trip release time을 함께 공지.
+
+근거: raw chat에서 `A Frames required LB trailers`, `FB then police permits`, `2 x 23meters`가 반복됩니다. 
+
+### 5.6 Gate / NOC 규칙
+
+* **빈차도 NOC 필요** 여부를 site별로 기본 가정한다.
+* gate issue 발생 시 아래 순서로 공지:
+
+  1. truck no.
+  2. location
+  3. issue type(no email / no pass / security hold)
+  4. resend time
+  5. expected release
+* 대응 기준:
+
+  * 10분 무응답: `[GATE][RISK]`
+  * 30분 경과: escalation
+  * 60분 경과: re-slot / re-dispatch 검토
+* email 발송 후에는 가능하면 gate proof를 남긴다.
+
+### 5.7 Offloading Readiness 규칙
+
+* truck arrival **60분 전** 아래 4개 재확인:
+
+  * forklift
+  * crane
+  * operator/rigger
+  * laydown / jetty readiness
+* 미준비 시 gate 안으로 truck를 오래 세워두지 않는다.
+* **2nd trip 가능/불가**는 오전 11:00 이전 1차 판정.
+* lunch break / road ban / Ramadan time은 plan 단계에서 이미 반영.
+
+### 5.8 Stuffing / Stripping 규칙
+
+* stuffing 전:
+
+  * cargo readiness
+  * COG / safe arrangement
+  * container suitability
+  * packing photo
+    확인.
+* stripping required shipment는 yard strip 후 delivery인지 direct container delivery인지 먼저 확정.
+* port / Mina Zayed / airport / warehouse 간 역할 구분을 본문에 명시.
+
+### 5.9 Damage / Packing / Dunnage 규칙
+
+* damaged / poor / open box / dunnage issue 발견 시:
+
+  * case no.
+  * photo
+  * discovered at
+  * immediate action
+  * need OSDR?
+    를 즉시 공유.
+* 현장 reject 시:
+
+  * return to yard
+  * replace with same size
+  * repair / repack
+    중 하나를 즉시 결정.
+* 대체품 투입 전 **condition good** 확인 후 재출고.
+
+### 5.10 Document / Customs 규칙
+
+다음은 별도 `[MANIFEST][RISK]`로 즉시 올린다.
+
+* BOE pending
+* DO validity / extension
+* MSDS expired
+* FANR approval
+* DG free time
+* customs qty mismatch
+* cover page / HS / ref mismatch
+* importer code / Dubai Trade authorization
+* serial number / inspection access issue
+
+근거: raw chat에서 `BOE is done`, `MSDS expired`, `FANR`, `DO validity`, `customs mismatch`가 직접 반복됩니다. 
+
+### 5.11 Communication 규칙
+
+* 상업 이슈 제외하고는 **필수 관계자 전체 CC** 원칙 유지.
+* 변경지시는 `email sent` 또는 `replied via email`로 남긴다.
+* WhatsApp 단독 지시로 혼선이 예상되면 `official email with final instructions` 요청 후 실행.
+
+### 5.12 Yard Visibility 규칙
+
+* Al Markaz / M44 / OY / 기타 yard는 **주 1회 이상 사진 리포트** 공유.
+* 최소 정보:
+
+  * location
+  * occupied space
+  * cargo grouping
+  * poor box / damaged zone
+  * indoor/outdoor 구분
+* weekly report용 사진은 목요일 기준으로 정례화.
+
+### 5.13 Cost / Detention 규칙
+
+* 아래는 반드시 `[COST][RISK]`로 사전공유:
+
+  * extra trip
+  * cancellation charge
+  * detention
+  * daily hire spillover
+  * permit/fine exposure
+* 현장 지연이 예측되면 truck dispatch 전 먼저 알린다.
+
+## 6) KPI & Monitoring
+
+| KPI                                  |   Target |
+| ------------------------------------ | -------: |
+| D-1 16:00 delivery plan 제출율          | ≥ 95.00% |
+| gate pass/NOC first-pass success     | ≥ 98.00% |
+| truck arrival 대비 offloading start    |    ≤ 30분 |
+| 2nd trip completion rate             | ≥ 70.00% |
+| forklift/crane readiness on-time     | ≥ 90.00% |
+| document exception same-day closure  | ≥ 95.00% |
+| damaged/repack OSDR same-day logging |  100.00% |
+| weekly OY/WH photo report            |  100.00% |
+
+## 7) DSV Delivery 전용 템플릿
+
+### A. Delivery Plan
+
+```markdown
+[ETA][ACTION] [DSV]/[SITE]/[CARGO]/[DELIVERY PLAN]
+
+- Ref No:
+- Item / Case No:
+- Trailer Qty / Type:
+- Loading Date-Time:
+- Delivery Date-Time:
+- Driver / Vehicle:
+- Entry / Exit Pass:
+- NOC:
+- Unloading Equipment:
+- Document Status: MSDS / BOE / DO / FANR
+- Owner:
+- Next Action:
+```
+
+### B. Gate Issue
+
+```markdown
+[GATE][RISK] [DSV]/[TRUCK NO]/[SITE]/[ENTRY ISSUE]
+
+- Location:
+- Issue:
+- Email Sent Time:
+- Re-sent Time:
+- Contacted Person:
+- Expected Release:
+- Impact on Rotation:
+```
+
+### C. Offloading Status
+
+```markdown
+[FYI][ETA] [DSV]/[SITE]/[OFFLOADING]/[STATUS]
+
+- Arrived:
+- Start:
+- Complete:
+- Trailer Qty:
+- Item / PKG:
+- Balance:
+- Equipment Status:
+- Trailer Release:
+- Next Trip:
+```
+
+### D. Document Exception
+
+```markdown
+[MANIFEST][RISK] [DSV]/[REF]/[DOC ISSUE]
+
+- Ref:
+- Issue Type:
+- Blocking Impact:
+- Current Owner:
+- Required By:
+- Temporary Action:
+- Final Resolution:
+```
+
+### E. Damage / Repack
+
+```markdown
+[RISK][URGENT] [DSV]/[CASE NO]/[DAMAGE]/[ACTION]
+
+- Case No:
+- Found At:
+- Issue:
+- Photo:
+- OSDR Required:
+- Return / Repair / Repack:
+- Replacement Needed:
+- Owner:
+```
+
+## 8) 운영 판정
+
+* 이 그룹의 핵심은 **단순 운송방이 아니라 DSV 실행 통제방**입니다.
+* 핵심 통제 포인트는 아래 5개입니다.
+
+  1. **Plan**
+  2. **Gate**
+  3. **Equipment**
+  4. **Document**
+  5. **Rotation**
+
+## 9) Change Log
+
+* **v1.1 (2026-03-28)**: raw WhatsApp export 기준 보강
+
+  * gate/NOC/security hold 패턴 강화 
+  * A-Frame LB 우선 / FB fine risk 반영 
+  * 2nd trip / detention / cost risk 명문화 
+  * MSDS/BOE/DO/FANR/customs mismatch 예외관리 추가 
+  * weekly yard visibility / photo reporting 반영 
+* **v1.0 (2025-08-09)**: 최초 발행본 

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "raw-conversation.schema.json",
+  "title": "RawConversationNote",
+  "type": "object",
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "const": "raw_conversation"
+    },
+    "mcp_id": {
+      "type": "string",
+      "pattern": "^convo-[A-Za-z0-9._:-]+$"
+    },
+    "source": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "conversation_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "project": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mcp_sig": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "body_markdown": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schema_type",
+    "mcp_id",
+    "source",
+    "created_by",
+    "created_at_utc",
+    "conversation_date",
+    "body_markdown"
+  ],
+  "additionalProperties": false
+}

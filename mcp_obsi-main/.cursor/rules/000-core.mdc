@@ -1,0 +1,11 @@
+---
+description: Core repository guardrails for the Obsidian MCP project.
+alwaysApply: true
+---
+- Keep the repository markdown-first: vault markdown files are the durable memory source of truth.
+- SQLite indexes markdown-derived records for search only; it is not a replacement SSOT store.
+- Preserve read-first, write-with-intent behavior and keep markdown writes authoritative.
+- Do not hard-code secrets, bearer tokens, vault paths, or private endpoints.
+- Reuse existing abstractions, prefer additive evolution, and keep diffs small and reviewable.
+- Keep claims tied to checked files, tests, or commands.
+- When reporting work, include changed files, commands run, verification status (`pass` / `fail` / `manual`), and remaining risks or assumptions.

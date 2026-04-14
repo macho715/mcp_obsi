@@ -1,0 +1,82 @@
+:root {
+  --bg: #0b1020;
+  --bg-elevated: #11182b;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-raised: rgba(255, 255, 255, 0.7);
+  --panel-bg: rgba(15, 23, 42, 0.42);
+  --text-strong: #0f172a;
+  --text-muted: #5b6578;
+  --border: rgba(148, 163, 184, 0.22);
+  --accent: #0f766e;
+  --accent-soft: rgba(15, 118, 110, 0.14);
+  --pill-bg: rgba(148, 163, 184, 0.16);
+  --shadow:
+    0 22px 45px rgba(15, 23, 42, 0.14), 0 8px 16px rgba(15, 23, 42, 0.08);
+  --font-sans: "Avenir Next", "Segoe UI Variable", "Trebuchet MS", sans-serif;
+  --font-display: "IBM Plex Sans", "Avenir Next", "Segoe UI Variable", sans-serif;
+
+  font-family: var(--font-sans);
+  color: var(--text-strong);
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.22), transparent 30%),
+    radial-gradient(circle at top right, rgba(234, 88, 12, 0.16), transparent 26%),
+    linear-gradient(180deg, #f5f7fb 0%, #edf1f7 45%, #e9eef5 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 35%),
+    linear-gradient(225deg, rgba(245, 158, 11, 0.05), transparent 32%);
+  opacity: 0.75;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
