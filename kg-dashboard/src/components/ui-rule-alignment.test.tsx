@@ -226,4 +226,29 @@ describe('kg-dashboard UI rule alignment', () => {
     expect(tabsMarkup).not.toContain('hero');
     expect(tableMarkup).not.toContain('card card');
   });
+
+  it('uses graph-first shell widths, a thin toolbar, and compact-panel selectors', () => {
+    const css = readFileSync(new URL('../App.css', import.meta.url), 'utf-8');
+
+    expect(css).toMatch(
+      /grid-template-columns:\s*minmax\(200px,\s*220px\)\s+minmax\(0,\s*1fr\)\s+minmax\(220px,\s*240px\)/,
+    );
+    expect(css).toMatch(/\.dashboard-main\s*\{[^}]*min-width:\s*0/);
+    expect(css).toMatch(/\.dashboard-toolbar\s*\{[^}]*min-height:\s*56px/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*1023px\)/);
+    expect(css).toMatch(/data-compact-panel='controls'/);
+    expect(css).toMatch(/data-compact-panel='inspector'/);
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*1023px\)\s*\{[\s\S]*\.dashboard-stage,\s*\.graph-canvas-shell,\s*\.companion-surface\s*\{[^}]*min-height:\s*68svh/,
+    );
+  });
+
+  it('caps desktop graph box height and keeps companion tabs compact', () => {
+    const css = readFileSync(new URL('../App.css', import.meta.url), 'utf-8');
+
+    expect(css).toMatch(/\.dashboard-shell\s*\{[^}]*height:\s*calc\(100svh\s*-\s*1\.5rem\)/);
+    expect(css).toMatch(/\.companion-tabs\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+    expect(css).toMatch(/\.graph-canvas-shell\s*\{[^}]*height:\s*min\(62svh,\s*680px\)/);
+    expect(css).toMatch(/\.companion-surface\s*\{[^}]*height:\s*min\(62svh,\s*680px\)/);
+  });
 });

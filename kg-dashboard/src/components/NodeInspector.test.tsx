@@ -167,4 +167,37 @@ describe('NodeInspector', () => {
     expect(markup).toContain('Issue / Lesson');
     expect(markup).toContain('obsidian://open?vault=ops%20vault');
   });
+
+  it('keeps summary actions above collapsed metadata sections', () => {
+    const markup = renderToStaticMarkup(
+      <NodeInspector
+        node={{
+          data: {
+            id: 'issue/1',
+            label: 'Issue 1',
+            type: 'LogisticsIssue',
+            analysisVault: 'ops vault',
+            analysisPath: 'wiki/analyses/issue-1.md',
+            severity: 'high',
+            owner: 'team-logistics',
+          },
+        }}
+        edge={null}
+        degree={2}
+        visibilityReasons={[
+          {
+            code: 'filter-match',
+            label: 'Filter match',
+            detail: 'Search term matched this node.',
+          },
+        ]}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(markup.indexOf('Why visible?')).toBeLessThan(markup.indexOf('Node metadata'));
+    expect(markup.indexOf('Open linked Obsidian note')).toBeLessThan(markup.indexOf('Node metadata'));
+    expect(markup).toMatch(/data-section-id="inspector-node-metadata"/);
+    expect(markup).toMatch(/data-section-id="inspector-related-context"/);
+  });
 });

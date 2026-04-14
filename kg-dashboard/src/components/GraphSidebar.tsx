@@ -8,6 +8,7 @@ import type {
   SearchMatch,
 } from '../types/graph';
 import { getNodeLabel } from '../utils/graph-model';
+import { CollapsibleSection } from './CollapsibleSection';
 
 const DEFAULT_INFRA_SUMMARY_LIMIT = 5;
 type InfraFilter = 'All' | 'Hub' | 'Site' | 'Warehouse';
@@ -201,7 +202,7 @@ export function GraphSidebar({
   }, [savedViews]);
 
   return (
-    <aside className="dashboard-sidebar">
+    <aside className="dashboard-sidebar dashboard-sidebar--rail">
       <section className="panel">
         <div className="panel-header">
           <div>
@@ -269,90 +270,6 @@ export function GraphSidebar({
             <p className="empty-copy">No quick matches. Try another label, hub, issue, or vessel name.</p>
           )
         ) : null}
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="section-label">Ontology Query</div>
-            <h2 className="section-title">Class + relation filters</h2>
-          </div>
-        </div>
-
-        <label className="field">
-          <span className="field-label">Class browser</span>
-          <select value={classFilter} onChange={(event) => onClassFilterChange(event.target.value)}>
-            <option value="">All classes</option>
-            {classOptions.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span className="field-label">Property browser</span>
-          <select value={propertyFilter} onChange={(event) => onPropertyFilterChange(event.target.value)}>
-            <option value="">All properties</option>
-            {propertyOptions.map((property) => (
-              <option key={property} value={property}>
-                {property}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field">
-          <span className="field-label">Relation type browser</span>
-          <select value={relationTypeFilter} onChange={(event) => onRelationTypeFilterChange(event.target.value)}>
-            <option value="">All relation types</option>
-            {relationTypeOptions.map((relation) => (
-              <option key={relation} value={relation}>
-                {relation}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="search-chip-row" role="tablist" aria-label="Ontology query presets">
-          {ontologyPresets.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              className="infra-filter-chip"
-              onClick={() => onApplyOntologyPreset(preset.id)}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="manual-node-actions">
-          <button type="button" className="ghost-button" onClick={onSaveCurrentQuery}>
-            Save current query
-          </button>
-        </div>
-        {savedQueries.length > 0 ? (
-          <div className="manual-node-list" role="list" aria-label="Saved queries">
-            {savedQueries.map((query) => (
-              <button
-                key={query.id}
-                type="button"
-                className="search-result-item"
-                onClick={() => onApplySavedQuery(query.id)}
-              >
-                <strong>{query.name}</strong>
-                <span>
-                  {query.query.classFilter || 'all'} / {query.query.propertyFilter || 'all'} /{' '}
-                  {query.query.relationTypeFilter || 'all'}
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-copy">No saved queries yet.</p>
-        )}
       </section>
 
       <section className="panel">
@@ -500,236 +417,354 @@ export function GraphSidebar({
         ) : null}
       </section>
 
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="section-label">Investigation view</div>
-            <h2 className="section-title">Share and compare</h2>
-          </div>
-        </div>
-
-        <div className="manual-node-actions">
-          <button type="button" className="ghost-button" onClick={onCopyCurrentStateLink}>
-            Copy current state link
-          </button>
-          <button type="button" className="ghost-button" onClick={onSaveCurrentView}>
-            Save current view
-          </button>
-        </div>
-
-        {savedViewOptions.length > 0 ? (
-          <>
-            <label className="field">
-              <span className="field-label">Compare left</span>
-              <select
-                className="search-input"
-                value={compareLeftId ?? ''}
-                onChange={(event) => onSetCompareLeft(event.target.value || null)}
-              >
-                <option value="">None</option>
-                {savedViewOptions.map((view) => (
-                  <option key={`left-${view.id}`} value={view.id}>
-                    {view.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="field">
-              <span className="field-label">Compare right</span>
-              <select
-                className="search-input"
-                value={compareRightId ?? ''}
-                onChange={(event) => onSetCompareRight(event.target.value || null)}
-              >
-                <option value="">None</option>
-                {savedViewOptions.map((view) => (
-                  <option key={`right-${view.id}`} value={view.id}>
-                    {view.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <p className="field-help">
-              {compareEnabled
-                ? 'Compare mode active: added=green, removed=red, changed=amber.'
-                : 'Choose two different saved views to enable compare mode.'}
-            </p>
-
-            <div className="manual-node-list" role="list" aria-label="Saved investigation views">
-              <strong>Saved views</strong>
-              {savedViewOptions.map((view) => (
-                <div key={view.id} className="search-result-item" role="listitem">
-                  <strong>{view.name}</strong>
-                  <span>{view.description || 'No description'}</span>
-                  <span>{view.createdAtLabel}</span>
-                  <div className="manual-node-actions">
-                    <button type="button" className="ghost-button" onClick={() => onLoadSavedView(view.id)}>
-                      Load
-                    </button>
-                    <button type="button" className="ghost-button" onClick={() => onDeleteSavedView(view.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="empty-copy">No saved views yet. Save the current investigation state first.</p>
-        )}
-      </section>
-
-      {viewMode === 'summary' && hubSummaries.length > 0 ? (
-        <section className="panel">
+      <section className="panel panel--rail">
+        <CollapsibleSection
+          key="ontology-query"
+          sectionId="ontology-query"
+          title="Ontology query"
+          summary="Class, property, and relation filters"
+        >
           <div className="panel-header">
             <div>
-              <div className="section-label">Infra summary</div>
-              <h2 className="section-title">Collapsed infra counts</h2>
+              <div className="section-label">Ontology Query</div>
+              <h2 className="section-title">Class + relation filters</h2>
             </div>
-            <span className="pill pill--soft">{hubSummaries.length} infra nodes</span>
           </div>
 
-          <div className="metric-row">
-            <span>Shown first</span>
-            <strong>{formatCount(visibleInfraSummaries.length)}</strong>
-          </div>
+          <label className="field">
+            <span className="field-label">Class browser</span>
+            <select value={classFilter} onChange={(event) => onClassFilterChange(event.target.value)}>
+              <option value="">All classes</option>
+              {classOptions.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <div className="hub-summary-list" role="list" aria-label="Infra summary rows">
-            {visibleInfraSummaries.map((hub) => (
-              <div key={hub.id} className="metric-row" role="listitem">
-                <span>
-                  <strong>{hub.label}</strong> <span className="hub-summary-type">{hub.type}</span>
-                </span>
-                <strong>
-                  Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
-                  {formatCount(hub.vendor)}
-                </strong>
-              </div>
+          <label className="field">
+            <span className="field-label">Property browser</span>
+            <select value={propertyFilter} onChange={(event) => onPropertyFilterChange(event.target.value)}>
+              <option value="">All properties</option>
+              {propertyOptions.map((property) => (
+                <option key={property} value={property}>
+                  {property}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field">
+            <span className="field-label">Relation type browser</span>
+            <select
+              value={relationTypeFilter}
+              onChange={(event) => onRelationTypeFilterChange(event.target.value)}
+            >
+              <option value="">All relation types</option>
+              {relationTypeOptions.map((relation) => (
+                <option key={relation} value={relation}>
+                  {relation}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="search-chip-row" role="tablist" aria-label="Ontology query presets">
+            {ontologyPresets.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="infra-filter-chip"
+                onClick={() => onApplyOntologyPreset(preset.id)}
+              >
+                {preset.label}
+              </button>
             ))}
           </div>
 
-          {hiddenInfraSummaryCount > 0 ? (
-            <div className="infra-summary-actions">
-              <button
-                type="button"
-                className="ghost-button infra-summary-toggle"
-                onClick={() => {
-                  setShowAllInfraSummaries((current) => !current);
-                  setInfraFilter('All');
-                }}
-                aria-expanded={expandedInfraSummaries}
-              >
-                {expandedInfraSummaries
-                  ? 'Collapse infra summary'
-                  : `Show ${formatCount(hiddenInfraSummaryCount)} more`}
-              </button>
-              <p className="infra-summary-help">
-                {expandedInfraSummaries
-                  ? 'All hidden infra rows are visible below. Collapse the list to shorten the sidebar again.'
-                  : `Only the top ${DEFAULT_INFRA_SUMMARY_LIMIT} infra rows are shown first. The button below opens only the hidden remainder.`}
+          <div className="manual-node-actions">
+            <button type="button" className="ghost-button" onClick={onSaveCurrentQuery}>
+              Save current query
+            </button>
+          </div>
+          {savedQueries.length > 0 ? (
+            <div className="manual-node-list" role="list" aria-label="Saved queries">
+              {savedQueries.map((query) => (
+                <button
+                  key={query.id}
+                  type="button"
+                  className="search-result-item"
+                  onClick={() => onApplySavedQuery(query.id)}
+                >
+                  <strong>{query.name}</strong>
+                  <span>
+                    {query.query.classFilter || 'all'} / {query.query.propertyFilter || 'all'} /{' '}
+                    {query.query.relationTypeFilter || 'all'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-copy">No saved queries yet.</p>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          key="investigation-view"
+          sectionId="investigation-view"
+          title="Investigation view"
+          summary={savedViews.length > 0 ? `${savedViews.length} saved views` : 'Share and compare'}
+        >
+          <div className="panel-header">
+            <div>
+              <div className="section-label">Investigation view</div>
+              <h2 className="section-title">Share and compare</h2>
+            </div>
+          </div>
+
+          <div className="manual-node-actions">
+            <button type="button" className="ghost-button" onClick={onCopyCurrentStateLink}>
+              Copy current state link
+            </button>
+            <button type="button" className="ghost-button" onClick={onSaveCurrentView}>
+              Save current view
+            </button>
+          </div>
+
+          {savedViewOptions.length > 0 ? (
+            <>
+              <label className="field">
+                <span className="field-label">Compare left</span>
+                <select
+                  className="search-input"
+                  value={compareLeftId ?? ''}
+                  onChange={(event) => onSetCompareLeft(event.target.value || null)}
+                >
+                  <option value="">None</option>
+                  {savedViewOptions.map((view) => (
+                    <option key={`left-${view.id}`} value={view.id}>
+                      {view.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="field">
+                <span className="field-label">Compare right</span>
+                <select
+                  className="search-input"
+                  value={compareRightId ?? ''}
+                  onChange={(event) => onSetCompareRight(event.target.value || null)}
+                >
+                  <option value="">None</option>
+                  {savedViewOptions.map((view) => (
+                    <option key={`right-${view.id}`} value={view.id}>
+                      {view.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <p className="field-help">
+                {compareEnabled
+                  ? 'Compare mode active: added=green, removed=red, changed=amber.'
+                  : 'Choose two different saved views to enable compare mode.'}
               </p>
 
-              {expandedInfraSummaries ? (
-                <>
-                  <p className="infra-summary-help infra-summary-help-secondary">
-                    These counts apply only to the hidden rows below, not to the full summary list.
-                  </p>
-                  <div
-                    className="infra-filter-chips"
-                    role="tablist"
-                    aria-label="Hidden infra summary filters"
-                  >
-                    {INFRA_FILTERS.map((filter) => (
+              <div className="manual-node-list" role="list" aria-label="Saved investigation views">
+                <strong>Saved views</strong>
+                {savedViewOptions.map((view) => (
+                  <div key={view.id} className="search-result-item" role="listitem">
+                    <strong>{view.name}</strong>
+                    <span>{view.description || 'No description'}</span>
+                    <span>{view.createdAtLabel}</span>
+                    <div className="manual-node-actions">
                       <button
-                        key={filter}
                         type="button"
-                        className={
-                          infraFilter === filter
-                            ? 'infra-filter-chip is-active'
-                            : 'infra-filter-chip'
-                        }
-                        onClick={() => setInfraFilter(filter)}
-                        aria-pressed={infraFilter === filter}
+                        className="ghost-button"
+                        onClick={() => onLoadSavedView(view.id)}
                       >
-                        <span>{filter}</span>
-                        <span className="infra-filter-chip__count">
-                          {formatCount(hiddenInfraSummaryCounts[filter])}
-                        </span>
+                        Load
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => onDeleteSavedView(view.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="empty-copy">No saved views yet. Save the current investigation state first.</p>
+          )}
+        </CollapsibleSection>
 
-                  <div className="hub-summary-list hub-summary-list--expanded" role="list">
-                    {filteredHiddenInfraSummaries.length > 0 ? (
-                      filteredHiddenInfraSummaries.map((hub) => (
-                        <div key={hub.id} className="metric-row" role="listitem">
-                          <span>
-                            <strong>{hub.label}</strong>{' '}
-                            <span className="hub-summary-type">{hub.type}</span>
-                          </span>
-                          <strong>
-                            Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
-                            {formatCount(hub.vendor)}
-                          </strong>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="empty-copy">
-                        No hidden infra rows match the current filter.
+        {viewMode === 'summary' && hubSummaries.length > 0 ? (
+          <CollapsibleSection
+            key="infra-summary"
+            sectionId="infra-summary"
+            title="Infra summary"
+            summary={`${hubSummaries.length} infra nodes`}
+          >
+            <>
+              <div className="panel-header">
+                <div>
+                  <div className="section-label">Infra summary</div>
+                  <h2 className="section-title">Collapsed infra counts</h2>
+                </div>
+                <span className="pill pill--soft">{hubSummaries.length} infra nodes</span>
+              </div>
+
+              <div className="metric-row">
+                <span>Shown first</span>
+                <strong>{formatCount(visibleInfraSummaries.length)}</strong>
+              </div>
+
+              <div className="hub-summary-list" role="list" aria-label="Infra summary rows">
+                {visibleInfraSummaries.map((hub) => (
+                  <div key={hub.id} className="metric-row" role="listitem">
+                    <span>
+                      <strong>{hub.label}</strong> <span className="hub-summary-type">{hub.type}</span>
+                    </span>
+                    <strong>
+                      Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
+                      {formatCount(hub.vendor)}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+
+              {hiddenInfraSummaryCount > 0 ? (
+                <div className="infra-summary-actions">
+                  <button
+                    type="button"
+                    className="ghost-button infra-summary-toggle"
+                    onClick={() => {
+                      setShowAllInfraSummaries((current) => !current);
+                      setInfraFilter('All');
+                    }}
+                    aria-expanded={expandedInfraSummaries}
+                  >
+                    {expandedInfraSummaries
+                      ? 'Collapse infra summary'
+                      : `Show ${formatCount(hiddenInfraSummaryCount)} more`}
+                  </button>
+                  <p className="infra-summary-help">
+                    {expandedInfraSummaries
+                      ? 'All hidden infra rows are visible below. Collapse the list to shorten the sidebar again.'
+                      : `Only the top ${DEFAULT_INFRA_SUMMARY_LIMIT} infra rows are shown first. The button below opens only the hidden remainder.`}
+                  </p>
+
+                  {expandedInfraSummaries ? (
+                    <>
+                      <p className="infra-summary-help infra-summary-help-secondary">
+                        These counts apply only to the hidden rows below, not to the full summary list.
                       </p>
-                    )}
-                  </div>
-                </>
+                      <div
+                        className="infra-filter-chips"
+                        role="tablist"
+                        aria-label="Hidden infra summary filters"
+                      >
+                        {INFRA_FILTERS.map((filter) => (
+                          <button
+                            key={filter}
+                            type="button"
+                            className={
+                              infraFilter === filter
+                                ? 'infra-filter-chip is-active'
+                                : 'infra-filter-chip'
+                            }
+                            onClick={() => setInfraFilter(filter)}
+                            aria-pressed={infraFilter === filter}
+                          >
+                            <span>{filter}</span>
+                            <span className="infra-filter-chip__count">
+                              {formatCount(hiddenInfraSummaryCounts[filter])}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="hub-summary-list hub-summary-list--expanded" role="list">
+                        {filteredHiddenInfraSummaries.length > 0 ? (
+                          filteredHiddenInfraSummaries.map((hub) => (
+                            <div key={hub.id} className="metric-row" role="listitem">
+                              <span>
+                                <strong>{hub.label}</strong>{' '}
+                                <span className="hub-summary-type">{hub.type}</span>
+                              </span>
+                              <strong>
+                                Ship {formatCount(hub.shipment)} · Ves {formatCount(hub.vessel)} · Ven{' '}
+                                {formatCount(hub.vendor)}
+                              </strong>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="empty-copy">
+                            No hidden infra rows match the current filter.
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
               ) : null}
+            </>
+          </CollapsibleSection>
+        ) : null}
+
+        <CollapsibleSection
+          key="metrics"
+          sectionId="metrics"
+          title="Metrics"
+          summary={`${metrics.visibleNodes} visible / ${metrics.hiddenNodes} hidden`}
+        >
+          <div className="panel-header">
+            <div>
+              <div className="section-label">Metrics</div>
+              <h2 className="section-title">Current slice</h2>
             </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="section-label">Metrics</div>
-            <h2 className="section-title">Current slice</h2>
+            <span className="pill pill--soft">Ready</span>
           </div>
-          <span className="pill pill--soft">Ready</span>
-        </div>
 
-        <div className="metric-row">
-          <span>Total nodes</span>
-          <strong>{formatCount(metrics?.totalNodes)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Total edges</span>
-          <strong>{formatCount(metrics?.totalEdges)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Visible nodes</span>
-          <strong>{formatCount(metrics?.visibleNodes)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Visible edges</span>
-          <strong>{formatCount(metrics?.visibleEdges)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Hidden nodes</span>
-          <strong>{formatCount(metrics?.hiddenNodes)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Hidden edges</span>
-          <strong>{formatCount(metrics?.hiddenEdges)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Logistics issues</span>
-          <strong>{formatCount(metrics?.issueCount)}</strong>
-        </div>
-        <div className="metric-row">
-          <span>Hub nodes</span>
-          <strong>{formatCount(metrics?.hubCount)}</strong>
-        </div>
+          <div className="metric-row">
+            <span>Total nodes</span>
+            <strong>{formatCount(metrics?.totalNodes)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Total edges</span>
+            <strong>{formatCount(metrics?.totalEdges)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Visible nodes</span>
+            <strong>{formatCount(metrics?.visibleNodes)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Visible edges</span>
+            <strong>{formatCount(metrics?.visibleEdges)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Hidden nodes</span>
+            <strong>{formatCount(metrics?.hiddenNodes)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Hidden edges</span>
+            <strong>{formatCount(metrics?.hiddenEdges)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Logistics issues</span>
+            <strong>{formatCount(metrics?.issueCount)}</strong>
+          </div>
+          <div className="metric-row">
+            <span>Hub nodes</span>
+            <strong>{formatCount(metrics?.hubCount)}</strong>
+          </div>
+        </CollapsibleSection>
       </section>
     </aside>
   );

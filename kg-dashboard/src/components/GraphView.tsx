@@ -304,9 +304,9 @@ export function GraphView({
       return {
         name: 'breadthfirst',
         fit: true,
-        padding: 48,
+        padding: 24,
         directed: false,
-        spacingFactor: 1.1,
+        spacingFactor: 0.9,
       };
     }
 
@@ -314,8 +314,8 @@ export function GraphView({
       return {
         name: 'concentric',
         fit: true,
-        padding: 48,
-        spacingFactor: 1.05,
+        padding: 24,
+        spacingFactor: 0.85,
         concentric: (element: cytoscape.NodeSingular) => degreeById.get(element.id()) ?? 1,
         levelWidth: () => 2,
       };
@@ -324,9 +324,9 @@ export function GraphView({
     return {
       name: 'concentric',
       fit: true,
-      padding: 56,
-      minNodeSpacing: 24,
-      spacingFactor: 1.05,
+      padding: 32,
+      minNodeSpacing: 16,
+      spacingFactor: 0.9,
       concentric: (element: cytoscape.NodeSingular) => degreeById.get(element.id()) ?? 1,
       levelWidth: () => 3,
     };
