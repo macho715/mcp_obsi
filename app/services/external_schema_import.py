@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from typing import Any, Literal
 
 import requests
@@ -215,11 +215,7 @@ def find_mapping_warnings(
     mappings: tuple[FieldMappingRule, ...] = DEFAULT_DOMAIN_FIELD_MAPPINGS,
 ) -> list[SchemaMappingWarning]:
     stage_order = {"off": 0, "poc": 1, "beta": 2}
-    active = [
-        rule
-        for rule in mappings
-        if stage_order[rule.required_stage] <= stage_order[stage]
-    ]
+    active = [rule for rule in mappings if stage_order[rule.required_stage] <= stage_order[stage]]
 
     warnings: list[SchemaMappingWarning] = []
     for rule in active:

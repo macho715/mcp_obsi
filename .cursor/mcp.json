@@ -11,6 +11,24 @@
       "headers": {
         "Authorization": "Bearer ${env:MCP_API_TOKEN}"
       }
+    },
+    "obsidian-claude-read": {
+      "url": "http://127.0.0.1:8000/claude-mcp"
+    },
+    "obsidian-claude-write": {
+      "url": "http://127.0.0.1:8000/claude-mcp-write",
+      "headers": {
+        "Authorization": "Bearer ${env:CLAUDE_MCP_WRITE_TOKEN}"
+      }
+    },
+    "obsidian-chatgpt-read": {
+      "url": "http://127.0.0.1:8000/chatgpt-mcp"
+    },
+    "obsidian-chatgpt-write": {
+      "url": "http://127.0.0.1:8000/chatgpt-mcp-write",
+      "headers": {
+        "Authorization": "Bearer ${env:CHATGPT_MCP_WRITE_TOKEN}"
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ntpath
 import os
 from datetime import datetime
 from pathlib import Path
@@ -66,7 +67,7 @@ def parse_everything_results(payload: dict[str, Any]) -> list[dict[str, Any]]:
         if not name or not parent:
             continue
         size = _parse_int_or_none(item.get("size"))
-        full_path = str(Path(parent) / name)
+        full_path = ntpath.join(parent, name)
         results.append(
             {
                 "name": name,
