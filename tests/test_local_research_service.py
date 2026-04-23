@@ -315,7 +315,7 @@ def test_ask_research_saves_source_backed_answer(tmp_path):
     assert result["mode"] == "ask"
     assert result["sources"][0]["path"] == str(source)
     assert result["saved_markdown"].endswith(
-        "runtime\\research\\answers\\20260416-120000-answer.md"
+        str(Path("runtime") / "research" / "answers" / "20260416-120000-answer.md")
     )
     assert Path(result["saved_markdown"]).exists()
     assert Path(result["saved_json"]).exists()
